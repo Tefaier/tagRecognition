@@ -1,28 +1,59 @@
 from typing import Any
 
 import cv2
-import apriltag
+from dt_apriltags import Detector, Detection
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
+from PIL import Image
 
-imagePath = "/testImages"
+imagePath1 = "./testImages/img.png"
+imagePath2 = "./testImages/tag41_12_00014.png"
 
 # used
 # https://pyimagesearch.com/2020/11/02/apriltag-with-python/
+# https://matplotlib.org/stable/gallery/mplot3d/imshow3d.html#sphx-glr-gallery-mplot3d-imshow3d-py
 
-def createDetector() -> apriltag.Detector:
-    options = apriltag.DetectorOptions(families="tagStandard41h12")  # recommended standard
-    return apriltag.Detector(options)
+def imshow3d(ax, img):
+    xx, yy = np.meshgrid(np.linspace(0, img.shape[1] / img.shape[0], img.shape[1]), np.linspace(0, 1, img.shape[0]))
+    zz     = np.ones((img.shape[0],img.shape[1]))
+    ax.plot_surface(xx, yy, zz, rstride=1, cstride=1, facecolors=img, shade=False)
 
-def createRotatedImage(path: str) -> str:
-    print(path)
+def createDetector() -> Detector:
+    return Detector(searchpath=['apriltags'],
+                       families='tag36h11', # tagStandard41h12 tag25h9 tag36h11
+                       nthreads=1,
+                       quad_decimate=1.0,
+                       quad_sigma=0.0,
+                       refine_edges=1,
+                       decode_sharpening=0.25,
+                       debug=0)
+
+def createRotatedImage(path: str, reduce: int = 1) -> str:
+    image = Image.open(path)
+    if (reduce != 1):
+        image = image.resize([int(x / reduce) for x in image.size])
+    image = np.array(image)
+    if (image.shape[-1] == 4):
+        image = image[:, :, :-1]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.view_init(elev=90, azim=0, roll=0)
+    ax.grid(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+    imshow3d(ax, img=image / 255)
+    newName = '.'.join(path.split('.')[:-1]) + "3d.png"
+    plt.savefig(newName, dpi=200, bbox_inches='tight', pad_inches=0)
+    return newName
 
 def getGrayImage(path: str) -> np.ndarray:
     image = cv2.imread(path)
-    cv2.rotatedRectangleIntersection()
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-def analyseImage(results: tuple[list[apriltag.Detection], Any] | list[apriltag.Detection], image: np.ndarray):
+def analyseImage(results: tuple[list[Detection], Any] | list[Detection], image: np.ndarray):
+    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     for r in results:
         # extract the bounding box (x, y)-coordinates for the AprilTag
         # and convert each of the (x, y)-coordinate pairs to integers
@@ -43,12 +74,14 @@ def analyseImage(results: tuple[list[apriltag.Detection], Any] | list[apriltag.D
         tagFamily = r.tag_family.decode("utf-8")
         cv2.putText(image, tagFamily, (ptA[0], ptA[1] - 15),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    return image
 
 
 detector = createDetector()
-rotatedVersion = createRotatedImage(imagePath)
+rotatedVersion = imagePath1 if True else createRotatedImage(imagePath2, reduce=1)
 image = getGrayImage(rotatedVersion)
 results = detector.detect(image)
-analyseImage(results, image)
+print(results)
+image = analyseImage(results, image)
 cv2.imshow("Image", image)
 cv2.waitKey(0)
