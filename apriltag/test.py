@@ -57,7 +57,6 @@ def getGrayImage(path: str) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 def analyseImage(results: tuple[list[Detection], Any] | list[Detection], image: np.ndarray):
-    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     for r in results:
         # extract the bounding box (x, y)-coordinates for the AprilTag
         # and convert each of the (x, y)-coordinate pairs to integers
@@ -77,15 +76,17 @@ def analyseImage(results: tuple[list[Detection], Any] | list[Detection], image: 
         # draw the tag family on the image
         tagFamily = r.tag_family.decode("utf-8")
         cv2.putText(image, tagFamily, (ptA[0], ptA[1] - 15),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 3)
+        cv2.putText(image, tagFamily, (ptA[0], ptA[1] - 15),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 0, 0), 2)
     return image
 
 
 detector = createDetector()
 rotatedVersion = imagePath1 if True else createRotatedImage(imagePath1, reduce=4)
-image = getGrayImage(rotatedVersion)
-results = detector.detect(image)
+imageGray = getGrayImage(rotatedVersion)
+results = detector.detect(imageGray)
 print(results)
-image = analyseImage(results, image)
-cv2.imshow("Image", image)
+analysedImage = analyseImage(results, cv2.imread(rotatedVersion))
+cv2.imshow("Image", analysedImage)
 cv2.waitKey(0)
