@@ -85,7 +85,26 @@ def analyseImage(results: tuple[list[Detection], Any] | list[Detection], image: 
 detector = createDetector()
 rotatedVersion = imagePath1 if True else createRotatedImage(imagePath1, reduce=4)
 imageGray = getGrayImage(rotatedVersion)
-results = detector.detect(imageGray)
+# camera_params is camera parameters of:
+# fx - x focal length in pixels
+# fy - y focal length in pixels
+# cx - x of focal center in pixels
+# cy - y of focal center in pixels
+# usually fx=fy
+# usually cx = image.width/2, cy = image.height/2
+#
+# tag_size is size of tag in terms of distance between parallel fully black sides (in meters!)
+#
+# results are as follows
+# The coordinate system has the origin at the camera center.
+# The z-axis points from the camera center out the camera lens.
+# The x-axis is to the right in the image taken by the camera, and y is down.
+# The tag's coordinate frame is centered at the center of the tag, with x-axis to the right, y-axis down, and z-axis into the tag.
+results = detector.detect(
+    imageGray,
+    estimate_tag_pose=True,
+    camera_params=[1, 1, imageGray.shape[1] / 2, imageGray.shape[0] / 2],
+    tag_size=0.1)
 print(results)
 analysedImage = analyseImage(results, cv2.imread(rotatedVersion))
 cv2.imshow("Image", analysedImage)
