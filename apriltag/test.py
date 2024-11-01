@@ -1,10 +1,11 @@
-from typing import Any
+from typing import Any, List
 
 import cv2
 from dt_apriltags import Detector, Detection
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+from scipy.spatial.transform import Rotation
 
 imagePath1 = "./testImages/img.png"
 imagePath2 = "./testImages/tag41_12_00000.png"
@@ -28,7 +29,9 @@ def createDetector() -> Detector:
                        decode_sharpening=0.25,
                        debug=0)
 
-def createRotatedImage(path: str, reduce: int = 1) -> str:
+def createRotatedImage(path: str, reduce: int = 1, cameraRot: List[float] = None) -> str:
+    if cameraRot is None:
+        cameraRot = [0, 0, 0]
     image = Image.open(path)
     if (reduce != 1):
         image = image.resize([int(x / reduce) for x in image.size])
@@ -39,7 +42,7 @@ def createRotatedImage(path: str, reduce: int = 1) -> str:
     plt.axis('square')
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
-    ax.view_init(elev=-90, azim=0, roll=0)
+    ax.view_init(elev=-90 + cameraRot[0], azim=cameraRot[1], roll=cameraRot[2])
     ax.grid(False)
     ax.set_xticks([])
     ax.set_yticks([])
@@ -81,9 +84,23 @@ def analyseImage(results: tuple[list[Detection], Any] | list[Detection], image: 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 0, 0), 2)
     return image
 
+def generateCameraTransform(distance: float, cameraRot: List[float]):
+    rot1 = Rotation.from_rotvec([cameraRot[0], 0, 0], degrees=True)
+    rot2 = Rotation.from_rotvec([0, 0, cameraRot[1]], degrees=True)
+    comb1 = rot2 * rot1
+    rot3 = Rotation.from_rotvec(comb1.apply(np.array([0, 0, 1])) * cameraRot[2], degrees=True)
+    combFull = rot3 * comb1
 
+    return (combFull.apply(np.array([0, 0, distance])), combFull)
+
+def localTransformToGlobal(positionLocal: np.ndarray, rotLocal: Rotation, positionInLocal: List[float], rotInLocal: Rotation):
+    inverted = rotLocal.inv()
+    return (positionLocal + inverted.apply(positionInLocal), rotInLocal * rotLocal)
+
+cameraRot = [0, 0, 0]
+cameraPosition, cameraRotation = generateCameraTransform(1, cameraRot)
 detector = createDetector()
-rotatedVersion = imagePath1 if True else createRotatedImage(imagePath1, reduce=4)
+rotatedVersion = imagePath1 if True else createRotatedImage(imagePath1, reduce=4, cameraRot=cameraRot)
 imageGray = getGrayImage(rotatedVersion)
 # camera_params is camera parameters of:
 # fx - x focal length in pixels
@@ -106,6 +123,8 @@ results = detector.detect(
     camera_params=[1, 1, imageGray.shape[1] / 2, imageGray.shape[0] / 2],
     tag_size=0.1)
 print(results)
+for r in results:
+    print(localTransformToGlobal(cameraPosition, cameraRotation, r.pose_t, Rotation.from_matrix(r.pose_R)))
 analysedImage = analyseImage(results, cv2.imread(rotatedVersion))
 cv2.imshow("Image", analysedImage)
 cv2.waitKey(0)
