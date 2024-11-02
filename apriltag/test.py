@@ -91,16 +91,16 @@ def generateCameraTransform(distance: float, cameraRot: List[float]):
     rot3 = Rotation.from_rotvec(comb1.apply(np.array([0, 0, 1])) * cameraRot[2], degrees=True)
     combFull = rot3 * comb1
 
-    return (combFull.apply(np.array([0, 0, distance])), combFull)
+    return (combFull.apply(np.array([0, 0, -1 * distance])), combFull)
 
 def localTransformToGlobal(positionLocal: np.ndarray, rotLocal: Rotation, positionInLocal: List[float], rotInLocal: Rotation):
     inverted = rotLocal.inv()
     return (positionLocal + inverted.apply(positionInLocal), rotInLocal * rotLocal)
 
-cameraRot = [0, 0, 0]
+cameraRot = [88, 0, 0]
 cameraPosition, cameraRotation = generateCameraTransform(1, cameraRot)
 detector = createDetector()
-rotatedVersion = imagePath1 if True else createRotatedImage(imagePath1, reduce=4, cameraRot=cameraRot)
+rotatedVersion = imagePath1 if False else createRotatedImage(imagePath2, reduce=1, cameraRot=cameraRot)
 imageGray = getGrayImage(rotatedVersion)
 # camera_params is camera parameters of:
 # fx - x focal length in pixels
@@ -120,11 +120,14 @@ imageGray = getGrayImage(rotatedVersion)
 results = detector.detect(
     imageGray,
     estimate_tag_pose=True,
-    camera_params=[1, 1, imageGray.shape[1] / 2, imageGray.shape[0] / 2],
-    tag_size=0.1)
+    camera_params=[100, 100, imageGray.shape[1] / 2, imageGray.shape[0] / 2], # imageGray [739, 739] when launched with plt
+    tag_size=1)
 print(results)
 for r in results:
-    print(localTransformToGlobal(cameraPosition, cameraRotation, r.pose_t, Rotation.from_matrix(r.pose_R)))
+    globalPos, globalRot = localTransformToGlobal(cameraPosition, cameraRotation, [p[0] for p in r.pose_t], Rotation.from_matrix(r.pose_R))
+    print("Position: " + str(globalPos))
+    print("Rotation: " + str(globalRot.as_euler('xyz', degrees=True)))
+
 analysedImage = analyseImage(results, cv2.imread(rotatedVersion))
 cv2.imshow("Image", analysedImage)
 cv2.waitKey(0)
