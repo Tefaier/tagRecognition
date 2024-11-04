@@ -1,2 +1,3 @@
-# read csv
-# for entry perform action
+import pandas as pd
+
+pd.read_csv()

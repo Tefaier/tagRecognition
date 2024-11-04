@@ -7,7 +7,7 @@ def getGrayImage(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 class Algo:
-    def detect(self, image: np.ndarray, markerLength: float) -> (np.ndarray, np.ndarray):
+    def detect(self, image: np.ndarray, markerLength: float) -> (list, list):
         print("Base class")
 
 class AlgoAruco(Algo):
@@ -19,7 +19,7 @@ class AlgoAruco(Algo):
         self.detectorParams = aruco.DetectorParameters()
         self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
 
-    def detect(self, image: np.ndarray, markerLength: float) -> (np.ndarray, np.ndarray):
+    def detect(self, image: np.ndarray, markerLength: float) -> (list, list):
         markerCorners, markerIds, rejectedCandidates = self.detector.detectMarkers(image)
 
         # координаты углов маркера в его собственной системе координат
@@ -60,7 +60,7 @@ class AlgoApriltag(Algo):
             decode_sharpening=0.25,
             debug=0)
 
-    def detect(self, image: np.ndarray, markerLength: float) -> (np.ndarray, np.ndarray):
+    def detect(self, image: np.ndarray, markerLength: float) -> (list, list):
         imageGray = getGrayImage(image)
         results = self.detector.detect(
             imageGray,
