@@ -5,9 +5,16 @@ import pandas as pd
 import numpy as np
 
 from checkAlgo.algoContainers import arucoDetector
-from checkAlgo.constantsForCheck import csvName, outputFile, folderName
+from checkAlgo.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder
 
-toCheck = pd.read_csv(folderName + "/" + csvName)
+
+# simple detection of one tag on image
+def detectionToResult(transforms: list, rotations: list, ids: list) -> (list, list):
+    if len(transforms) == 0:
+        return ([], [])
+    return (transforms[0], rotations[0])
+
+toCheck = pd.read_csv(collectionFolder + "/" + csvName)
 
 toCheck.rename(columns={"transform": "realT", "rotation": "realR"})
 size = toCheck.shape[1]
@@ -19,11 +26,12 @@ markerLength = 0.0525
 
 # for now expect one detection per image
 for index, row in toCheck.iterrows():
-    t, r = arucoDetector.detect(image=cv2.imread(folderName + "/" + row["imageName"]), markerLength=markerLength)
-    detectedT.append(t[0] if len(t) > 0 else [])
-    detectedR.append(r[0] if len(r) > 0 else [])
+    t, r, ids = arucoDetector.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]), markerLength=markerLength)
+    t, r = detectionToResult(t, r, ids)
+    detectedT.append(t)
+    detectedR.append(r)
 
 toCheck["method"] = method
 toCheck["detectedT"] = detectedT
 toCheck["detectedR"] = detectedR
-toCheck.to_csv(outputFile)
+toCheck.to_csv(resultFolder + "/" + detectionFile)
