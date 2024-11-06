@@ -34,5 +34,5 @@ for i in range(0, realT.size):
     isSuccess[i] = transformPass and rotationPass
 
 toAnalise['isSuccess'] = isSuccess
-toAnalise.drop(columns=['onlyAruko', 'realT', 'realR', 'detectedT', 'detectedR'])
+toAnalise.drop(columns=['onlyAruco', 'realT', 'realR', 'detectedT', 'detectedR'])
 toAnalise.to_csv(resultFolder + "/" + analiseFile)

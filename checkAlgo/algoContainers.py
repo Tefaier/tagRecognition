@@ -11,10 +11,10 @@ class Algo:
         print("Base class")
 
 class AlgoAruco(Algo):
-    def __init__(self, camMatrix: np.ndarray, distCoeffs: np.ndarray):
+    def __init__(self, camMatrix: np.ndarray):
         super().__init__()
         self.camMatrix = camMatrix
-        self.distCoeffs = distCoeffs
+        self.distCoeffs = np.array([0, 0, 0, 0, 0])
         self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
         self.detectorParams = aruco.DetectorParameters()
         self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
@@ -82,8 +82,6 @@ arucoDetector = AlgoAruco(
     camMatrix=np.array(
         [[804.7329058535828, 0.0, 549.3237487667773],
          [0.0, 802.189566021595, 293.62680986426403],
-         [0.0, 0.0, 1.0]]),
-    distCoeffs=np.array(
-        [-0.12367717208987415, 1.3006314330799533, -0.00045665885332229637, -0.028794247586331707, -2.264152794148503]))
+         [0.0, 0.0, 1.0]]))
 
-apriltagDetector = AlgoApriltag(fx=1, fy=1, cx=1, cy=1)
+apriltagDetector = AlgoApriltag(fx=804.7329058535828, fy=802.189566021595, cx=549.3237487667773, cy=293.62680986426403)

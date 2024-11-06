@@ -7,7 +7,7 @@ from checkAlgo.constantsForCheck import collectionFolder, csvName
 
 # fields: imageName, tagFamily, tagId, transform, rotation
 imageNames = []
-onlyArukos = []
+onlyArucos = []
 transforms = []
 rotations = []
 
@@ -22,7 +22,7 @@ for i in range(0, 0):
     cv2.imwrite(filename=(collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png"), img=image)
     # fill values
     imageNames.append(toWriteFrom + iterationIndex)
-    onlyArukos.append(True)
+    onlyArucos.append(True)
     transforms.append([0, 0, 0])
     rotations.append([0, 0, 0])
     iterationIndex += 1
@@ -30,7 +30,7 @@ for i in range(0, 0):
 # creates DataFrame and appends it to file
 collectedInfo = pd.DataFrame.from_dict({
     "imageName": imageNames,
-    "onlyAruko": onlyArukos,
+    "onlyAruco": onlyArucos,
     "transform": transforms,
     "rotation": rotations
 })

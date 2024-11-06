@@ -1,10 +1,10 @@
 collectionFolder = "collectedInfo"
 resultFolder = "processedInfo"
 # what this file is about
-# fields: imageName, onlyAruko, transform, rotation
+# fields: imageName, onlyAruco, transform, rotation
 csvName = "info.csv"
 # what this file is about
-# fields: imageName, onlyAruko, method, realT, realR, detectedT, detectedR
+# fields: imageName, onlyAruco, method, realT, realR, detectedT, detectedR
 detectionFile = "detection.csv"
 # what this file is about
 # fields: imageName, method, isSuccess
