@@ -4,8 +4,8 @@ import cv2
 import pandas as pd
 import numpy as np
 
-from checkAlgo.algoContainers import arucoDetector
-from checkAlgo.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder
+from checkAlgo.algoContainers import arucoDetector, apriltagDetector, Algo
+from checkAlgo.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, markerLength
 
 
 # simple detection of one tag on image
@@ -14,24 +14,34 @@ def detectionToResult(transforms: list, rotations: list, ids: list) -> (list, li
         return ([], [])
     return (transforms[0], rotations[0])
 
-toCheck = pd.read_csv(collectionFolder + "/" + csvName)
+def performDetection(method: Algo, dframe: pd.DataFrame, transformWrite: list, rotationWrite: list):
+    for _, row in dframe.iterrows():
+        t, r, ids = method.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]),
+                                         markerLength=markerLength)
+        t, r = detectionToResult(t, r, ids)
+        transformWrite.append(t)
+        rotationWrite.append(r)
 
-toCheck.rename(columns={"transform": "realT", "rotation": "realR"})
-size = toCheck.shape[1]
-toCheck = toCheck.reset_index()
-method = np.full((size,), "aruco")
-detectedT = []
-detectedR = []
-markerLength = 0.0525
+def analyseInfo(method: Algo, dframe: pd.DataFrame, writeTo: str):
+    methodData = np.full((dframe.shape[1],), method.name)
+    detectedT = []
+    detectedR = []
 
-# for now expect one detection per image
-for index, row in toCheck.iterrows():
-    t, r, ids = arucoDetector.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]), markerLength=markerLength)
-    t, r = detectionToResult(t, r, ids)
-    detectedT.append(t)
-    detectedR.append(r)
+    performDetection(method, dframe, detectedT, detectedR)
 
-toCheck["method"] = method
-toCheck["detectedT"] = detectedT
-toCheck["detectedR"] = detectedR
-toCheck.to_csv(resultFolder + "/" + detectionFile)
+    toCheck["method"] = methodData
+    toCheck["detectedT"] = detectedT
+    toCheck["detectedR"] = detectedR
+
+    toCheck.drop(columns=['otherInfo'])  # not sure if to drop or not to drop
+    toCheck.to_csv(writeTo, header=False, mode='a', index=False)
+
+def openAndPrepareRawInfo(path: str) -> pd.DataFrame:
+    info = pd.read_csv(path, usecols=["imageName", "arucoAvailable", "realT", "realR", "otherInfo"])
+    # info = info.reset_index()
+    return info
+
+toCheck = openAndPrepareRawInfo(collectionFolder + "/" + csvName)
+analyseInfo(arucoDetector, toCheck, resultFolder + "/" + detectionFile)
+toCheck = openAndPrepareRawInfo(collectionFolder + "/" + csvName)
+analyseInfo(apriltagDetector, toCheck, resultFolder + "/" + detectionFile)

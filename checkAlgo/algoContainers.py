@@ -3,16 +3,24 @@ import cv2
 import cv2.aruco as aruco
 from dt_apriltags import Detector, Detection
 
+from checkAlgo.constantsForCheck import camMatrix
+
+
 def getGrayImage(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 class Algo:
+    name: str
+
+    def __init__(self, name: str):
+        self.name = name
+
     def detect(self, image: np.ndarray, markerLength: float) -> (list, list, list):
         print("Base class")
 
 class AlgoAruco(Algo):
-    def __init__(self, camMatrix: np.ndarray):
-        super().__init__()
+    def __init__(self, name: str, camMatrix: np.ndarray):
+        super().__init__(name)
         self.camMatrix = camMatrix
         self.distCoeffs = np.array([0, 0, 0, 0, 0])
         self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
@@ -46,8 +54,8 @@ class AlgoApriltag(Algo):
     # fy - y focal length in pixels
     # cx - x of focal center in pixels
     # cy - y of focal center in pixels
-    def __init__(self, fx: float, fy: float, cx: float, cy: float, tagFamily: str = "tagStandard41h12 tag25h9"):
-        super().__init__()
+    def __init__(self, name: str, fx: float, fy: float, cx: float, cy: float, tagFamily: str = "tagStandard41h12 tag25h9"):
+        super().__init__(name)
         self.fx = fx
         self.fy = fy
         self.cx = cx
@@ -79,9 +87,12 @@ class AlgoApriltag(Algo):
         return (rotations, transforms, ids)
 
 arucoDetector = AlgoAruco(
-    camMatrix=np.array(
-        [[804.7329058535828, 0.0, 549.3237487667773],
-         [0.0, 802.189566021595, 293.62680986426403],
-         [0.0, 0.0, 1.0]]))
+    name="aruco",
+    camMatrix=camMatrix)
 
-apriltagDetector = AlgoApriltag(fx=804.7329058535828, fy=802.189566021595, cx=549.3237487667773, cy=293.62680986426403)
+apriltagDetector = AlgoApriltag(
+    name="apriltag",
+    fx=camMatrix[0, 0],
+    fy=camMatrix[1, 1],
+    cx=camMatrix[0, 2],
+    cy=camMatrix[1, 2])

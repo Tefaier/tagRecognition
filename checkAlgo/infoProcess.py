@@ -5,7 +5,6 @@ from scipy.spatial.transform import Rotation
 
 from checkAlgo.constantsForCheck import resultFolder, analiseFile, detectionFile, acceptedTransformError, \
     acceptedRotationError
-from fArucoPhoto import euler_angles
 
 def getVectorError(vector1: list, vector2: list) -> float:
     vector1 = np.array(vector1)
@@ -20,6 +19,7 @@ def getRotationError(rotation1: list, rotation2: list) -> float:
     rotation1To2 = rotation2 * rotation1.inv()
     return norm(rotation1To2.as_rotvec(degrees=True))
 
+# usecols=["imageName", "arucoAvailable", "method", "realT", "realR", "detectedT", "detectedR"]
 toAnalise = pd.read_csv(resultFolder + "/" + detectionFile)
 
 realT = toAnalise['realT'].to_numpy()
@@ -34,5 +34,5 @@ for i in range(0, realT.size):
     isSuccess[i] = transformPass and rotationPass
 
 toAnalise['isSuccess'] = isSuccess
-toAnalise.drop(columns=['onlyAruco', 'realT', 'realR', 'detectedT', 'detectedR'])
-toAnalise.to_csv(resultFolder + "/" + analiseFile)
+toAnalise.drop(columns=['arucoAvailable', 'realT', 'realR', 'detectedT', 'detectedR'])
+toAnalise.to_csv(resultFolder + "/" + analiseFile, index=False)
