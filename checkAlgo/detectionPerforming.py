@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from checkAlgo.algoContainers import arucoDetector, apriltagDetector, Algo
-from checkAlgo.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, markerLength
+from checkAlgo.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, tagLength
 
 
 # simple detection of one tag on image
@@ -17,7 +17,7 @@ def detectionToResult(transforms: list, rotations: list, ids: list) -> (list, li
 def performDetection(method: Algo, dframe: pd.DataFrame, transformWrite: list, rotationWrite: list):
     for _, row in dframe.iterrows():
         t, r, ids = method.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]),
-                                         markerLength=markerLength)
+                                  markerLength=tagLength)
         t, r = detectionToResult(t, r, ids)
         transformWrite.append(t)
         rotationWrite.append(r)
