@@ -54,7 +54,7 @@ class AlgoApriltag(Algo):
     # fy - y focal length in pixels
     # cx - x of focal center in pixels
     # cy - y of focal center in pixels
-    def __init__(self, name: str, camMatrix: np.ndarray, distCoeffs: np.ndarray, tagFamily: str = "tagStandard41h12 tag25h9"):
+    def __init__(self, name: str, camMatrix: np.ndarray, distCoeffs: np.ndarray, tagFamily: str = "tagStandard41h12 tag25h9 tag36h11"):
         super().__init__(name)
         self.fx = camMatrix[0, 0]
         self.fy = camMatrix[1, 1]
@@ -89,6 +89,9 @@ class AlgoApriltag(Algo):
             transforms.append(r.pose_t)
         return (rotations, transforms, ids)
 
+# for ARUCO rotation is rotation vector
+# also for it z is out of the tag, x is to the right, y is to the top
+# it suggests camera z is forward, x is to the right, y is down
 arucoDetector = AlgoAruco(
     name="aruco",
     camMatrix=camMatrix,
