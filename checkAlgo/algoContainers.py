@@ -1,7 +1,10 @@
+from math import degrees
+
 import numpy as np
 import cv2
 import cv2.aruco as aruco
 from dt_apriltags import Detector, Detection
+from scipy.spatial.transform import Rotation
 
 from checkAlgo.constantsForCheck import camMatrix, distortionCoefficients
 
@@ -23,7 +26,7 @@ class AlgoAruco(Algo):
         super().__init__(name)
         self.camMatrix = camMatrix
         self.distCoeffs = distCoeffs
-        self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+        self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_APRILTAG_36H11)
         self.detectorParams = aruco.DetectorParameters()
         self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
 
@@ -42,9 +45,14 @@ class AlgoAruco(Algo):
         if markerIds is not None:
             for i in range(len(markerCorners)):
                 success, rvec, tvec = cv2.solvePnP(objPoints, markerCorners[i], self.camMatrix, self.distCoeffs)
+                rvec = rvec.reshape((3,))
+                tvec = tvec.reshape((3,))
                 if success:
                     ids.append(markerIds[i])
-                    rotations.append(rvec)
+                    rotation = Rotation.from_rotvec(rvec, degrees=False)
+                    rotationVector = Rotation.from_rotvec(rotation.apply([0.0, 180.0, 0.0]), degrees=True)
+                    rotation = rotationVector * rotation
+                    rotations.append(rotation.as_rotvec(degrees=False))
                     transforms.append(tvec)
         return (rotations, transforms, ids)
 
@@ -54,7 +62,7 @@ class AlgoApriltag(Algo):
     # fy - y focal length in pixels
     # cx - x of focal center in pixels
     # cy - y of focal center in pixels
-    def __init__(self, name: str, camMatrix: np.ndarray, distCoeffs: np.ndarray, tagFamily: str = "tagStandard41h12 tag25h9 tag36h11"):
+    def __init__(self, name: str, camMatrix: np.ndarray, distCoeffs: np.ndarray, tagFamily: str = "tag36h11"):
         super().__init__(name)
         self.fx = camMatrix[0, 0]
         self.fy = camMatrix[1, 1]
@@ -84,8 +92,9 @@ class AlgoApriltag(Algo):
         rotations = []
         transforms = []
         for r in results:
-            ids.append(r.id)
-            rotations.append(r.pose_R)
+            ids.append(r.tag_id)
+            rotation = Rotation.from_matrix(r.pose_R)
+            rotations.append(rotation.as_rotvec(degrees=False))
             transforms.append(r.pose_t)
         return (rotations, transforms, ids)
 

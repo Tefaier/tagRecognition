@@ -42,6 +42,7 @@ class PlaneRenderer():
         planeActor = vtkActor()
         planeActor.SetMapper(planeMapper)
         planeActor.SetTexture(self.textureMap)
+        planeActor.GetProperty().LightingOff()
         self.renderer.AddActor(planeActor)
 
         w2if = vtkWindowToImageFilter()
@@ -65,7 +66,7 @@ class PlaneRenderer():
 
         self.textureMap = vtkTexture()
         self.textureMap.SetInputConnection(textureFile.GetOutputPort())
-        self.textureMap.InterpolateOn()
+        self.textureMap.InterpolateOff()
 
         self.renderer = vtkRenderer()
         self.renWin = vtkRenderWindow()

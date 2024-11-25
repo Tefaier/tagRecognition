@@ -1,4 +1,6 @@
 import os
+
+import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation
 
@@ -18,7 +20,7 @@ files = [int(name.split('.')[0]) for name in files]
 toWriteFrom = max(files, default=-1) + 1
 iterationIndex = 0
 
-tagImage = tagImagesFolder + '/' + 'aruco_1.png'
+tagImage = tagImagesFolder + '/' + '2.png'
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
 
 def getImageWithParams(transform: list, rotation: Rotation, tagSize: float, saveDestination: str):
@@ -34,11 +36,36 @@ def makeOutput(index: int, transform: list, rotation: list, isAruco: bool = Fals
     rotations.append(rotation)
     otherInfos.append(extraInfo)
 
-for i in range(0, 1):
+def rotationWithRectify(toMake: Rotation) -> Rotation:
+    rectify = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
+    return toMake * rectify
+
+for x in np.linspace(-80, 80, 100):
     transform = [0.0, 0.0, 0.1]
-    rotation = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
-    getImageWithParams(transform, rotation, tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'aruco5x5', 'tagId': 2})
+    rotation = Rotation.from_euler('xyz', [x, 0, 0], degrees=True)
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+    iterationIndex += 1
+
+for y in np.linspace(-80, 80, 100):
+    transform = [0.0, 0.0, 0.1]
+    rotation = Rotation.from_euler('xyz', [0, y, 0], degrees=True)
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+    iterationIndex += 1
+
+for posZ in np.linspace(0.1, 5, 100):
+    transform = [0.0, 0.0, posZ]
+    rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+    iterationIndex += 1
+
+for posY in np.linspace(-0.5, 0.5, 100):
+    transform = [0.0, posY, 1]
+    rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 # creates DataFrame and appends it to file

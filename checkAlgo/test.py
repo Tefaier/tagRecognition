@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 import cv2.aruco as aruco
+
+from checkAlgo.algoContainers import arucoDetector, apriltagDetector
 from checkAlgo.constantsForCheck import camMatrix, distortionCoefficients, tagLength
 
 
@@ -18,7 +20,7 @@ class AlgoAruco(Algo):
         super().__init__(name)
         self.camMatrix = camMatrix
         self.distCoeffs = distCoeffs
-        self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_5X5_50)
+        self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_APRILTAG_36h11)
         self.detectorParams = aruco.DetectorParameters()
         self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
 
@@ -43,12 +45,16 @@ class AlgoAruco(Algo):
                     transforms.append(tvec)
         return (rotations, transforms, ids)
 
+'''
 arucoDetector = AlgoAruco(
     name="aruco",
     camMatrix=camMatrix,
     distCoeffs=distortionCoefficients
 )
+'''
 
-image = cv2.imread("collectedInfo/67.png")
-result = arucoDetector.detect(image, tagLength)
-print(result)
+image = cv2.imread("collectedInfo/76.png")
+result1 = arucoDetector.detect(image, tagLength)
+result2 = apriltagDetector.detect(image, tagLength)
+print(result1)
+print(result2)
