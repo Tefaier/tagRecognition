@@ -33,8 +33,8 @@ class PlaneRenderer():
         self.plane.SetPoint1(planeLength*0.5, -planeLength*0.5, 0.0)
         self.plane.SetPoint2(-planeLength*0.5, planeLength*0.5, 0.0)
         self.plane.SetCenter(planePosition[0], planePosition[1], planePosition[2])
-        rotVec = planeRotation.as_rotvec(degrees=False)
-        self.plane.Rotate(numpy.linalg.norm(rotVec), rotVec)
+        rotVec = planeRotation.as_rotvec(degrees=True)
+        self.plane.Rotate(numpy.linalg.norm(rotVec), (rotVec[0], rotVec[1], rotVec[2]))
 
         planeMapper = vtkPolyDataMapper()
         planeMapper.SetInputConnection(self.plane.GetOutputPort())
