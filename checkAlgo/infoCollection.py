@@ -35,7 +35,7 @@ def makeOutput(index: int, transform: list, rotation: list, isAruco: bool = Fals
     otherInfos.append(extraInfo)
 
 for i in range(0, 1):
-    transform = [0.0, 0.0, 1.0]
+    transform = [0.0, 0.0, 0.1]
     rotation = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
     getImageWithParams(transform, rotation, tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
     makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'aruco5x5', 'tagId': 2})

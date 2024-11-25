@@ -49,6 +49,6 @@ arucoDetector = AlgoAruco(
     distCoeffs=distortionCoefficients
 )
 
-image = cv2.imread("collectedInfo/64.png")
+image = cv2.imread("collectedInfo/67.png")
 result = arucoDetector.detect(image, tagLength)
 print(result)
