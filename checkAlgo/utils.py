@@ -1,0 +1,17 @@
+import ast
+
+import numpy as np
+from pandas import Series
+from scipy.spatial.transform import Rotation
+
+
+def parseRotation(rotation: list) -> Rotation:
+    if (len(rotation) == 0): return None
+    rotation = np.array(rotation)
+    if rotation.size == 9:
+        return Rotation.from_matrix(rotation)
+    else:
+        return Rotation.from_rotvec(rotation)
+
+def readStringOfList(listStr: Series) -> list:
+    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]

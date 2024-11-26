@@ -1,20 +1,9 @@
 import pandas as pd
 import numpy as np
 from numpy.linalg import norm
-from pandas import Series
-from scipy.spatial.transform import Rotation
-import ast
-
 from checkAlgo.constantsForCheck import resultFolder, analiseFile, detectionFile, acceptedTransformError, \
     acceptedRotationError
-
-def parseRotation(rotation: list) -> Rotation:
-    if (len(rotation) == 0): return None
-    rotation = np.array(rotation)
-    if rotation.size == 9:
-        return Rotation.from_matrix(rotation)
-    else:
-        return Rotation.from_rotvec(rotation)
+from checkAlgo.utils import parseRotation, readStringOfList
 
 
 def getVectorError(vector1: list, vector2: list) -> float:
@@ -33,9 +22,6 @@ def getRotationError(rotation1: list, rotation2: list) -> float:
 
     rotation1To2 = rotation2 * rotation1.inv()
     return float(norm(rotation1To2.as_rotvec(degrees=False)))
-
-def readStringOfList(listStr: Series) -> list:
-    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
 
 # usecols=["imageName", "arucoAvailable", "method", "realT", "realR", "detectedT", "detectedR"]
 toAnalise = pd.read_csv(resultFolder + "/" + detectionFile)
