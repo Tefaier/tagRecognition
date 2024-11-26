@@ -30,7 +30,7 @@ def makeOutput(index: int, transform: list, rotation: list, isAruco: bool = Fals
     if extraInfo is None:
         extraInfo = {}
     # fill values
-    imageNames.append(toWriteFrom + index)
+    imageNames.append(str(toWriteFrom + index) + str(".png"))
     arucoAvailables.append(isAruco)
     transforms.append(transform)
     rotations.append(rotation)
@@ -76,4 +76,4 @@ collectedInfo = pd.DataFrame.from_dict({
     "realR": rotations,
     "otherInfo": otherInfos
 })
-collectedInfo.to_csv(collectionFolder + "/" + csvName, header=False, mode='a', index=False)
+collectedInfo.to_csv(collectionFolder + "/" + csvName, header=True, mode='w', index=False)

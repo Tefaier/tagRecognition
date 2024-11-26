@@ -54,7 +54,7 @@ class AlgoAruco(Algo):
                     rotation = rotationVector * rotation
                     rotations.append(rotation.as_rotvec(degrees=False))
                     transforms.append(tvec)
-        return (rotations, transforms, ids)
+        return (transforms, rotations, ids)
 
 
 class AlgoApriltag(Algo):
@@ -95,8 +95,8 @@ class AlgoApriltag(Algo):
             ids.append(r.tag_id)
             rotation = Rotation.from_matrix(r.pose_R)
             rotations.append(rotation.as_rotvec(degrees=False))
-            transforms.append(r.pose_t)
-        return (rotations, transforms, ids)
+            transforms.append([val[0] for val in r.pose_t])
+        return (transforms, rotations, ids)
 
 # for ARUCO rotation is rotation vector
 # also for it z is out of the tag, x is to the right, y is to the top
