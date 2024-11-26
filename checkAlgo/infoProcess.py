@@ -24,7 +24,7 @@ def getVectorError(vector1: list, vector2: list) -> float:
 
     norm1 = norm(vector1)
     norm2 = norm(vector2 - vector1)
-    return norm2 / norm1 if norm1 != 0 else 1
+    return float(norm2)  # / norm1 if norm1 != 0 else 1
 
 def getRotationError(rotation1: list, rotation2: list) -> float:
     rotation1 = parseRotation(rotation1)
@@ -32,7 +32,7 @@ def getRotationError(rotation1: list, rotation2: list) -> float:
     if (rotation1 == None or rotation2 == None): return -1.0
 
     rotation1To2 = rotation2 * rotation1.inv()
-    return norm(rotation1To2.as_rotvec(degrees=True))
+    return norm(rotation1To2.as_rotvec(degrees=False))
 
 def readStringOfList(listStr: Series) -> list:
     return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
