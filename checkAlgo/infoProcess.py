@@ -9,7 +9,7 @@ from checkAlgo.constantsForCheck import resultFolder, analiseFile, detectionFile
     acceptedRotationError
 
 def parseRotation(rotation: list) -> Rotation:
-    if (len(rotation) == 0): return -1.0
+    if (len(rotation) == 0): return None
     rotation = np.array(rotation)
     if rotation.size == 9:
         return Rotation.from_matrix(rotation)
