@@ -36,7 +36,7 @@ isSuccess = np.full((len(realT),), False)
 
 for i in range(0, len(realT)):
     errorT.append(getVectorError(realT[i], detectedT[i]))
-    errorR.append(getRotationError(realR[i], realR[i]))
+    errorR.append(getRotationError(realR[i], detectedR[i]))
     transformPass = errorT[-1] <= acceptedTransformError
     rotationPass = errorR[-1] <= acceptedRotationError
     isSuccess[i] = transformPass and rotationPass

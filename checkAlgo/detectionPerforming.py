@@ -23,8 +23,8 @@ def performDetection(method: Algo, dframe: pd.DataFrame, transformWrite: list, r
         t, r, ids = method.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]),
                                   markerLength=tagLength)
         t, r = detectionToResult(t, r, ids)
-        transformWrite.append(t)
-        rotationWrite.append(r)
+        transformWrite.append([float(val) for val in t])
+        rotationWrite.append([float(val) for val in r])
 
 def analyseInfo(method: Algo, dframe: pd.DataFrame):
     methodData = np.full((dframe.shape[0],), method.name)

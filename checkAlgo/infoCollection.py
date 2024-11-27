@@ -32,7 +32,7 @@ def makeOutput(index: int, transform: list, rotation: list, isAruco: bool = Fals
     # fill values
     imageNames.append(str(toWriteFrom + index) + str(".png"))
     arucoAvailables.append(isAruco)
-    transforms.append(transform)
+    transforms.append([float(val) for val in transform])
     rotations.append(rotation)
     otherInfos.append(extraInfo)
 
@@ -44,28 +44,28 @@ for x in np.linspace(-80, 80, 100):
     transform = [0.0, 0.0, 0.1]
     rotation = Rotation.from_euler('xyz', [x, 0, 0], degrees=True)
     getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 for y in np.linspace(-80, 80, 100):
     transform = [0.0, 0.0, 0.1]
     rotation = Rotation.from_euler('xyz', [0, y, 0], degrees=True)
     getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 for posZ in np.linspace(0.1, 5, 100):
     transform = [0.0, 0.0, posZ]
     rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
     getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 for posY in np.linspace(-0.5, 0.5, 100):
     transform = [0.0, posY, 1]
     rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
     getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_matrix().tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 # creates DataFrame and appends it to file
