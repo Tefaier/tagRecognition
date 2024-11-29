@@ -21,10 +21,11 @@ toWriteFrom = max(files, default=-1) + 1
 iterationIndex = 0
 
 tagImage = tagImagesFolder + '/' + '2.png'
+ratioOfImageToTag = 9 / 7
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
 
-def getImageWithParams(transform: list, rotation: Rotation, tagSize: float, saveDestination: str):
-    renderer.renderPlane(transform, rotation, tagSize, saveDestination)
+def getImageWithParams(transform: list, rotation: Rotation, planeSize: float, saveDestination: str):
+    renderer.renderPlane(transform, rotation, planeSize, saveDestination)
 
 def makeOutput(index: int, transform: list, rotation: list, isAruco: bool = False, extraInfo: dict = None):
     if extraInfo is None:
@@ -43,28 +44,28 @@ def rotationWithRectify(toMake: Rotation) -> Rotation:
 for x in np.linspace(-80, 80, 100):
     transform = [0.0, 0.0, 0.1]
     rotation = Rotation.from_euler('xyz', [x, 0, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
     makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 for y in np.linspace(-80, 80, 100):
     transform = [0.0, 0.0, 0.1]
     rotation = Rotation.from_euler('xyz', [0, y, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
     makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 for posZ in np.linspace(0.1, 5, 100):
     transform = [0.0, 0.0, posZ]
     rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
     makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
 for posY in np.linspace(-0.5, 0.5, 100):
     transform = [0.0, posY, 1]
     rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
     makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
     iterationIndex += 1
 
