@@ -2,17 +2,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
-
-from checkAlgo.algoContainers import arucoDetector, apriltagDetector
 from checkAlgo.constantsForCheck import resultFolder, analiseFile
-from checkAlgo.utils import readStringOfList
+from checkAlgo.utils import readStringOfList, getRotationEuler
 
 analizationResults = pd.read_csv(resultFolder + "/" + analiseFile)
 
 realT = np.array(readStringOfList(analizationResults['realT']))
 realR = np.array(readStringOfList(analizationResults['realR']))
-errorT = np.array(readStringOfList(analizationResults['errorT']))
-errorR = np.array(readStringOfList(analizationResults['errorR']))
+detectedT = readStringOfList(analizationResults['detectedT'])
+detectedR = readStringOfList(analizationResults['detectedR'])
+errorT = np.array(analizationResults['errorT'])
+errorR = np.array(analizationResults['errorR'])
 usedMethod = np.array(analizationResults['method'])
 
 # arucoIndexes = np.where(usedMethod == arucoDetector.name)
@@ -20,57 +20,122 @@ usedMethod = np.array(analizationResults['method'])
 
 offset = 400
 # show x rotation [0, 100)
-mask = np.arange(0, 100)
-plt.plot(
-    [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[0] for rot in realR[mask]],
-    errorR[mask]
-)
-mask += offset
-plt.plot(
-    [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[0] for rot in realR[mask]],
-    errorR[mask]
-)
-plt.show()
+def xRotation():
+    mask = np.arange(0, 100)
+    plt.plot(
+        [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[0] for rot in realR[mask]],
+        errorR[mask]
+    )
+    mask += offset
+    plt.plot(
+        [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[0] for rot in realR[mask]],
+        errorR[mask]
+    )
+    plt.show()
 
 
 # show y rotation [100, 200)
-mask = np.arange(100, 200)
-plt.plot(
-    [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[1] for rot in realR[mask]],
-    errorR[mask]
-)
-mask += offset
-plt.plot(
-    [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[1] for rot in realR[mask]],
-    errorR[mask]
-)
-plt.show()
+def yRotation():
+    mask = np.arange(100, 200)
+    plt.plot(
+        [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[1] for rot in realR[mask]],
+        errorR[mask]
+    )
+    mask += offset
+    plt.plot(
+        [Rotation.from_rotvec(rot).as_euler('xyz', degrees=True)[1] for rot in realR[mask]],
+        errorR[mask]
+    )
+    plt.show()
 
 
 # show z displacement [200, 300)
-mask = np.arange(200, 300)
-plt.plot(
-    [vec[2] for vec in realT[mask]],
-    errorT[mask]
-)
-mask += offset
-plt.plot(
-    [vec[2] for vec in realT[mask]],
-    errorT[mask]
-)
-plt.show()
+def zDisplacement():
+    mask = np.arange(200, 300)
+    plt.plot(
+        [vec[2] for vec in realT[mask]],
+        errorT[mask]
+    )
+    mask += offset
+    plt.plot(
+        [vec[2] for vec in realT[mask]],
+        errorT[mask]
+    )
+    plt.show()
 
 
 # show y displacement [300, 400)
-mask = np.arange(300, 400)
-plt.plot(
-    [vec[1] for vec in realT[mask]],
-    errorT[mask]
-)
-mask += offset
-plt.plot(
-    [vec[1] for vec in realT[mask]],
-    errorT[mask]
-)
-plt.show()
+def yDisplacement():
+    mask = np.arange(300, 400)
+    plt.plot(
+        [vec[1] for vec in realT[mask]],
+        errorT[mask]
+    )
+    mask += offset
+    plt.plot(
+        [vec[1] for vec in realT[mask]],
+        errorT[mask]
+    )
+    plt.show()
 
+
+# shows rotation error splitted by euler
+def separateRotation():
+    plt.title("Relation between errors in detected rotation and real rotation")
+    plt.xlabel("Real rotation around x, degrees")
+    plt.ylabel("Deviation of detected rotation compared to real, degrees")
+
+    mask = np.where(errorR > -0.5)
+    mask = mask[0][np.where(mask[0] < 100)]
+
+    realRX = [getRotationEuler(rot, 'x', True) for rot in realR[mask]]
+    binEdges = np.histogram_bin_edges(realRX, 10)
+    binMiddles = (binEdges[1:] + binEdges[:-1]) * 0.5
+
+    deviationsXAruco = [getRotationEuler(realR[index], 'x', True) - getRotationEuler(detectedR[index], 'x', True) for index in mask]
+    deviationsYAruco = [getRotationEuler(realR[index], 'y', True) - getRotationEuler(detectedR[index], 'y', True) for index in mask]
+    deviationsZAruco = [getRotationEuler(realR[index], 'z', True) - getRotationEuler(detectedR[index], 'z', True) for index in mask]
+
+    plt.plot(
+        binMiddles,
+        np.histogram(realRX, binEdges, weights=deviationsXAruco)[0],
+        label='x deviation of aruco'
+    )
+    plt.plot(
+        binMiddles,
+        np.histogram(realRX, binEdges, weights=deviationsYAruco)[0],
+        label='y deviation of aruco'
+    )
+    plt.plot(
+        binMiddles,
+        np.histogram(realRX, binEdges, weights=deviationsZAruco)[0],
+        label='z deviation of aruco'
+    )
+    mask += offset
+
+    realRX = [getRotationEuler(rot, 'x', True) for rot in realR[mask]]
+    binEdges = np.histogram_bin_edges(realRX, 10)
+    binMiddles = (binEdges[1:] + binEdges[:-1]) * 0.5
+
+    deviationsXApriltag = [getRotationEuler(realR[index], 'x', True) - getRotationEuler(detectedR[index], 'x', True) for index in mask]
+    deviationsYApriltag = [getRotationEuler(realR[index], 'y', True) - getRotationEuler(detectedR[index], 'y', True) for index in mask]
+    deviationsZApriltag = [getRotationEuler(realR[index], 'z', True) - getRotationEuler(detectedR[index], 'z', True) for index in mask]
+    plt.plot(
+        binMiddles,
+        np.histogram(realRX, binEdges, weights=deviationsXApriltag)[0],
+        label='x deviation of apriltag'
+    )
+    plt.plot(
+        binMiddles,
+        np.histogram(realRX, binEdges, weights=deviationsYApriltag)[0],
+        label='y deviation of apriltag'
+    )
+    plt.plot(
+        binMiddles,
+        np.histogram(realRX, binEdges, weights=deviationsZApriltag)[0],
+        label='z deviation of apriltag'
+    )
+    plt.legend()
+    plt.show()
+
+separateRotation()
