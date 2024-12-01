@@ -1,8 +1,14 @@
 import ast
+import time
+from typing import Tuple, List, Any
 
 import numpy as np
+import numpy.random
+import scipy.stats
 from pandas import Series
 from scipy.spatial.transform import Rotation
+
+randomGenerator = numpy.random.Generator(np.random.default_rng(int(time.time())).bit_generator)
 
 def parseRotation(rotation: list) -> Rotation:
     if (len(rotation) == 0): return None
@@ -19,3 +25,23 @@ def getRotationEuler(rotation: list, part: str, degrees: bool = False) -> float:
 
 def readStringOfList(listStr: Series) -> list:
     return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
+
+def generateNormalDistributionValue(center: float = 0, maxDeviation: float = 3) -> float:
+    return min(
+        max(
+            -maxDeviation,
+            randomGenerator.normal(loc=center, scale=maxDeviation / 3, size=None)),
+        maxDeviation
+    )
+
+def deviateTransform(position: list, rotation: list, px: float = 0, py: float = 0, pz: float = 0, rx: float = 0, ry: float = 0, rz: float = 0) -> list[list[float]]:
+    answer = [[], []]
+    if (px == 0 and py == 0 and pz == 0):
+        answer[0] = position
+    else:
+        answer[0] = [position[0] + px, position[1] + py, position[2] + pz]
+    if (rx == 0 and ry == 0 and rz == 0):
+        answer[1] = rotation
+    else:
+        answer[1] = [rotation[0] + rx, rotation[1] + ry, rotation[2] + rz]
+    return answer

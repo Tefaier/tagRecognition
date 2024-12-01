@@ -5,12 +5,13 @@ import pandas as pd
 from scipy.spatial.transform import Rotation
 
 from checkAlgo.constantsForCheck import collectionFolder, csvName, tagLength, tagImagesFolder, imageWidth, imageHeight, camMatrix
+from checkAlgo.utils import deviateTransform, generateNormalDistributionValue
 from checkAlgo.virtualCamera import PlaneRenderer
 
-# fields: imageName, tagFamily, tagId, transform, rotation
+# fields: imageName, tagFamily, tagId, position, rotation
 imageNames = []
 arucoAvailables = []
-transforms = []
+positions = []
 rotations = []
 otherInfos = []
 
@@ -20,20 +21,20 @@ files = [int(name.split('.')[0]) for name in files]
 toWriteFrom = max(files, default=-1) + 1
 iterationIndex = 0
 
-tagImage = tagImagesFolder + '/' + '2.png'
+tagImage = tagImagesFolder + '/' + 'aruco_1.png'
 ratioOfImageToTag = 9 / 7
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
 
-def getImageWithParams(transform: list, rotation: Rotation, planeSize: float, saveDestination: str):
-    renderer.renderPlane(transform, rotation, planeSize, saveDestination)
+def getImageWithParams(position: list, rotation: Rotation, planeSize: float, saveDestination: str):
+    renderer.renderPlane(position, rotation, planeSize, saveDestination)
 
-def makeOutput(index: int, transform: list, rotation: list, isAruco: bool = False, extraInfo: dict = None):
+def makeOutput(index: int, position: list, rotation: list, isAruco: bool = False, extraInfo: dict = None):
     if extraInfo is None:
         extraInfo = {}
     # fill values
     imageNames.append(str(toWriteFrom + index) + str(".png"))
     arucoAvailables.append(isAruco)
-    transforms.append([float(val) for val in transform])
+    positions.append([float(val) for val in position])
     rotations.append(rotation)
     otherInfos.append(extraInfo)
 
@@ -41,39 +42,59 @@ def rotationWithRectify(toMake: Rotation) -> Rotation:
     rectify = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
     return toMake * rectify
 
-for x in np.linspace(-80, 80, 100):
-    transform = [0.0, 0.0, 0.1]
-    rotation = Rotation.from_euler('xyz', [x, 0, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-    iterationIndex += 1
+defaultPosition = [0.0, 0.0, 0.15]
+samplesToGet = 50
+samplesDispersion = 1
 
-for y in np.linspace(-80, 80, 100):
-    transform = [0.0, 0.0, 0.1]
-    rotation = Rotation.from_euler('xyz', [0, y, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-    iterationIndex += 1
+for x in np.linspace(-89, 89, 60):
+    deviateValue = 89 * 2 / (60 * 2)
+    rawPosition = defaultPosition
+    rawRotation = [x, 0, 0]
+    for i in range(0, samplesToGet):
+        position, rotationEuler = deviateTransform(rawPosition, rawRotation, rx=generateNormalDistributionValue(maxDeviation=deviateValue))
+        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+        getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+        makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+        iterationIndex += 1
 
-for posZ in np.linspace(0.1, 5, 100):
-    transform = [0.0, 0.0, posZ]
-    rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-    iterationIndex += 1
+for y in np.linspace(-89, 89, 60):
+    deviateValue = 89 * 2 / (60 * 2)
+    rawPosition = defaultPosition
+    rawRotation = [0, y, 0]
+    for i in range(0, samplesToGet):
+        position, rotationEuler = deviateTransform(rawPosition, rawRotation, ry=generateNormalDistributionValue(maxDeviation=deviateValue))
+        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+        getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+        makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+        iterationIndex += 1
 
-for posY in np.linspace(-0.5, 0.5, 100):
-    transform = [0.0, posY, 1]
-    rotation = Rotation.from_euler('xyz', [0, 0, 0], degrees=True)
-    getImageWithParams(transform, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-    makeOutput(iterationIndex, transform, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-    iterationIndex += 1
+for posZ in np.linspace(0.1, 4, 50):
+    deviateValue = 4 / (50 * 2)
+    rawPosition = [defaultPosition[0], defaultPosition[1], posZ]
+    rawRotation = [0, 0, 0]
+    for i in range(0, samplesToGet):
+        position, rotationEuler = deviateTransform(rawPosition, rawRotation, pz=generateNormalDistributionValue(maxDeviation=deviateValue))
+        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+        getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+        makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+        iterationIndex += 1
+
+for posY in np.linspace(-0.4, 0.4, 50):
+    deviateValue = 0.8 / (50 * 2)
+    rawPosition = [defaultPosition[0], posY, defaultPosition[2]]
+    rawRotation = [0, 0, 0]
+    for i in range(0, samplesToGet):
+        position, rotationEuler = deviateTransform(rawPosition, rawRotation, py=generateNormalDistributionValue(maxDeviation=deviateValue))
+        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+        getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
+        makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
+        iterationIndex += 1
 
 # creates DataFrame and appends it to file
 collectedInfo = pd.DataFrame.from_dict({
     "imageName": imageNames,
     "arucoAvailable": arucoAvailables,
-    "realT": transforms,
+    "realT": positions,
     "realR": rotations,
     "otherInfo": otherInfos
 })
