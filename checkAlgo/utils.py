@@ -10,18 +10,21 @@ from scipy.spatial.transform import Rotation
 
 randomGenerator = numpy.random.Generator(np.random.default_rng(int(time.time())).bit_generator)
 
+def axisToIndex(axis: str):
+    return 0 if axis == 'x' else (1 if axis == 'y' else 2)
+
 def parseRotation(rotation: list) -> Rotation:
     if (len(rotation) == 0): return None
     rotation = np.array(rotation)
     if rotation.size == 9:
         return Rotation.from_matrix(rotation)
     else:
-        return Rotation.from_rotvec(rotation)
+        return Rotation.from_rotvec(rotation, degrees=False)
 
 def getRotationEuler(rotation: list, part: str, degrees: bool = False) -> float:
     rotation = parseRotation(rotation)
     parts = rotation.as_euler('xyz', degrees=degrees)
-    return float(parts[0 if part == 'x' else (1 if part == 'y' else 2)])
+    return float(parts[axisToIndex(part)])
 
 def readStringOfList(listStr: Series) -> list:
     return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
@@ -45,3 +48,4 @@ def deviateTransform(position: list, rotation: list, px: float = 0, py: float = 
     else:
         answer[1] = [rotation[0] + rx, rotation[1] + ry, rotation[2] + rz]
     return answer
+

@@ -6,22 +6,18 @@ from checkAlgo.constantsForCheck import resultFolder, analiseFile, detectionFile
 from checkAlgo.utils import parseRotation, readStringOfList
 
 
-def getVectorError(vector1: list, vector2: list) -> float:
-    if (len(vector1) == 0 or len(vector2) == 0): return -1.0
-    vector1 = np.array(vector1)
-    vector2 = np.array(vector2)
+def getVectorError(vector1: list, vector2: list) -> list:
+    if (len(vector1) == 0 or len(vector2) == 0): return []
+    return [vector2[i] - vector1[i] for i in range(0, len(vector1))]
 
-    norm1 = norm(vector1)
-    norm2 = norm(vector2 - vector1)
-    return float(norm2)  # / norm1 if norm1 != 0 else 1
 
-def getRotationError(rotation1: list, rotation2: list) -> float:
+def getRotationError(rotation1: list, rotation2: list) -> list:
     rotation1 = parseRotation(rotation1)
     rotation2 = parseRotation(rotation2)
-    if (rotation1 == None or rotation2 == None): return -1.0
+    if (rotation1 == None or rotation2 == None): return []
 
     rotation1To2 = rotation2 * rotation1.inv()
-    return float(norm(rotation1To2.as_rotvec(degrees=False)))
+    return rotation1To2.as_rotvec(degrees=False).tolist()
 
 # usecols=["imageName", "arucoAvailable", "method", "realT", "realR", "detectedT", "detectedR"]
 toAnalise = pd.read_csv(resultFolder + "/" + detectionFile)
@@ -37,8 +33,8 @@ isSuccess = np.full((len(realT),), False)
 for i in range(0, len(realT)):
     errorT.append(getVectorError(realT[i], detectedT[i]))
     errorR.append(getRotationError(realR[i], detectedR[i]))
-    transformPass = errorT[-1] <= acceptedTransformError
-    rotationPass = errorR[-1] <= acceptedRotationError
+    transformPass = len(errorT[-1]) != 0
+    rotationPass = len(errorR[-1]) != 0
     isSuccess[i] = transformPass and rotationPass
 
 toAnalise['isSuccess'] = isSuccess

@@ -1,9 +1,11 @@
+from cProfile import label
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 from checkAlgo.constantsForCheck import resultFolder, analiseFile
-from checkAlgo.utils import readStringOfList, getRotationEuler
+from checkAlgo.utils import readStringOfList, getRotationEuler, axisToIndex
 
 analizationResults = pd.read_csv(resultFolder + "/" + analiseFile)
 
@@ -11,15 +13,63 @@ realT = np.array(readStringOfList(analizationResults['realT']))
 realR = np.array(readStringOfList(analizationResults['realR']))
 detectedT = readStringOfList(analizationResults['detectedT'])
 detectedR = readStringOfList(analizationResults['detectedR'])
-errorT = np.array(analizationResults['errorT'])
-errorR = np.array(analizationResults['errorR'])
+errorT = readStringOfList(analizationResults['errorT'])
+errorR = readStringOfList(analizationResults['errorR'])
+isSuccess = np.array(analizationResults['isSuccess'])
 usedMethod = np.array(analizationResults['method'])
+successMask = np.where(isSuccess == True)
 
 # arucoIndexes = np.where(usedMethod == arucoDetector.name)
 # apriltagIndexes = np.where(usedMethod == apriltagDetector.name)
 
 offset = 400
 # show x rotation [0, 100)
+def makeXAxisInfo(specificMask: np.array, isPosition: bool, xAxisPartToShow: str):
+    if isPosition:
+        return [realT[index][axisToIndex(xAxisPartToShow)] for index in specificMask]
+    else:
+        return [getRotationEuler(realR[index], xAxisPartToShow, True) for index in specificMask]
+
+def makeYAxisInfo(specificMask: np.array, isPosition: bool, yAxisPartToShow: str):
+    if isPosition:
+        return [errorT[index][axisToIndex(yAxisPartToShow)] for index in specificMask]
+    else:
+        return [getRotationEuler(errorR[index], yAxisPartToShow, True) for index in specificMask]
+
+def maskBySuccess(mask: np.array):
+    return np.intersect1d(mask, successMask)
+
+def initPlot(plotRow: int, plotColumn: int, plotNumber: int, plotTitle: str, plotXAxisTitle: str, plotYAxisTitle: str):
+    plt.subplot(plotRow, plotColumn, plotNumber)
+    plt.title(plotTitle)
+    plt.xlabel(plotXAxisTitle)
+    plt.ylabel(plotYAxisTitle)
+
+def binifyInfo(x: list, y: list, bins: int):
+    binEdges = np.histogram_bin_edges(x, bins)
+    binMiddles = (binEdges[1:] + binEdges[:-1]) * 0.5
+    return (binMiddles, np.histogram(x, binEdges, weights=y)[0])
+
+def makeDislpay(
+        plotLabel: str,
+        generalMask: np.array,
+        isPosition: bool,
+        xAxisPartToShow: str,
+        yAxisPartToShow: str,
+        binsToMake: int
+):
+    mask = maskBySuccess(generalMask)
+    xInfo = makeXAxisInfo(mask, isPosition, xAxisPartToShow)
+    yInfo = makeYAxisInfo(mask, isPosition, yAxisPartToShow)
+
+    if binsToMake != 0:
+        x, y = binifyInfo(xInfo, yInfo, binsToMake)
+    else:
+        x = xInfo
+        y = yInfo
+
+    plt.plot(x, y, label=plotLabel)
+
 def xRotation():
     mask = np.arange(0, 100)
     plt.plot(
@@ -138,4 +188,7 @@ def separateRotation():
     plt.legend()
     plt.show()
 
-separateRotation()
+initPlot(1, 2, 1, "Relation between errors in detected rotation and real rotation", "Real rotation around x, degrees", "Deviation of detected rotation compared to real, degrees")
+makeDislpay("x", np.arange(0, 100), True, 'x', 'x', 10)
+makeDislpay("y", np.arange(0, 100), True, 'x', 'y', 10)
+makeDislpay("z", np.arange(0, 100), True, 'x', 'z', 10)
