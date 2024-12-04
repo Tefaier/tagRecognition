@@ -188,7 +188,67 @@ def separateRotation():
     plt.legend()
     plt.show()
 
-initPlot(1, 2, 1, "Relation between errors in detected rotation and real rotation", "Real rotation around x, degrees", "Deviation of detected rotation compared to real, degrees")
-makeDislpay("x", np.arange(0, 100), True, 'x', 'x', 10)
-makeDislpay("y", np.arange(0, 100), True, 'x', 'y', 10)
-makeDislpay("z", np.arange(0, 100), True, 'x', 'z', 10)
+
+initPlot(2, 4, 1,
+         "Relation between errors in detected rotation and real rotation, Aruco",
+         "Real rotation around x, degrees",
+         "Deviation of detected rotation compared to real, degrees")
+makeDislpay("x", np.arange(0, 100), False, 'x', 'x', 10)
+makeDislpay("y", np.arange(0, 100), False, 'x', 'y', 10)
+makeDislpay("z", np.arange(0, 100), False, 'x', 'z', 10)
+
+initPlot(2, 4, 2,
+         "Relation between errors in detected rotation and real rotation, Apriltag",
+         "Real rotation around x, degrees",
+         "Deviation of detected rotation compared to real, degrees")
+makeDislpay("x", np.arange(0, 100), False, 'x', 'x', 10)
+makeDislpay("y", np.arange(0, 100), False, 'x', 'y', 10)
+makeDislpay("z", np.arange(0, 100), False, 'x', 'z', 10)
+
+initPlot(2, 4, 3,
+         "Relation between errors in detected rotation and real rotation, Aruco",
+         "Real rotation around y, degrees",
+         "Deviation of detected rotation compared to real, degrees")
+makeDislpay("x", np.arange(0, 100), False, 'y', 'x', 10)
+makeDislpay("y", np.arange(0, 100), False, 'y', 'y', 10)
+makeDislpay("z", np.arange(0, 100), False, 'y', 'z', 10)
+
+initPlot(2, 4, 4,
+         "Relation between errors in detected rotation and real rotation, Apriltag",
+         "Real rotation around y, degrees",
+         "Deviation of detected rotation compared to real, degrees")
+makeDislpay("x", np.arange(0, 100), False, 'y', 'x', 10)
+makeDislpay("y", np.arange(0, 100), False, 'y', 'y', 10)
+makeDislpay("z", np.arange(0, 100), False, 'y', 'z', 10)
+
+initPlot(2, 4, 5,
+         "Relation between errors in detected position and real position, Aruco",
+         "Real position z, meters",
+         "Deviation of detected position compared to real, meters")
+makeDislpay("x", np.arange(0, 100), True, 'z', 'x', 10)
+makeDislpay("y", np.arange(0, 100), True, 'z', 'y', 10)
+makeDislpay("z", np.arange(0, 100), True, 'z', 'z', 10)
+
+initPlot(2, 4, 6,
+         "Relation between errors in detected position and real position, Apriltag",
+         "Real position z, meters",
+         "Deviation of detected position compared to real, meters")
+makeDislpay("x", np.arange(0, 100), True, 'z', 'x', 10)
+makeDislpay("y", np.arange(0, 100), True, 'z', 'y', 10)
+makeDislpay("z", np.arange(0, 100), True, 'z', 'z', 10)
+
+initPlot(2, 4, 7,
+         "Relation between errors in detected position and real position, Aruco",
+         "Real position y, meters",
+         "Deviation of detected position compared to real, meters")
+makeDislpay("x", np.arange(0, 100), True, 'y', 'x', 10)
+makeDislpay("y", np.arange(0, 100), True, 'y', 'y', 10)
+makeDislpay("z", np.arange(0, 100), True, 'y', 'z', 10)
+
+initPlot(2, 4, 8,
+         "Relation between errors in detected position and real position, Apriltag",
+         "Real position y, meters",
+         "Deviation of detected position compared to real, meters")
+makeDislpay("x", np.arange(0, 100), True, 'y', 'x', 10)
+makeDislpay("y", np.arange(0, 100), True, 'y', 'y', 10)
+makeDislpay("z", np.arange(0, 100), True, 'y', 'z', 10)
