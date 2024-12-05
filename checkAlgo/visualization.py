@@ -48,7 +48,8 @@ def initPlot(plotRow: int, plotColumn: int, plotNumber: int, plotTitle: str, plo
 def binifyInfo(x: list, y: list, bins: int):
     binEdges = np.histogram_bin_edges(x, bins)
     binMiddles = (binEdges[1:] + binEdges[:-1]) * 0.5
-    return (binMiddles, np.histogram(x, binEdges, weights=y)[0])
+    binCounters = np.histogram(x, binEdges)[0]
+    return (binMiddles, np.divide(np.histogram(x, binEdges, weights=y)[0], binCounters))
 
 def makeDislpay(
         plotLabel: str,
@@ -188,67 +189,77 @@ def separateRotation():
     plt.legend()
     plt.show()
 
-
+plt.figure(figsize=(20, 10))
+iFrom, iTo = 0, 3000
 initPlot(2, 4, 1,
          "Relation between errors in detected rotation and real rotation, Aruco",
          "Real rotation around x, degrees",
          "Deviation of detected rotation compared to real, degrees")
-makeDislpay("x", np.arange(0, 100), False, 'x', 'x', 10)
-makeDislpay("y", np.arange(0, 100), False, 'x', 'y', 10)
-makeDislpay("z", np.arange(0, 100), False, 'x', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 60)
+makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 60)
+makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 60)
 
-initPlot(2, 4, 2,
+iFrom, iTo = iFrom + 11000, iTo + 11000
+initPlot(2, 4, 5,
          "Relation between errors in detected rotation and real rotation, Apriltag",
          "Real rotation around x, degrees",
          "Deviation of detected rotation compared to real, degrees")
-makeDislpay("x", np.arange(0, 100), False, 'x', 'x', 10)
-makeDislpay("y", np.arange(0, 100), False, 'x', 'y', 10)
-makeDislpay("z", np.arange(0, 100), False, 'x', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 60)
+makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 60)
+makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 60)
 
-initPlot(2, 4, 3,
+iFrom, iTo = 3000, 6000
+initPlot(2, 4, 2,
          "Relation between errors in detected rotation and real rotation, Aruco",
          "Real rotation around y, degrees",
          "Deviation of detected rotation compared to real, degrees")
-makeDislpay("x", np.arange(0, 100), False, 'y', 'x', 10)
-makeDislpay("y", np.arange(0, 100), False, 'y', 'y', 10)
-makeDislpay("z", np.arange(0, 100), False, 'y', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 60)
+makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 60)
+makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 60)
 
-initPlot(2, 4, 4,
+iFrom, iTo = iFrom + 11000, iTo + 11000
+initPlot(2, 4, 6,
          "Relation between errors in detected rotation and real rotation, Apriltag",
          "Real rotation around y, degrees",
          "Deviation of detected rotation compared to real, degrees")
-makeDislpay("x", np.arange(0, 100), False, 'y', 'x', 10)
-makeDislpay("y", np.arange(0, 100), False, 'y', 'y', 10)
-makeDislpay("z", np.arange(0, 100), False, 'y', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 60)
+makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 60)
+makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 60)
 
-initPlot(2, 4, 5,
+iFrom, iTo = 6000, 8500
+initPlot(2, 4, 3,
          "Relation between errors in detected position and real position, Aruco",
          "Real position z, meters",
          "Deviation of detected position compared to real, meters")
-makeDislpay("x", np.arange(0, 100), True, 'z', 'x', 10)
-makeDislpay("y", np.arange(0, 100), True, 'z', 'y', 10)
-makeDislpay("z", np.arange(0, 100), True, 'z', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), True, 'z', 'x', 50)
+makeDislpay("y", np.arange(iFrom, iTo), True, 'z', 'y', 50)
+makeDislpay("z", np.arange(iFrom, iTo), True, 'z', 'z', 50)
 
-initPlot(2, 4, 6,
+iFrom, iTo = iFrom + 11000, iTo + 11000
+initPlot(2, 4, 7,
          "Relation between errors in detected position and real position, Apriltag",
          "Real position z, meters",
          "Deviation of detected position compared to real, meters")
-makeDislpay("x", np.arange(0, 100), True, 'z', 'x', 10)
-makeDislpay("y", np.arange(0, 100), True, 'z', 'y', 10)
-makeDislpay("z", np.arange(0, 100), True, 'z', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), True, 'z', 'x', 50)
+makeDislpay("y", np.arange(iFrom, iTo), True, 'z', 'y', 50)
+makeDislpay("z", np.arange(iFrom, iTo), True, 'z', 'z', 50)
 
-initPlot(2, 4, 7,
+iFrom, iTo = 8500, 11000
+initPlot(2, 4, 4,
          "Relation between errors in detected position and real position, Aruco",
          "Real position y, meters",
          "Deviation of detected position compared to real, meters")
-makeDislpay("x", np.arange(0, 100), True, 'y', 'x', 10)
-makeDislpay("y", np.arange(0, 100), True, 'y', 'y', 10)
-makeDislpay("z", np.arange(0, 100), True, 'y', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), True, 'y', 'x', 50)
+makeDislpay("y", np.arange(iFrom, iTo), True, 'y', 'y', 50)
+makeDislpay("z", np.arange(iFrom, iTo), True, 'y', 'z', 50)
 
+iFrom, iTo = iFrom + 11000, iTo + 11000
 initPlot(2, 4, 8,
          "Relation between errors in detected position and real position, Apriltag",
          "Real position y, meters",
          "Deviation of detected position compared to real, meters")
-makeDislpay("x", np.arange(0, 100), True, 'y', 'x', 10)
-makeDislpay("y", np.arange(0, 100), True, 'y', 'y', 10)
-makeDislpay("z", np.arange(0, 100), True, 'y', 'z', 10)
+makeDislpay("x", np.arange(iFrom, iTo), True, 'y', 'x', 50)
+makeDislpay("y", np.arange(iFrom, iTo), True, 'y', 'y', 50)
+makeDislpay("z", np.arange(iFrom, iTo), True, 'y', 'z', 50)
+plt.legend()
+plt.show()

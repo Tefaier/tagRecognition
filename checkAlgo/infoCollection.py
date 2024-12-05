@@ -21,8 +21,8 @@ files = [int(name.split('.')[0]) for name in files]
 toWriteFrom = max(files, default=-1) + 1
 iterationIndex = 0
 
-tagImage = tagImagesFolder + '/' + 'aruco_1.png'
-ratioOfImageToTag = 9 / 7
+tagImage = tagImagesFolder + '/' + '2.png'
+ratioOfImageToTag = 10 / 8
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
 
 def getImageWithParams(position: list, rotation: Rotation, planeSize: float, saveDestination: str):
@@ -44,10 +44,9 @@ def rotationWithRectify(toMake: Rotation) -> Rotation:
 
 defaultPosition = [0.0, 0.0, 0.15]
 samplesToGet = 50
-samplesDispersion = 1
 
-for x in np.linspace(-89, 89, 60):
-    deviateValue = 89 * 2 / (60 * 2)
+for x in np.linspace(-85, 85, 60):
+    deviateValue = 85 * 2 / (60 * 2)
     rawPosition = defaultPosition
     rawRotation = [x, 0, 0]
     for i in range(0, samplesToGet):
@@ -56,9 +55,10 @@ for x in np.linspace(-89, 89, 60):
         getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
+        print(f"Iteration {iterationIndex} finished")
 
-for y in np.linspace(-89, 89, 60):
-    deviateValue = 89 * 2 / (60 * 2)
+for y in np.linspace(-85, 85, 60):
+    deviateValue = 85 * 2 / (60 * 2)
     rawPosition = defaultPosition
     rawRotation = [0, y, 0]
     for i in range(0, samplesToGet):
@@ -67,9 +67,10 @@ for y in np.linspace(-89, 89, 60):
         getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
+        print(f"Iteration {iterationIndex} finished")
 
-for posZ in np.linspace(0.1, 4, 50):
-    deviateValue = 4 / (50 * 2)
+for posZ in np.linspace(0.1, 4.5, 50):
+    deviateValue = 4.4 / (50 * 2)
     rawPosition = [defaultPosition[0], defaultPosition[1], posZ]
     rawRotation = [0, 0, 0]
     for i in range(0, samplesToGet):
@@ -78,10 +79,11 @@ for posZ in np.linspace(0.1, 4, 50):
         getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
+        print(f"Iteration {iterationIndex} finished")
 
 for posY in np.linspace(-0.4, 0.4, 50):
     deviateValue = 0.8 / (50 * 2)
-    rawPosition = [defaultPosition[0], posY, defaultPosition[2]]
+    rawPosition = [defaultPosition[0], posY, 1]
     rawRotation = [0, 0, 0]
     for i in range(0, samplesToGet):
         position, rotationEuler = deviateTransform(rawPosition, rawRotation, py=generateNormalDistributionValue(maxDeviation=deviateValue))
@@ -89,6 +91,7 @@ for posY in np.linspace(-0.4, 0.4, 50):
         getImageWithParams(position, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, position, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
+        print(f"Iteration {iterationIndex} finished")
 
 # creates DataFrame and appends it to file
 collectedInfo = pd.DataFrame.from_dict({
