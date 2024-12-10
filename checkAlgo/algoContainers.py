@@ -41,7 +41,7 @@ class AlgoAruco(Algo):
 
         ids = []
         rotations = []
-        transforms = []
+        translations = []
         if markerIds is not None:
             for i in range(len(markerCorners)):
                 success, rvec, tvec = cv2.solvePnP(objPoints, markerCorners[i], self.camMatrix, self.distCoeffs)
@@ -53,8 +53,8 @@ class AlgoAruco(Algo):
                     rotationVector = Rotation.from_rotvec(rotation.apply([0.0, 180.0, 0.0]), degrees=True)
                     rotation = rotationVector * rotation
                     rotations.append(rotation.as_rotvec(degrees=False))
-                    transforms.append(tvec)
-        return (transforms, rotations, ids)
+                    translations.append(tvec)
+        return (translations, rotations, ids)
 
 
 class AlgoApriltag(Algo):
@@ -90,13 +90,13 @@ class AlgoApriltag(Algo):
             tag_size=markerLength)
         ids = []
         rotations = []
-        transforms = []
+        translations = []
         for r in results:
             ids.append(r.tag_id)
             rotation = Rotation.from_matrix(r.pose_R)
             rotations.append(rotation.as_rotvec(degrees=False))
-            transforms.append([val[0] for val in r.pose_t])
-        return (transforms, rotations, ids)
+            translations.append([val[0] for val in r.pose_t])
+        return (translations, rotations, ids)
 
 # for ARUCO rotation is rotation vector
 # also for it z is out of the tag, x is to the right, y is to the top

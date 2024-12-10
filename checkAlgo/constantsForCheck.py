@@ -14,10 +14,10 @@ detectionFile = "detection.csv"
 analiseFile = "analysis.csv"
 
 # in ratio of transform difference to correct transform
-acceptedTransformError = 0.01
+acceptedTranslationError = 0.01
 # in pure degrees
 acceptedRotationError = 0.01
-tagLength = 0.0525
+tagLength = 0.07
 imageWidth = 1280
 imageHeight = 720
 camMatrix=np.array(

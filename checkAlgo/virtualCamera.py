@@ -27,12 +27,12 @@ class PlaneRenderer():
 
         self.init_vtk()
 
-    def renderPlane(self, planePosition: np.array, planeRotation: Rotation, planeLength: float, saveTo: str):
+    def renderPlane(self, planeTranslation: np.array, planeRotation: Rotation, planeLength: float, saveTo: str):
         self.plane = vtkPlaneSource()
         self.plane.SetOrigin(-planeLength*0.5, -planeLength*0.5, 0.0)
         self.plane.SetPoint1(planeLength*0.5, -planeLength*0.5, 0.0)
         self.plane.SetPoint2(-planeLength*0.5, planeLength*0.5, 0.0)
-        self.plane.SetCenter(planePosition[0], planePosition[1], planePosition[2])
+        self.plane.SetCenter(planeTranslation[0], planeTranslation[1], planeTranslation[2])
         rotVec = planeRotation.as_rotvec(degrees=True)
         self.plane.Rotate(numpy.linalg.norm(rotVec), (rotVec[0], rotVec[1], rotVec[2]))
 
@@ -71,7 +71,7 @@ class PlaneRenderer():
         self.renderer = vtkRenderer()
         self.renWin = vtkRenderWindow()
         self.renWin.AddRenderer(self.renderer)
-        self.renWin.SetShowWindow(False)
+        #self.renWin.SetShowWindow(False)
 
         self.renderer.SetBackground(self.colors.GetColor3d('BkgColor'))
         self.renWin.SetSize(self.windowWidth, self.windowHeight)

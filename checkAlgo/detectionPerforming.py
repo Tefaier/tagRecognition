@@ -13,17 +13,17 @@ detectedTFinal = []
 detectedRFinal = []
 
 # simple detection of one tag on image
-def detectionToResult(transforms: list, rotations: list, ids: list) -> (list, list):
-    if len(transforms) == 0:
+def detectionToResult(translations: list, rotations: list, ids: list) -> (list, list):
+    if len(translations) == 0:
         return ([], [])
-    return (list(transforms[0]), list(rotations[0]))
+    return (list(translations[0]), list(rotations[0]))
 
-def performDetection(method: Algo, dframe: pd.DataFrame, transformWrite: list, rotationWrite: list):
+def performDetection(method: Algo, dframe: pd.DataFrame, translationWrite: list, rotationWrite: list):
     for _, row in dframe.iterrows():
         t, r, ids = method.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]),
                                   markerLength=tagLength)
         t, r = detectionToResult(t, r, ids)
-        transformWrite.append([float(val) for val in t])
+        translationWrite.append([float(val) for val in t])
         rotationWrite.append([float(val) for val in r])
 
 def analyseInfo(method: Algo, dframe: pd.DataFrame):

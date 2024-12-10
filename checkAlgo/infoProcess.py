@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from numpy.linalg import norm
-from checkAlgo.constantsForCheck import resultFolder, analiseFile, detectionFile, acceptedTransformError, \
+from checkAlgo.constantsForCheck import resultFolder, analiseFile, detectionFile, acceptedTranslationError, \
     acceptedRotationError
 from checkAlgo.utils import parseRotation, readStringOfList
 
@@ -33,9 +33,9 @@ isSuccess = np.full((len(realT),), False)
 for i in range(0, len(realT)):
     errorT.append(getVectorError(realT[i], detectedT[i]))
     errorR.append(getRotationError(realR[i], detectedR[i]))
-    transformPass = len(errorT[-1]) != 0
+    translationPass = len(errorT[-1]) != 0
     rotationPass = len(errorR[-1]) != 0
-    isSuccess[i] = transformPass and rotationPass
+    isSuccess[i] = translationPass and rotationPass
 
 toAnalise['isSuccess'] = isSuccess
 toAnalise['errorT'] = errorT
