@@ -78,12 +78,13 @@ def makeDislpay(
         y = yInfo
 
     plt.plot(x, y, label=plotLabel)
+    plt.legend(loc=1)
 
 def initFigure(
         title: str,
         size: tuple = None
 ):
-    if size is None: size = (12, 5)
+    if size is None: size = (14, 4)
     fig = plt.figure(figsize=size)
     plt.suptitle(title)
     return fig
@@ -93,8 +94,8 @@ def savePlot(
         figure: plt.figure,
         path: str,
 ):
-    plt.legend()
-    plt.savefig(path, dpi=300, bbox_inches='tight', pad_inches=0.2)
+    plt.subplots_adjust(wspace=0.3)
+    plt.savefig(path, dpi='figure', bbox_inches='tight', pad_inches=0.2, edgecolor='blue')
     plt.close(figure)
 
 

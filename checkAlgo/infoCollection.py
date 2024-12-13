@@ -43,7 +43,7 @@ def rotationWithRectify(toMake: Rotation) -> Rotation:
     return toMake * rectify
 
 defaultTranslation = [0.0, 0.0, 0.15]
-samplesToGet = 50
+samplesToGet = 10
 
 for x in np.linspace(-85, 85, 60):
     deviateValue =  85  / 60
