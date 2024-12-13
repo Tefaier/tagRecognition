@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation
+from tqdm import tqdm
 
 from checkAlgo.constantsForCheck import collectionFolder, csvName, tagLength, tagImagesFolder, imageWidth, imageHeight, camMatrix
 from checkAlgo.utils import deviateTransform, generateNormalDistributionValue
@@ -21,7 +22,7 @@ files = [int(name.split('.')[0]) for name in files]
 toWriteFrom = max(files, default=-1) + 1
 iterationIndex = 0
 
-tagImage = tagImagesFolder + '/' + 'aruco_1.png'
+tagImage = tagImagesFolder + '/' + '2.png'
 ratioOfImageToTag = 10 / 8
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
 
@@ -43,10 +44,12 @@ def rotationWithRectify(toMake: Rotation) -> Rotation:
     return toMake * rectify
 
 defaultTranslation = [0.0, 0.0, 0.15]
-samplesToGet = 10
+samplesToGet = 500
+p_bar = tqdm(range(samplesToGet * (50 + 50 + 50 + 50)), ncols=100)
 
-for x in np.linspace(-85, 85, 60):
-    deviateValue =  85  / 60
+startStop, spots = (-85, 85), 50
+for x in np.linspace(startStop[0], startStop[1], spots):
+    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
     rawTranslation = defaultTranslation
     rawRotation = [x, 0, 0]
     for i in range(0, samplesToGet):
@@ -55,10 +58,12 @@ for x in np.linspace(-85, 85, 60):
         getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
-        print(f"Iteration {iterationIndex} finished")
+        p_bar.update()
+        p_bar.refresh()
 
-for y in np.linspace(-85, 85, 60):
-    deviateValue = 85 * 2 / (60 * 2)
+startStop, spots = (-85, 85), 50
+for y in np.linspace(startStop[0], startStop[1], spots):
+    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
     rawTranslation = defaultTranslation
     rawRotation = [0, y, 0]
     for i in range(0, samplesToGet):
@@ -67,10 +72,12 @@ for y in np.linspace(-85, 85, 60):
         getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
-        print(f"Iteration {iterationIndex} finished")
+        p_bar.update()
+        p_bar.refresh()
 
-for posZ in np.linspace(0.1, 4.5, 50):
-    deviateValue = 4.4 / (50 * 2)
+startStop, spots = (0.1, 4.5), 50
+for posZ in np.linspace(startStop[0], startStop[1], spots):
+    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
     rawTranslation = [defaultTranslation[0], defaultTranslation[1], posZ]
     rawRotation = [0, 0, 0]
     for i in range(0, samplesToGet):
@@ -79,10 +86,12 @@ for posZ in np.linspace(0.1, 4.5, 50):
         getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
-        print(f"Iteration {iterationIndex} finished")
+        p_bar.update()
+        p_bar.refresh()
 
-for posY in np.linspace(-0.4, 0.4, 50):
-    deviateValue = 0.8 / (50 * 2)
+startStop, spots = (-0.4, 0.4), 50
+for posY in np.linspace(startStop[0], startStop[1], spots):
+    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
     rawTranslation = [defaultTranslation[0], posY, 1]
     rawRotation = [0, 0, 0]
     for i in range(0, samplesToGet):
@@ -91,7 +100,9 @@ for posY in np.linspace(-0.4, 0.4, 50):
         getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
         iterationIndex += 1
-        print(f"Iteration {iterationIndex} finished")
+        p_bar.update()
+        p_bar.refresh()
+
 
 # creates DataFrame and appends it to file
 collectedInfo = pd.DataFrame.from_dict({

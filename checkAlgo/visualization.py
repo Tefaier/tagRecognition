@@ -100,47 +100,47 @@ def savePlot(
 
 
 fig = initFigure("Errors in detected rotation and real rotation")
-iFrom, iTo = 0, 3000
+iFrom, iTo = 0, 25000
 initSubplot(1, 2, 1,
          "Aruco",
          "Real rotation around x, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 60, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 60, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 60, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85))
+makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85))
+makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85))
 
-iFrom, iTo = iFrom + 11000, iTo + 11000
+iFrom, iTo = iFrom + 100000, iTo + 100000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real rotation around x, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 60, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 60, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 60, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85))
+makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85))
+makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85))
 savePlot(fig, resultFolder + '/RotationX.png')
 
 fig = initFigure("Errors in detected rotation and real rotation")
-iFrom, iTo = 3000, 6000
+iFrom, iTo = 25000, 50000
 initSubplot(1, 2, 1,
          "Aruco",
          "Real rotation around y, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 60, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 60, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 60, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85))
+makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85))
+makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85))
 
-iFrom, iTo = iFrom + 11000, iTo + 11000
+iFrom, iTo = iFrom + 100000, iTo + 100000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real rotation around y, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 60, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 60, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 60, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85))
+makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85))
+makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85))
 savePlot(fig, resultFolder + '/RotationY.png')
 
 fig = initFigure("Errors in detected translation and real translation")
-iFrom, iTo = 6000, 8500
+iFrom, iTo = 50000, 75000
 initSubplot(1, 2, 1,
          "Aruco",
          "Real translation z, meters",
@@ -149,7 +149,7 @@ makeDislpay("x", np.arange(iFrom, iTo), True, 'z', 'x', 50, (0.1, 4.5))
 makeDislpay("y", np.arange(iFrom, iTo), True, 'z', 'y', 50, (0.1, 4.5))
 makeDislpay("z", np.arange(iFrom, iTo), True, 'z', 'z', 50, (0.1, 4.5))
 
-iFrom, iTo = iFrom + 11000, iTo + 11000
+iFrom, iTo = iFrom + 100000, iTo + 100000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real translation z, meters",
@@ -160,7 +160,7 @@ makeDislpay("z", np.arange(iFrom, iTo), True, 'z', 'z', 50, (0.1, 4.5))
 savePlot(fig, resultFolder + '/TranslateX.png')
 
 fig = initFigure("Errors in detected translation and real translation")
-iFrom, iTo = 8500, 11000
+iFrom, iTo = 75000, 100000
 initSubplot(1, 2, 1,
          "Aruco",
          "Real translation y, meters",
@@ -169,7 +169,7 @@ makeDislpay("x", np.arange(iFrom, iTo), True, 'y', 'x', 50, (-0.4, 0.4))
 makeDislpay("y", np.arange(iFrom, iTo), True, 'y', 'y', 50, (-0.4, 0.4))
 makeDislpay("z", np.arange(iFrom, iTo), True, 'y', 'z', 50, (-0.4, 0.4))
 
-iFrom, iTo = iFrom + 11000, iTo + 11000
+iFrom, iTo = iFrom + 100000, iTo + 100000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real translation y, meters",
