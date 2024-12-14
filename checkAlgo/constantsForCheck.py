@@ -18,10 +18,10 @@ acceptedTranslationError = 0.01
 # in pure degrees
 acceptedRotationError = 0.01
 tagLength = 0.07
-imageWidth = 1280
-imageHeight = 720
+imageWidth = 1920
+imageHeight = 1080
 camMatrix=np.array(
-        [[900.0, 0.0, imageWidth / 2.0],
-         [0.0, 900.0, imageHeight / 2.0],
+        [[1000.0, 0.0, imageWidth / 2.0],
+         [0.0, 1000.0, imageHeight / 2.0],
          [0.0, 0.0, 1.0]])
 distortionCoefficients=np.array([0.0, 0.0, 0.0, 0.0, 0.0])

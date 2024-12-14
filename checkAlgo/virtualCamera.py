@@ -15,7 +15,7 @@ from vtkmodules.vtkRenderingCore import vtkTexture, vtkPolyDataMapper, vtkActor,
 class PlaneRenderer():
     def __init__(self, windowWidth, windowHeight, cameraMatrix, imagePath, bkgColor=None):
         if bkgColor is None:
-            bkgColor = [100, 0, 0, 255]
+            bkgColor = [154, 188, 255, 255]
         self.windowWidth = windowWidth
         self.windowHeight = windowHeight
         self.cameraMatrix = cameraMatrix

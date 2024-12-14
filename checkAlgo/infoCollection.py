@@ -22,7 +22,7 @@ files = [int(name.split('.')[0]) for name in files]
 toWriteFrom = max(files, default=-1) + 1
 iterationIndex = 0
 
-tagImage = tagImagesFolder + '/' + '2.png'
+tagImage = tagImagesFolder + '/' + 'aruco_1.png'
 ratioOfImageToTag = 10 / 8
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
 
@@ -43,9 +43,9 @@ def rotationWithRectify(toMake: Rotation) -> Rotation:
     rectify = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
     return toMake * rectify
 
-defaultTranslation = [0.0, 0.0, 0.15]
-samplesToGet = 500
-p_bar = tqdm(range(samplesToGet * (50 + 50 + 50 + 50)), ncols=100)
+defaultTranslation = [0.0, 0.0, 4.0]
+samplesToGet = 50
+p_bar = tqdm(range(samplesToGet * (50 + 50)), ncols=100)
 
 startStop, spots = (-85, 85), 50
 for x in np.linspace(startStop[0], startStop[1], spots):
@@ -68,34 +68,6 @@ for y in np.linspace(startStop[0], startStop[1], spots):
     rawRotation = [0, y, 0]
     for i in range(0, samplesToGet):
         translation, rotationEuler = deviateTransform(rawTranslation, rawRotation, ry=generateNormalDistributionValue(maxDeviation=deviateValue))
-        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
-        getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-        makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-        iterationIndex += 1
-        p_bar.update()
-        p_bar.refresh()
-
-startStop, spots = (0.1, 4.5), 50
-for posZ in np.linspace(startStop[0], startStop[1], spots):
-    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-    rawTranslation = [defaultTranslation[0], defaultTranslation[1], posZ]
-    rawRotation = [0, 0, 0]
-    for i in range(0, samplesToGet):
-        translation, rotationEuler = deviateTransform(rawTranslation, rawRotation, pz=generateNormalDistributionValue(maxDeviation=deviateValue))
-        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
-        getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-        makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-        iterationIndex += 1
-        p_bar.update()
-        p_bar.refresh()
-
-startStop, spots = (-0.4, 0.4), 50
-for posY in np.linspace(startStop[0], startStop[1], spots):
-    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-    rawTranslation = [defaultTranslation[0], posY, 1]
-    rawRotation = [0, 0, 0]
-    for i in range(0, samplesToGet):
-        translation, rotationEuler = deviateTransform(rawTranslation, rawRotation, py=generateNormalDistributionValue(maxDeviation=deviateValue))
         rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
         getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
         makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})

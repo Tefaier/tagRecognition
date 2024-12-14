@@ -100,7 +100,7 @@ def savePlot(
 
 
 fig = initFigure("Errors in detected rotation and real rotation")
-iFrom, iTo = 0, 25000
+iFrom, iTo = 0, 2500
 initSubplot(1, 2, 1,
          "Aruco",
          "Real rotation around x, degrees",
@@ -109,7 +109,7 @@ makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85))
 makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85))
 makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85))
 
-iFrom, iTo = iFrom + 100000, iTo + 100000
+iFrom, iTo = iFrom + 5000, iTo + 5000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real rotation around x, degrees",
@@ -120,7 +120,7 @@ makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85))
 savePlot(fig, resultFolder + '/RotationX.png')
 
 fig = initFigure("Errors in detected rotation and real rotation")
-iFrom, iTo = 25000, 50000
+iFrom, iTo = 2500, 5000
 initSubplot(1, 2, 1,
          "Aruco",
          "Real rotation around y, degrees",
@@ -129,7 +129,7 @@ makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85))
 makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85))
 makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85))
 
-iFrom, iTo = iFrom + 100000, iTo + 100000
+iFrom, iTo = iFrom + 5000, iTo + 5000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real rotation around y, degrees",
@@ -138,44 +138,4 @@ makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85))
 makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85))
 makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85))
 savePlot(fig, resultFolder + '/RotationY.png')
-
-fig = initFigure("Errors in detected translation and real translation")
-iFrom, iTo = 50000, 75000
-initSubplot(1, 2, 1,
-         "Aruco",
-         "Real translation z, meters",
-         "Deviation, meters")
-makeDislpay("x", np.arange(iFrom, iTo), True, 'z', 'x', 50, (0.1, 4.5))
-makeDislpay("y", np.arange(iFrom, iTo), True, 'z', 'y', 50, (0.1, 4.5))
-makeDislpay("z", np.arange(iFrom, iTo), True, 'z', 'z', 50, (0.1, 4.5))
-
-iFrom, iTo = iFrom + 100000, iTo + 100000
-initSubplot(1, 2, 2,
-         "Apriltag",
-         "Real translation z, meters",
-         "Deviation, meters")
-makeDislpay("x", np.arange(iFrom, iTo), True, 'z', 'x', 50, (0.1, 4.5))
-makeDislpay("y", np.arange(iFrom, iTo), True, 'z', 'y', 50, (0.1, 4.5))
-makeDislpay("z", np.arange(iFrom, iTo), True, 'z', 'z', 50, (0.1, 4.5))
-savePlot(fig, resultFolder + '/TranslateX.png')
-
-fig = initFigure("Errors in detected translation and real translation")
-iFrom, iTo = 75000, 100000
-initSubplot(1, 2, 1,
-         "Aruco",
-         "Real translation y, meters",
-         "Deviation, meters")
-makeDislpay("x", np.arange(iFrom, iTo), True, 'y', 'x', 50, (-0.4, 0.4))
-makeDislpay("y", np.arange(iFrom, iTo), True, 'y', 'y', 50, (-0.4, 0.4))
-makeDislpay("z", np.arange(iFrom, iTo), True, 'y', 'z', 50, (-0.4, 0.4))
-
-iFrom, iTo = iFrom + 100000, iTo + 100000
-initSubplot(1, 2, 2,
-         "Apriltag",
-         "Real translation y, meters",
-         "Deviation, meters")
-makeDislpay("x", np.arange(iFrom, iTo), True, 'y', 'x', 50, (-0.4, 0.4))
-makeDislpay("y", np.arange(iFrom, iTo), True, 'y', 'y', 50, (-0.4, 0.4))
-makeDislpay("z", np.arange(iFrom, iTo), True, 'y', 'z', 50, (-0.4, 0.4))
-savePlot(fig, resultFolder + '/TranslateY.png')
 
