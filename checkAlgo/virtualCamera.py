@@ -71,7 +71,7 @@ class PlaneRenderer():
         self.renderer = vtkRenderer()
         self.renWin = vtkRenderWindow()
         self.renWin.AddRenderer(self.renderer)
-        self.renWin.SetShowWindow(False)
+        #self.renWin.SetShowWindow(False)
 
         self.renderer.SetBackground(self.colors.GetColor3d('BkgColor'))
         self.renWin.SetSize(self.windowWidth, self.windowHeight)

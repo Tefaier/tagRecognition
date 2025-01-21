@@ -22,11 +22,11 @@ class Algo:
         print("Base class")
 
 class AlgoAruco(Algo):
-    def __init__(self, name: str, camMatrix: np.ndarray, distCoeffs: np.ndarray):
+    def __init__(self, name: str, camMatrix: np.ndarray, distCoeffs: np.ndarray, tagFamily: int):
         super().__init__(name)
         self.camMatrix = camMatrix
         self.distCoeffs = distCoeffs
-        self.dictionary = aruco.getPredefinedDictionary(aruco.DICT_APRILTAG_36H11)
+        self.dictionary = aruco.getPredefinedDictionary(tagFamily)
         self.detectorParams = aruco.DetectorParameters()
         self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
 
@@ -104,7 +104,8 @@ class AlgoApriltag(Algo):
 arucoDetector = AlgoAruco(
     name="aruco",
     camMatrix=camMatrix,
-    distCoeffs=distortionCoefficients
+    distCoeffs=distortionCoefficients,
+    tagFamily=aruco.DICT_APRILTAG_36H11
 )
 
 apriltagDetector = AlgoApriltag(

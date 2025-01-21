@@ -22,7 +22,7 @@ files = [int(name.split('.')[0]) for name in files]
 toWriteFrom = max(files, default=-1) + 1
 iterationIndex = 0
 
-tagImage = tagImagesFolder + '/' + 'aruco_1.png'
+tagImage = tagImagesFolder + '/' + 'aruco_5x5_2.png'
 ratioOfImageToTag = 10 / 8
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
 
