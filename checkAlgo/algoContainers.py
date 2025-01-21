@@ -108,7 +108,7 @@ arucoDetector = AlgoAruco(
 )
 
 apriltagDetector = AlgoApriltag(
-    name="apriltag",
+    name="apriltagTesting",
     camMatrix=camMatrix,
     distCoeffs=distortionCoefficients
 )
