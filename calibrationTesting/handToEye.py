@@ -11,10 +11,10 @@ from vtkmodules.vtkRenderingCore import vtkTexture, vtkPolyDataMapper, vtkActor,
     vtkWindowToImageFilter
 from checkAlgo.constantsForCheck import imageWidth, imageHeight, camMatrix, distortionCoefficients
 
-cameraRotation = Rotation.from_rotvec([10, 10, 0], degrees=True)
-cameraTranslation = np.array([0, 0, 0])
+cameraRotation = Rotation.from_rotvec([45, 0, 0], degrees=True)
+cameraTranslation = np.array([0, 1, 0])
 makeImages = True
-displayDetectedAxis = False
+displayDetectedAxis = True
 
 print(f"Real rotation    {cameraRotation.as_rotvec(degrees=True)}")
 print(f"Real translation {cameraTranslation.reshape((3,))}")
@@ -94,9 +94,9 @@ class PlaneRenderer():
         cam = self.renderer.GetActiveCamera()
         cam.SetPosition(cameraTranslation[0], cameraTranslation[1], cameraTranslation[2])
         focalPoint = cameraRotation.apply([0, 0, 1])
-        cam.SetFocalPoint(focalPoint[0], focalPoint[1], focalPoint[2])
+        cam.SetFocalPoint(cameraTranslation[0] + focalPoint[0], cameraTranslation[1] + focalPoint[1], cameraTranslation[2] + focalPoint[2])
         viewUp = cameraRotation.apply([0, -1, 0])
-        cam.SetViewUp(viewUp[0], viewUp[1], viewUp[2])
+        cam.SetViewUp(cameraTranslation[0] + viewUp[0], cameraTranslation[1] + viewUp[1], cameraTranslation[2] + viewUp[2])
         wcx = -2.0 * (self.c[0] - self.windowWidth / 2.0) / self.windowWidth
         wcy = 2.0 * (self.c[1] - self.windowHeight / 2.0) / self.windowHeight
         cam.SetWindowCenter(wcx, wcy)
