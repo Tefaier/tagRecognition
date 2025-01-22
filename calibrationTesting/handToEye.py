@@ -1,20 +1,115 @@
 import cv2 as cv2
 from cv2 import aruco
+import numpy.linalg
+import vtk
 import numpy as np
 from scipy.spatial.transform import Rotation
-
+from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkFiltersSources import vtkPlaneSource
+from vtkmodules.vtkIOImage import vtkImageReader2Factory, vtkPNGWriter
+from vtkmodules.vtkRenderingCore import vtkTexture, vtkPolyDataMapper, vtkActor, vtkRenderer, vtkRenderWindow, \
+    vtkWindowToImageFilter
 from checkAlgo.constantsForCheck import imageWidth, imageHeight, camMatrix, distortionCoefficients
-from checkAlgo.virtualCamera import PlaneRenderer
+
+cameraRotation = Rotation.from_rotvec([10, 10, 0], degrees=True)
+cameraTranslation = np.array([0, 0, 0])
+makeImages = True
+displayDetectedAxis = False
+
+print(f"Real rotation    {cameraRotation.as_rotvec(degrees=True)}")
+print(f"Real translation {cameraTranslation.reshape((3,))}")
 
 image = 'testImages/aruco_5x5_2.png'
 resultSaveFolder = 'createdImages'
-chessboardSize = 0.1
-objp = np.zeros((7*7, 3), np.float32)
-objp[:, :2] = np.mgrid[0:7, 0:7].T.reshape(-1, 2) * (chessboardSize / 8)
-objp[:, 0:2] -= (chessboardSize * 3 / 8)
-n, k = 30, 0.001
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, n, k)
-axis = np.float32([[0,0,0], [0.1,0,0], [0,0.1,0], [0,0,0.1]]).reshape(-1,3)
+tagSize = 0.1
+axis = np.float32([[0,0,0], [0.05,0,0], [0,0.05,0], [0,0,0.05]]).reshape(-1,3)
+
+class PlaneRenderer():
+    def __init__(self, windowWidth, windowHeight, cameraMatrix, imagePath, bkgColor=None):
+        if not makeImages: return
+        if bkgColor is None:
+            bkgColor = [154, 188, 255, 255]
+        self.windowWidth = windowWidth
+        self.windowHeight = windowHeight
+        self.cameraMatrix = cameraMatrix
+        self.imagePath = imagePath
+        self.bkgColor = bkgColor
+
+        self.f = np.array([cameraMatrix[0, 0], cameraMatrix[1, 1]])
+        self.c = cameraMatrix[:2, 2]
+
+        self.init_vtk()
+
+    def renderPlane(self, planeTranslation: np.array, planeRotation: Rotation, planeLength: float, saveTo: str):
+        if not makeImages: return
+        self.plane = vtkPlaneSource()
+        self.plane.SetOrigin(-planeLength*0.5, -planeLength*0.5, 0.0)
+        self.plane.SetPoint1(planeLength*0.5, -planeLength*0.5, 0.0)
+        self.plane.SetPoint2(-planeLength*0.5, planeLength*0.5, 0.0)
+        self.plane.SetCenter(planeTranslation[0], planeTranslation[1], planeTranslation[2])
+        rotVec = planeRotation.as_rotvec(degrees=True)
+        self.plane.Rotate(numpy.linalg.norm(rotVec), (rotVec[0], rotVec[1], rotVec[2]))
+
+        planeMapper = vtkPolyDataMapper()
+        planeMapper.SetInputConnection(self.plane.GetOutputPort())
+
+        planeActor = vtkActor()
+        planeActor.SetMapper(planeMapper)
+        planeActor.SetTexture(self.textureMap)
+        planeActor.GetProperty().LightingOff()
+        self.renderer.AddActor(planeActor)
+
+        w2if = vtkWindowToImageFilter()
+        w2if.SetInput(self.renWin)
+        w2if.Update()
+
+        writer = vtkPNGWriter()
+        writer.SetFileName(saveTo)
+        writer.SetInputData(w2if.GetOutput())
+        writer.Write()
+        self.renderer.RemoveActor(planeActor)
+
+    def init_vtk(self):
+        self.colors = vtkNamedColors()
+        self.colors.SetColor('BkgColor', self.bkgColor)
+
+        readerFactory = vtkImageReader2Factory()
+        textureFile = readerFactory.CreateImageReader2(self.imagePath)
+        textureFile.SetFileName(self.imagePath)
+        textureFile.Update()
+
+        self.textureMap = vtkTexture()
+        self.textureMap.SetInputConnection(textureFile.GetOutputPort())
+        self.textureMap.InterpolateOff()
+
+        self.renderer = vtkRenderer()
+        self.renWin = vtkRenderWindow()
+        self.renWin.AddRenderer(self.renderer)
+        self.renWin.SetShowWindow(False)
+
+        self.renderer.SetBackground(self.colors.GetColor3d('BkgColor'))
+        self.renWin.SetSize(self.windowWidth, self.windowHeight)
+
+        self.renderer.ResetCamera()
+        cam = self.renderer.GetActiveCamera()
+        cam.SetPosition(cameraTranslation[0], cameraTranslation[1], cameraTranslation[2])
+        focalPoint = cameraRotation.apply([0, 0, 1])
+        cam.SetFocalPoint(focalPoint[0], focalPoint[1], focalPoint[2])
+        viewUp = cameraRotation.apply([0, -1, 0])
+        cam.SetViewUp(viewUp[0], viewUp[1], viewUp[2])
+        wcx = -2.0 * (self.c[0] - self.windowWidth / 2.0) / self.windowWidth
+        wcy = 2.0 * (self.c[1] - self.windowHeight / 2.0) / self.windowHeight
+        cam.SetWindowCenter(wcx, wcy)
+        angle = 180 / np.pi * 2.0 * np.arctan2(self.windowHeight / 2.0, self.f[1])
+        cam.SetViewAngle(angle)
+        m = np.eye(4)
+        aspect = self.f[1] / self.f[0]
+        m[0, 0] = 1.0 / aspect
+        t = vtk.vtkTransform()
+        t.SetMatrix(m.flatten())
+        cam.SetUserTransform(t)
+        self.renderer.ResetCameraClippingRange()
+
 
 class Algo:
     name: str
@@ -68,6 +163,7 @@ def draw(img, imgpts):
     return img
 
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, image)
+detector = AlgoAruco('aruco', camMatrix, distortionCoefficients, aruco.DICT_5X5_50)
 
 index = 0
 translationsGlobal = []
@@ -76,34 +172,41 @@ rotationsGlobal = []
 translation = np.array([0, 0, 1])
 rotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
 translationsGlobal.append(translation)
-rotationsGlobal.append(rotation)
-renderer.renderPlane(translation, rotation, chessboardSize, getResPath(index))
+rotationsGlobal.append(rotation.as_rotvec(degrees=False))
+renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
 index += 1
 
 for angle in np.linspace(0, 360, 10):
     translation = np.array([0, 0, 1]) + Rotation.from_rotvec([0, 0, angle], degrees=True).apply([0, 0.4, 0])
     rotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
     translationsGlobal.append(translation)
-    rotationsGlobal.append(rotation)
-    renderer.renderPlane(translation, rotation, chessboardSize, getResPath(index))
+    rotationsGlobal.append(rotation.as_rotvec(degrees=False))
+    renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
     index += 1
 
 for angle in np.linspace(0, 180, 10):
     translation = np.array([0, 0, 1]) + Rotation.from_rotvec([0, angle, 0], degrees=True).apply([0.4, 0, 0])
     rotation = Rotation.from_rotvec([180, 0, 0], degrees=True) * Rotation.from_rotvec([0, 90 - angle, 0], degrees=True)
     translationsGlobal.append(translation)
-    rotationsGlobal.append(rotation)
-    renderer.renderPlane(translation, rotation, chessboardSize, getResPath(index))
+    rotationsGlobal.append(rotation.as_rotvec(degrees=False))
+    renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
     index += 1
 
-detector = AlgoAruco('aruco', camMatrix, distortionCoefficients, aruco.DICT_5X5_50)
+for angle in np.linspace(0, 180, 10):
+    translation = np.array([0, 0, 1]) + Rotation.from_rotvec([-angle, 0, 0], degrees=True).apply([0, 0.4, 0])
+    rotation = Rotation.from_rotvec([180, 0, 0], degrees=True) * Rotation.from_rotvec([90 - angle, 0, 0], degrees=True)
+    translationsGlobal.append(translation)
+    rotationsGlobal.append(rotation.as_rotvec(degrees=False))
+    renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
+    index += 1
+
 detectedMask = [True] * index
 translationsCamera = []
 rotationsCamera = []
 
 for i in range(0, index):
     img = cv2.imread(getResPath(i))
-    tvec, rvec, ids = detector.detect(img, chessboardSize)
+    tvec, rvec, ids = detector.detect(img, tagSize)
     if len(ids) == 0:
         detectedMask[i] = False
         continue
@@ -111,15 +214,32 @@ for i in range(0, index):
     rvec = rvec[0]
     translationsCamera.append(tvec)
     rotationsCamera.append(rvec)
-'''
-    imgpts, jac = cv2.projectPoints(axis, rvec, tvec, camMatrix, distortionCoefficients)
-    img = draw(img, imgpts)
-    cv2.imshow('img', img)
-    k = cv2.waitKey(0) & 0xFF
-'''
+
+    if displayDetectedAxis:
+        imgpts, jac = cv2.projectPoints(axis, rvec, tvec, camMatrix, distortionCoefficients)
+        img = draw(img, imgpts)
+        cv2.imshow('img', img)
+        k = cv2.waitKey(0) & 0xFF
+
+
 
 translationsGlobal = np.array(translationsGlobal)[detectedMask]
 rotationsGlobal = np.array(rotationsGlobal)[detectedMask]
-rCamera, tCamera = cv2.calibrateHandEye(rotationsGlobal, translationsGlobal, rotationsCamera, translationsCamera)
-print(rCamera)
-print(tCamera)
+reverseRotations = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotationsGlobal]
+reverseTranslations = [-1 * reverseRotations[index].apply(tr) for index, tr in enumerate(translationsGlobal)]
+reverseRotations = [rot.as_rotvec(degrees=False) for rot in reverseRotations]
+rCamera, tCamera = cv2.calibrateHandEye(reverseRotations, reverseTranslations, rotationsCamera, translationsCamera, method=cv2.CALIB_HAND_EYE_PARK)
+print(f"Obtained rotation    {Rotation.from_matrix(rCamera).as_rotvec(degrees=True)}")
+print(f"Obtained translation {tCamera.reshape((3,))}")
+rCamera, tCamera = cv2.calibrateHandEye(reverseRotations, reverseTranslations, rotationsCamera, translationsCamera, method=cv2.CALIB_HAND_EYE_TSAI)
+print(f"Obtained rotation    {Rotation.from_matrix(rCamera).as_rotvec(degrees=True)}")
+print(f"Obtained translation {tCamera.reshape((3,))}")
+rCamera, tCamera = cv2.calibrateHandEye(reverseRotations, reverseTranslations, rotationsCamera, translationsCamera, method=cv2.CALIB_HAND_EYE_HORAUD)
+print(f"Obtained rotation    {Rotation.from_matrix(rCamera).as_rotvec(degrees=True)}")
+print(f"Obtained translation {tCamera.reshape((3,))}")
+rCamera, tCamera = cv2.calibrateHandEye(reverseRotations, reverseTranslations, rotationsCamera, translationsCamera, method=cv2.CALIB_HAND_EYE_DANIILIDIS)
+print(f"Obtained rotation    {Rotation.from_matrix(rCamera).as_rotvec(degrees=True)}")
+print(f"Obtained translation {tCamera.reshape((3,))}")
+rCamera, tCamera = cv2.calibrateHandEye(reverseRotations, reverseTranslations, rotationsCamera, translationsCamera, method=cv2.CALIB_HAND_EYE_ANDREFF)
+print(f"Obtained rotation    {Rotation.from_matrix(rCamera).as_rotvec(degrees=True)}")
+print(f"Obtained translation {tCamera.reshape((3,))}")
