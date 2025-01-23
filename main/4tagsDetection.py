@@ -4,8 +4,8 @@ import cv2
 import pandas as pd
 import numpy as np
 
-from checkAlgo.algoContainers import arucoDetector, apriltagDetector, Algo
-from checkAlgo.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, tagLength
+from main.algoContainers import arucoDetector, apriltagDetector, Algo
+from main.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, tagLength
 
 
 methodDataFinal = []
@@ -21,7 +21,7 @@ def detectionToResult(translations: list, rotations: list, ids: list) -> (list, 
 def performDetection(method: Algo, dframe: pd.DataFrame, translationWrite: list, rotationWrite: list):
     for _, row in dframe.iterrows():
         t, r, ids = method.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]),
-                                  markerLength=tagLength)
+                                  tagLength=tagLength)
         t, r = detectionToResult(t, r, ids)
         translationWrite.append([float(val) for val in t])
         rotationWrite.append([float(val) for val in r])

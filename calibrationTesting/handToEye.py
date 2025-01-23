@@ -10,7 +10,7 @@ from vtkmodules.vtkFiltersSources import vtkPlaneSource
 from vtkmodules.vtkIOImage import vtkImageReader2Factory, vtkPNGWriter
 from vtkmodules.vtkRenderingCore import vtkTexture, vtkPolyDataMapper, vtkActor, vtkRenderer, vtkRenderWindow, \
     vtkWindowToImageFilter
-from checkAlgo.constantsForCheck import imageWidth, imageHeight, camMatrix, distortionCoefficients
+from main.constantsForCheck import imageWidth, imageHeight, camMatrix, distortionCoefficients
 
 cameraRotation = Rotation.from_rotvec([0, 0, 0], degrees=True)
 cameraTranslation = np.array([0, 0, 0])

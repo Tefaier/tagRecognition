@@ -1,6 +1,8 @@
 import ast
 import time
+from pathlib import Path
 from typing import Tuple, List, Any
+import cv2
 
 import numpy as np
 import numpy.random
@@ -49,3 +51,8 @@ def deviateTransform(position: list, rotation: list, px: float = 0, py: float = 
         answer[1] = [rotation[0] + rx, rotation[1] + ry, rotation[2] + rz]
     return answer
 
+def ensureFolderExists(relativePath: str):
+    Path(relativePath).mkdir(parents=True, exist_ok=True)
+
+def getGrayImage(image: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

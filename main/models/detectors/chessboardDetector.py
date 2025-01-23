@@ -1,0 +1,40 @@
+from typing import Sequence
+
+import numpy as np
+import cv2
+from scipy.spatial.transform import Rotation
+
+from main.models.detectors.detector import TagDetector
+from main.utils import getGrayImage
+
+# expects chessboard pattern to be centered at the image with it
+# considers chessboard orientation on image to be (rectify applied)
+# x-to right
+# y-to down
+# z-from viewer
+class ChessboardDetector(TagDetector):
+    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, pattern: Sequence[int], squareSize: float, name: str = 'chessboard'):
+        super().__init__(name, cameraMatrix, distortionCoefficients)
+        self.chessboardPattern = pattern
+        self.squareSize = squareSize
+        self.objp = np.zeros((pattern[0] * pattern[1], 3), np.float32)
+        self.objp[:, :2] = np.mgrid[0:pattern[0], 0:pattern[1]].T.reshape(-1, 2) * squareSize
+        self.objp[:, 0] -= squareSize * (pattern[0] - 1) / 2.0
+        self.objp[:, 1] -= squareSize * (pattern[1] - 1) / 2.0
+
+    def rectifyRotation(self, rotation: Rotation):
+        extraRotation = Rotation.from_rotvec(rotation.apply([180, 0, 0]), degrees=True)
+        return extraRotation * rotation
+
+    def detectObjectPoints(self, image: np.ndarray, tagLength: float) -> (list, list):
+        gray = getGrayImage(image)
+        success, corners = cv2.findChessboardCorners(gray, self.chessboardPattern, None)
+        return self.objp, corners
+
+    def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
+        gray = getGrayImage(image)
+        success, corners = cv2.findChessboardCorners(gray, self.chessboardPattern, None)
+        if not success: return self.objp, None, None
+        success, rvec, tvec = cv2.solvePnP(self.objp, corners, self.cameraMatrix, self.distortionCoefficients)
+        rvec = self.rectifyRotation(Rotation.from_rotvec(rvec, degrees=False)).as_rotvec(degrees=False)
+        return tvec.reshape((3,)), rvec.reshape((3,)), None
