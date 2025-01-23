@@ -1,5 +1,5 @@
+from pathlib import Path
 import cv2 as cv2
-from cv2 import aruco
 import numpy.linalg
 import vtk
 import numpy as np
@@ -128,6 +128,10 @@ def draw(img, imgpts):
     img = cv2.line(img, tuple(imgpts[0].ravel()), tuple(imgpts[3].ravel()), (0, 0, 255), 5)
     return img
 
+def ensureFolderExists(relativePath: str):
+    Path(relativePath).mkdir(parents=True, exist_ok=True)
+
+ensureFolderExists(resultSaveFolder)
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, image)
 
 index = 0
