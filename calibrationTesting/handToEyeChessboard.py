@@ -21,8 +21,8 @@ print(f"Real translation {cameraTranslation.reshape((3,))}")
 
 image = 'testImages/chessboard3.png'
 resultSaveFolder = 'createdImages'
-patternWidth = 0.2
-patternHeight = 0.2 * 9 / 11
+patternWidth = 0.1
+patternHeight = 0.1 * 9 / 11
 squareSize = patternWidth / 11
 chessboardPattern = (8, 6)
 axis = np.float32([[0,0,0], [0.05,0,0], [0,0.05,0], [0,0,0.05]]).reshape(-1,3)
