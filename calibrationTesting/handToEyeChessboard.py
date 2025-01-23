@@ -19,10 +19,17 @@ displayDetectedAxis = True
 print(f"Real rotation    {cameraRotation.as_rotvec(degrees=True)}")
 print(f"Real translation {cameraTranslation.reshape((3,))}")
 
-image = 'testImages/aruco_5x5_2.png'
+image = 'testImages/chessboard3.png'
 resultSaveFolder = 'createdImages'
-tagSize = 0.1
+patternWidth = 0.2
+patternHeight = 0.2 * 9 / 11
+squareSize = patternWidth / 11
+chessboardPattern = (8, 6)
 axis = np.float32([[0,0,0], [0.05,0,0], [0,0.05,0], [0,0,0.05]]).reshape(-1,3)
+objp = np.zeros((chessboardPattern[0] * chessboardPattern[1], 3), np.float32)
+objp[:, :2] = np.mgrid[0:chessboardPattern[0], 0:chessboardPattern[1]].T.reshape(-1, 2) * squareSize
+objp[:, 0] -= squareSize * (chessboardPattern[0] - 1) / 2.0
+objp[:, 1] -= squareSize * (chessboardPattern[1] - 1) / 2.0
 
 class PlaneRenderer():
     def __init__(self, windowWidth, windowHeight, cameraMatrix, imagePath, bkgColor=None):
@@ -40,12 +47,12 @@ class PlaneRenderer():
 
         self.init_vtk()
 
-    def renderPlane(self, planeTranslation: np.array, planeRotation: Rotation, planeLength: float, saveTo: str):
+    def renderPlane(self, planeTranslation: np.array, planeRotation: Rotation, planeWidth: float, planeHeight: float, saveTo: str):
         if not makeImages: return
         self.plane = vtkPlaneSource()
-        self.plane.SetOrigin(-planeLength*0.5, -planeLength*0.5, 0.0)
-        self.plane.SetPoint1(planeLength*0.5, -planeLength*0.5, 0.0)
-        self.plane.SetPoint2(-planeLength*0.5, planeLength*0.5, 0.0)
+        self.plane.SetOrigin(-planeWidth*0.5, -planeHeight*0.5, 0.0)
+        self.plane.SetPoint1(planeWidth*0.5, -planeHeight*0.5, 0.0)
+        self.plane.SetPoint2(-planeWidth*0.5, planeHeight*0.5, 0.0)
         self.plane.SetCenter(planeTranslation[0], planeTranslation[1], planeTranslation[2])
         rotVec = planeRotation.as_rotvec(degrees=True)
         self.plane.Rotate(numpy.linalg.norm(rotVec), (rotVec[0], rotVec[1], rotVec[2]))
@@ -110,46 +117,6 @@ class PlaneRenderer():
         cam.SetUserTransform(t)
         self.renderer.ResetCameraClippingRange()
 
-class Algo:
-    name: str
-
-    def __init__(self, name: str):
-        self.name = name
-
-    def detect(self, image: np.ndarray, markerLength: float) -> (list, list, list):
-        print("Base class")
-
-class AlgoAruco(Algo):
-    def __init__(self, name: str, camMatrix: np.ndarray, distCoeffs: np.ndarray, tagFamily: int):
-        super().__init__(name)
-        self.camMatrix = camMatrix
-        self.distCoeffs = distCoeffs
-        self.dictionary = aruco.getPredefinedDictionary(tagFamily)
-        self.detectorParams = aruco.DetectorParameters()
-        self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
-
-    def detect(self, image: np.ndarray, markerLength: float) -> (list, list, list):
-        markerCorners, markerIds, rejectedCandidates = self.detector.detectMarkers(image)
-
-        # координаты углов маркера в его собственной системе координат
-        objPoints = np.array([[-markerLength / 2, markerLength / 2, 0],
-                              [markerLength / 2, markerLength / 2, 0],
-                              [markerLength / 2, -markerLength / 2, 0],
-                              [-markerLength / 2, -markerLength / 2, 0]])
-
-        ids = []
-        rotations = []
-        translations = []
-        if markerIds is not None:
-            for i in range(len(markerCorners)):
-                success, rvec, tvec = cv2.solvePnP(objPoints, markerCorners[i], self.camMatrix, self.distCoeffs)
-                rvec = rvec.reshape((3,))
-                tvec = tvec.reshape((3,))
-                if success:
-                    ids.append(markerIds[i])
-                    rotations.append(rvec)
-                    translations.append(tvec)
-        return (translations, rotations, ids)
 
 def getResPath(index: int):
     return resultSaveFolder + '/' + str(index) + '.png'
@@ -162,7 +129,6 @@ def draw(img, imgpts):
     return img
 
 renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, image)
-detector = AlgoAruco('aruco', camMatrix, distortionCoefficients, aruco.DICT_5X5_50)
 
 index = 0
 translationsGlobal = []
@@ -172,7 +138,7 @@ translation = np.array([0, 0, 1])
 rotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
 translationsGlobal.append(translation)
 rotationsGlobal.append(rotation.as_rotvec(degrees=False))
-renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
+renderer.renderPlane(translation, rotation, patternWidth, patternHeight, getResPath(index))
 index += 1
 
 for angle in np.linspace(0, 360, 10):
@@ -180,7 +146,7 @@ for angle in np.linspace(0, 360, 10):
     rotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
     translationsGlobal.append(translation)
     rotationsGlobal.append(rotation.as_rotvec(degrees=False))
-    renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
+    renderer.renderPlane(translation, rotation, patternWidth, patternHeight, getResPath(index))
     index += 1
 
 for angle in np.linspace(0, 180, 10):
@@ -188,7 +154,7 @@ for angle in np.linspace(0, 180, 10):
     rotation = Rotation.from_rotvec([180, 0, 0], degrees=True) * Rotation.from_rotvec([0, 90 - angle, 0], degrees=True)
     translationsGlobal.append(translation)
     rotationsGlobal.append(rotation.as_rotvec(degrees=False))
-    renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
+    renderer.renderPlane(translation, rotation, patternWidth, patternHeight, getResPath(index))
     index += 1
 
 for angle in np.linspace(0, 180, 10):
@@ -196,7 +162,7 @@ for angle in np.linspace(0, 180, 10):
     rotation = Rotation.from_rotvec([180, 0, 0], degrees=True) * Rotation.from_rotvec([90 - angle, 0, 0], degrees=True)
     translationsGlobal.append(translation)
     rotationsGlobal.append(rotation.as_rotvec(degrees=False))
-    renderer.renderPlane(translation, rotation, tagSize, getResPath(index))
+    renderer.renderPlane(translation, rotation, patternWidth, patternHeight, getResPath(index))
     index += 1
 
 detectedMask = [True] * index
@@ -205,14 +171,14 @@ rotationsCamera = []
 
 for i in range(0, index):
     img = cv2.imread(getResPath(i))
-    tvec, rvec, ids = detector.detect(img, tagSize)
-    if len(ids) == 0:
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    success, corners = cv2.findChessboardCorners(gray, chessboardPattern, None)
+    if success == False:
         detectedMask[i] = False
         continue
-    tvec = tvec[0]
-    rvec = rvec[0]
-    translationsCamera.append(tvec)
-    rotationsCamera.append(rvec)
+    success, rvec, tvec = cv2.solvePnP(objp, corners, camMatrix, distortionCoefficients)
+    translationsCamera.append(tvec.reshape((3,)))
+    rotationsCamera.append(rvec.reshape((3,)))
 
     if displayDetectedAxis:
         imgpts, jac = cv2.projectPoints(axis, rvec, tvec, camMatrix, distortionCoefficients)
