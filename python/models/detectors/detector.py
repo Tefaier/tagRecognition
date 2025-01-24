@@ -14,9 +14,9 @@ class TagDetector:
 
     # returns (objpoints, imagepoints)
     # imagepoints is None if not detected
-    def detectObjectPoints(self, image: np.ndarray, tagLength: float) -> (list, list):
+    def detectObjectPoints(self, image: np.ndarray) -> (list, list):
         pass
 
     # returns (translations, rotations, ids)
-    def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
+    def detect(self, image: np.ndarray) -> (list, list, list):
         pass

@@ -27,14 +27,14 @@ class ChessboardDetector(TagDetector):
         extraRotation = Rotation.from_rotvec(rotation.apply([180, 0, 0]), degrees=True)
         return extraRotation * rotation
 
-    def detectObjectPoints(self, image: np.ndarray, tagLength: float) -> (list, list):
+    def detectObjectPoints(self, image: np.ndarray) -> (list, list):
         gray = getGrayImage(image)
         success, corners = cv2.findChessboardCorners(gray, self.chessboardPattern, None)
         if not success: return self.objp, None
         cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), self.criteria)
         return self.objp, corners
 
-    def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
+    def detect(self, image: np.ndarray) -> (list, list, list):
         gray = getGrayImage(image)
         success, corners = cv2.findChessboardCorners(gray, self.chessboardPattern, None)
         if not success: return None, None, None

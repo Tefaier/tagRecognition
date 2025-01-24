@@ -17,7 +17,7 @@ from python.settings import generatedInfoFolder, calibrationImagesFolder, imageW
 from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVector, updateJSON
 
 
-def performCalibration(profile: str, tagLength: float, detector: TagDetector, generator: ImageGenerator) -> (list, list):
+def performCalibration(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
     ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
     files = glob.glob(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/*")
     for f in files:
@@ -38,10 +38,10 @@ def performCalibration(profile: str, tagLength: float, detector: TagDetector, ge
             generator.makeImageWithPlane(translation, rotation, f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/{index}.png')
             index += 1
 
-    cameraMatrix, distortionCoefficients = performCalibrationOnExistingImages(profile, tagLength, detector)
+    cameraMatrix, distortionCoefficients = performCalibrationOnExistingImages(profile, detector)
     return cameraMatrix, distortionCoefficients
 
-def performCalibrationOnExistingImages(profile: str, tagLength: float, detector: TagDetector) -> (list, list):
+def performCalibrationOnExistingImages(profile: str, detector: TagDetector) -> (list, list):
     ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
     objpoints = []
     imgpoints = []
@@ -49,7 +49,7 @@ def performCalibrationOnExistingImages(profile: str, tagLength: float, detector:
 
     for name in images:
         image = cv2.imread(name)
-        objp, imgp = detector.detectObjectPoints(image, tagLength)
+        objp, imgp = detector.detectObjectPoints(image)
         if imgp is not None:
             objpoints.append(objp)
             imgpoints.append(imgp)
@@ -68,14 +68,14 @@ def testRun():
     squareSize = patternWidth / 11
     # performCalibrationOnExistingImages("test", patternWidth, ChessboardDetector(None, None, chessboardPattern, squareSize))
     performCalibration(
-        "test", patternWidth,
+        "test",
         ChessboardDetector(None, None, chessboardPattern, squareSize),
         VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', testCameraMatrix, patternWidth,
                      patternHeight)
     )
     # performCalibration(
-    #     "test", patternWidth,
-    #     ArucoDetector(None, None, cv2.aruco.DICT_5X5_50),
+    #     "test",
+    #     ArucoDetector(None, None, patternWidth, cv2.aruco.DICT_5X5_50),
     #     VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/aruco_1.png', testCameraMatrix, patternWidth,
     #                  patternWidth)
     # )

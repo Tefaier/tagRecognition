@@ -15,12 +15,13 @@ class ApriltagDetector(TagDetector):
     # fy - y focal length in pixels
     # cx - x of focal center in pixels
     # cy - y of focal center in pixels
-    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagFamily: str = "tag36h11", name: str = 'apriltag'):
+    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagLength: float, tagFamily: str = "tag36h11", name: str = 'apriltag'):
         super().__init__(name, cameraMatrix, distortionCoefficients)
         self.fx = cameraMatrix[0, 0]
         self.fy = cameraMatrix[1, 1]
         self.cx = cameraMatrix[0, 2]
         self.cy = cameraMatrix[1, 2]
+        self.tagLength = tagLength
         self.detector = Detector(
             searchpath=['apriltags'],
             families=tagFamily,  # tagStandard41h12 tag25h9 tag36h11
@@ -35,14 +36,14 @@ class ApriltagDetector(TagDetector):
         extraRotation = Rotation.from_rotvec(rotation.apply([180, 0, 0]), degrees=True)
         return extraRotation * rotation
 
-    def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
+    def detect(self, image: np.ndarray) -> (list, list, list):
         imageGray = getGrayImage(image)
         imageGray = cv2.undistort(imageGray, self.cameraMatrix, self.distortionCoefficients, None)
         results = self.detector.detect(
             imageGray,
             estimate_tag_pose=True,
             camera_params=[self.fx, self.fy, self.cx, self.cy],
-            tag_size=tagLength)
+            tag_size=self.tagLength)
         ids = []
         rotations = []
         translations = []

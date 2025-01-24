@@ -6,28 +6,22 @@ from python.models.detectors.detector import TagDetector
 
 
 class ArucoDetector(TagDetector):
-    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagFamily: int, name: str = 'aruco'):
+    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagLength: float, tagFamily: int, name: str = 'aruco'):
         super().__init__(name, cameraMatrix, distortionCoefficients)
         self.dictionary = aruco.getPredefinedDictionary(tagFamily)
         self.detectorParams = aruco.DetectorParameters()
         self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
-
-    def detectObjectPoints(self, image: np.ndarray, tagLength: float) -> (list, list):
-        # координаты углов маркера в его собственной системе координат
-        objPoints = np.array([[-tagLength / 2, tagLength / 2, 0],
+        self.objPoints = np.array([[-tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, -tagLength / 2, 0],
                               [-tagLength / 2, -tagLength / 2, 0]], dtype=np.float32)
+        self.tagLength = tagLength
+
+    def detectObjectPoints(self, image: np.ndarray) -> (list, list):
         markerCorners, _, _ = self.detector.detectMarkers(image)
-        return objPoints, markerCorners[0].reshape((4, 1, 2)) if len(markerCorners) > 0 else None
+        return self.objPoints.copy(), markerCorners[0].reshape((4, 1, 2)) if len(markerCorners) > 0 else None
 
-    def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
-        # координаты углов маркера в его собственной системе координат
-        objPoints = np.array([[-tagLength / 2, tagLength / 2, 0],
-                              [tagLength / 2, tagLength / 2, 0],
-                              [tagLength / 2, -tagLength / 2, 0],
-                              [-tagLength / 2, -tagLength / 2, 0]], dtype=np.float32)
-
+    def detect(self, image: np.ndarray) -> (list, list, list):
         markerCorners, markerIds, rejectedCandidates = self.detector.detectMarkers(image)
 
         ids = []
@@ -35,7 +29,7 @@ class ArucoDetector(TagDetector):
         translations = []
         if markerIds is not None:
             for i in range(len(markerCorners)):
-                success, rvec, tvec = cv2.solvePnP(objPoints, markerCorners[i], self.cameraMatrix, self.distortionCoefficients)
+                success, rvec, tvec = cv2.solvePnP(self.objPoints, markerCorners[i], self.cameraMatrix, self.distortionCoefficients)
                 rvec = rvec.reshape((3,))
                 tvec = tvec.reshape((3,))
                 if success:

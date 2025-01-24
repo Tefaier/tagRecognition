@@ -19,7 +19,7 @@ from python.settings import generatedInfoFolder, calibrationImagesFolder, imageW
 from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVector, updateJSON
 
 
-def performEyeHand(profile: str, tagLength: float, detector: TagDetector, generator: ImageGenerator) -> (list, list):
+def performEyeHand(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
     ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
     files = glob.glob(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/*")
     for f in files:
@@ -46,7 +46,7 @@ def performEyeHand(profile: str, tagLength: float, detector: TagDetector, genera
             index += 1
 
     number = len(translationsFromBase)
-    detectedMask, translationsFromCamera, rotationsFromCamera = performEyeHandDetection(profile, tagLength, detector, number)
+    detectedMask, translationsFromCamera, rotationsFromCamera = performEyeHandDetection(profile, detector, number)
     translationsFromBase = np.array(translationsFromBase)[detectedMask]
     rotationsFromBase = np.array(rotationsFromBase)[detectedMask]
     rotationsFromBaseReverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotationsFromBase]
@@ -60,14 +60,14 @@ def performEyeHand(profile: str, tagLength: float, detector: TagDetector, genera
                f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json')
     return translationOfCamera, rotationOfCamera
 
-def performEyeHandDetection(profile: str, tagLength: float, detector: TagDetector, number: int) -> (list, list, list):
+def performEyeHandDetection(profile: str, detector: TagDetector, number: int) -> (list, list, list):
     translationsFromCamera = []
     rotationsFromCamera = []
     detectedMask = [True] * number
 
     for i in range(0, number):
         img = cv2.imread(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/{i}.png')
-        tvec, rvec, ids = detector.detect(img, tagLength)
+        tvec, rvec, ids = detector.detect(img)
         if rvec is None:
             detectedMask[i] = False
             continue
@@ -80,21 +80,21 @@ def performEyeHandDetection(profile: str, tagLength: float, detector: TagDetecto
 
 def testRun():
     with open(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/test/{generalInfoFilename}.json', 'r') as f:
-        dict: dict = json.load(f)
+        info: dict = json.load(f)
     chessboardPattern = (8, 6)
     patternWidth = 0.1
     patternHeight = 0.1 * 9 / 11
     squareSize = patternWidth / 11
     # performCalibrationOnExistingImages("test", patternWidth, ChessboardDetector(None, None, chessboardPattern, squareSize))
     performEyeHand(
-        "test", patternWidth,
-        ChessboardDetector(np.array(dict.get("cameraMatrix")), np.array(dict.get("distortionCoefficients")), chessboardPattern, squareSize),
+        "test",
+        ChessboardDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), chessboardPattern, squareSize),
         VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', np.array(testCameraMatrix), patternWidth,
                      patternHeight)
     )
     # performCalibration(
-    #     "test", patternWidth,
-    #     ArucoDetector(dict.get("CameraMatrix"), dict.get("distortionCoefficients"), cv2.aruco.DICT_5X5_50),
+    #     "test",
+    #     ArucoDetector(info.get("CameraMatrix"), info.get("distortionCoefficients"), patternWidth, cv2.aruco.DICT_5X5_50),
     #     VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/aruco_1.png', testCameraMatrix, patternWidth,
     #                  patternWidth)
     # )
