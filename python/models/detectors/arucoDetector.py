@@ -17,16 +17,16 @@ class ArucoDetector(TagDetector):
         objPoints = np.array([[-tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, -tagLength / 2, 0],
-                              [-tagLength / 2, -tagLength / 2, 0]])
+                              [-tagLength / 2, -tagLength / 2, 0]], dtype=np.float32)
         markerCorners, _, _ = self.detector.detectMarkers(image)
-        return objPoints, markerCorners if len(markerCorners) > 0 else None
+        return objPoints, markerCorners[0].reshape((4, 1, 2)) if len(markerCorners) > 0 else None
 
     def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
         # координаты углов маркера в его собственной системе координат
         objPoints = np.array([[-tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, -tagLength / 2, 0],
-                              [-tagLength / 2, -tagLength / 2, 0]])
+                              [-tagLength / 2, -tagLength / 2, 0]], dtype=np.float32)
 
         markerCorners, markerIds, rejectedCandidates = self.detector.detectMarkers(image)
 
