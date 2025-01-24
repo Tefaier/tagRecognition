@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
-from main.constantsForCheck import resultFolder, analiseFile
-from main.utils import readStringOfList, getRotationEuler, axisToIndex
+from python.constantsForCheck import resultFolder, analiseFile
+from python.utils import readStringOfList, getRotationEuler, axisToIndex
 
 analizationResults = pd.read_csv(resultFolder + "/" + analiseFile)
 

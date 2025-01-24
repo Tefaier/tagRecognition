@@ -1,4 +1,5 @@
 import ast
+import json
 import math
 import time
 from pathlib import Path
@@ -64,3 +65,10 @@ def generateRandomNormVector() -> np.array:
     if abs(length) < 1e-2:
         return generateRandomNormVector()
     return randomVector / math.sqrt(length)
+
+def updateJSON(newInfo: dict, path: str):
+    with open(path, 'r') as f:
+        dic = json.load(f)
+    dic.update(newInfo)
+    with open(path, 'w') as f:
+        json.dump(dic, f)

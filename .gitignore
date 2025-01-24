@@ -1,4 +1,4 @@
 .idea
 venv
 apriltagTesting/testImages
-main/collectedInfo
+python/collectedInfo

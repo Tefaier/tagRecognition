@@ -7,13 +7,13 @@ import glob
 
 from scipy.spatial.transform import Rotation
 
-from main.models.detectors.chessboardDetector import ChessboardDetector
-from main.models.detectors.detector import TagDetector
-from main.models.imageGenerators.imageGenerator import ImageGenerator
-from main.models.imageGenerators.vtkGenerator import VTKGenerator
-from main.settings import generatedInfoFolder, calibrationImagesFolder, imageWidth, imageHeight, tagImagesFolder, \
+from python.models.detectors.chessboardDetector import ChessboardDetector
+from python.models.detectors.detector import TagDetector
+from python.models.imageGenerators.imageGenerator import ImageGenerator
+from python.models.imageGenerators.vtkGenerator import VTKGenerator
+from python.settings import generatedInfoFolder, calibrationImagesFolder, imageWidth, imageHeight, tagImagesFolder, \
     testCameraMatrix
-from main.utils import ensureFolderExists, getGrayImage, generateRandomNormVector
+from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVector
 
 
 def performHandEye(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
@@ -55,7 +55,7 @@ def performHandEyeOnExistingImages(profile: str, detector: TagDetector) -> (list
     return cameraMatrix, distortionCoefficients
 
 if __name__ == "__main__":
-    performCalibration(
+    performHandEye(
         "test",
         ChessboardDetector(None, None, (9, 7), 0.1),
         VTKGenerator(imageWidth, imageHeight, f'{tagImagesFolder}/chessboard.png', testCameraMatrix, 0.1, 0.1)

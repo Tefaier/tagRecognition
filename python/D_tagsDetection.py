@@ -4,8 +4,8 @@ import cv2
 import pandas as pd
 import numpy as np
 
-from main.algoContainers import arucoDetector, apriltagDetector, Algo
-from main.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, tagLength
+from python.algoContainers import arucoDetector, apriltagDetector, Algo
+from python.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, tagLength
 
 
 methodDataFinal = []

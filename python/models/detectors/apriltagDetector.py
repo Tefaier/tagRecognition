@@ -3,8 +3,8 @@ import cv2
 from dt_apriltags import Detector, Detection
 from scipy.spatial.transform import Rotation
 
-from main.models.detectors.detector import TagDetector
-from main.utils import getGrayImage
+from python.models.detectors.detector import TagDetector
+from python.utils import getGrayImage
 
 # considers tag orientation on image to be (rectify applied)
 # x-to right

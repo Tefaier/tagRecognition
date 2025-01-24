@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 from numpy.linalg import norm
-from main.constantsForCheck import resultFolder, analiseFile, detectionFile, acceptedTranslationError, \
+from python.constantsForCheck import resultFolder, analiseFile, detectionFile, acceptedTranslationError, \
     acceptedRotationError
-from main.utils import parseRotation, readStringOfList
+from python.utils import parseRotation, readStringOfList
 
 
 def getVectorError(vector1: list, vector2: list) -> list:

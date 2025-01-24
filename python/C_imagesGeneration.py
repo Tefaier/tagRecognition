@@ -5,9 +5,9 @@ import pandas as pd
 from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 
-from main.constantsForCheck import collectionFolder, csvName, tagLength, tagImagesFolder, imageWidth, imageHeight, camMatrix
-from main.utils import deviateTransform, generateNormalDistributionValue
-from main.virtualCamera import PlaneRenderer
+from python.constantsForCheck import collectionFolder, csvName, tagLength, tagImagesFolder, imageWidth, imageHeight, camMatrix
+from python.utils import deviateTransform, generateNormalDistributionValue
+from python.virtualCamera import PlaneRenderer
 
 # fields: imageName, tagFamily, tagId, translation, rotation
 imageNames = []

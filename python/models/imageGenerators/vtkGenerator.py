@@ -8,7 +8,7 @@ from vtkmodules.vtkIOImage import vtkImageReader2Factory, vtkPNGWriter
 from vtkmodules.vtkRenderingCore import vtkTexture, vtkPolyDataMapper, vtkActor, vtkRenderer, vtkRenderWindow, \
     vtkWindowToImageFilter
 
-from main.models.imageGenerators.imageGenerator import ImageGenerator
+from python.models.imageGenerators.imageGenerator import ImageGenerator
 
 
 class VTKGenerator(ImageGenerator):
@@ -82,7 +82,7 @@ class VTKGenerator(ImageGenerator):
         self.renderer = vtkRenderer()
         self.renWin = vtkRenderWindow()
         self.renWin.AddRenderer(self.renderer)
-        #self.renWin.SetShowWindow(False)
+        self.renWin.SetShowWindow(False)
 
         self.renderer.SetBackground(self.colors.GetColor3d('BkgColor'))
         self.renWin.SetSize(self.imageWidth, self.imageHeight)

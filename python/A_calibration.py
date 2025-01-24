@@ -1,0 +1,75 @@
+import os.path
+import time
+from random import Random
+
+import numpy as np
+import cv2
+import glob
+import json
+
+from scipy.spatial.transform import Rotation
+
+from python.models.detectors.chessboardDetector import ChessboardDetector
+from python.models.detectors.detector import TagDetector
+from python.models.imageGenerators.imageGenerator import ImageGenerator
+from python.models.imageGenerators.vtkGenerator import VTKGenerator
+from python.settings import generatedInfoFolder, calibrationImagesFolder, imageWidth, imageHeight, tagImagesFolder, \
+    testCameraMatrix, generalInfoFilename
+from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVector, updateJSON
+
+
+def performCalibration(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
+    random = Random()
+    random.seed(int(time.time()))
+    ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
+
+    index = 0
+    # position around which images are created
+    baseTranslation = np.array([0, 0, 0.3])
+    baseRotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
+    positionSamples = 20
+    rotationSamples = 5
+    deviationTranslation = np.array([0.2, 0.05, 0.1])  # in meters
+    angleRotation = 40  # in degrees
+    for _ in range(0, positionSamples):
+        translation = baseTranslation + generateRandomNormVector() * deviationTranslation
+        for _ in range(0, rotationSamples):
+            rotation = baseRotation * Rotation.from_rotvec(generateRandomNormVector() * angleRotation, degrees=True)
+            generator.makeImageWithPlane(translation, rotation, f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/{index}.png')
+            index += 1
+
+    cameraMatrix, distortionCoefficients = performCalibrationOnExistingImages(profile, detector)
+    return cameraMatrix, distortionCoefficients
+
+def performCalibrationOnExistingImages(profile: str, detector: TagDetector) -> (list, list):
+    ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
+    objpoints = []
+    imgpoints = []
+    images = glob.glob(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/*.png')
+
+    for name in images:
+        image = cv2.imread(name)
+        objp, imgp = detector.detectObjectPoints(image, 0)
+        if imgp is not None:
+            objpoints.append(objp)
+            imgpoints.append(imgp)
+
+    ret, cameraMatrix, distortionCoefficients, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, getGrayImage(cv2.imread(images[-1])).shape[::-1], None, None, flags = cv2.CALIB_USE_LU)
+    cameraMatrix = cameraMatrix.tolist()
+    distortionCoefficients = distortionCoefficients.tolist()
+    updateJSON({"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients},
+               f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json')
+    return cameraMatrix, distortionCoefficients
+
+def testRun():
+    chessboardPattern = (8, 6)
+    patternWidth = 0.1
+    patternHeight = 0.1 * 9 / 11
+    squareSize = patternWidth / 11
+    performCalibrationOnExistingImages("test", ChessboardDetector(None, None, chessboardPattern, squareSize))
+    # performCalibration(
+    #     "test",
+    #     ChessboardDetector(None, None, chessboardPattern, squareSize),
+    #     VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', testCameraMatrix, patternWidth,
+    #                  patternHeight)
+    # )
