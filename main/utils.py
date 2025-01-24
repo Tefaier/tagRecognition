@@ -1,4 +1,5 @@
 import ast
+import math
 import time
 from pathlib import Path
 from typing import Tuple, List, Any
@@ -56,3 +57,10 @@ def ensureFolderExists(relativePath: str):
 
 def getGrayImage(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+def generateRandomNormVector() -> np.array:
+    randomVector = (np.random.rand(3) * 2) - 1
+    length = randomVector.dot(randomVector)
+    if abs(length) < 1e-2:
+        return generateRandomNormVector()
+    return randomVector / math.sqrt(length)

@@ -13,6 +13,7 @@ class TagDetector:
         self.distortionCoefficients = distortionCoefficients
 
     # returns (objpoints, imagepoints)
+    # imagepoints is None if not detected
     def detectObjectPoints(self, image: np.ndarray, tagLength: float) -> (list, list):
         pass
 

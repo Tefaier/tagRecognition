@@ -29,7 +29,7 @@ class ChessboardDetector(TagDetector):
     def detectObjectPoints(self, image: np.ndarray, tagLength: float) -> (list, list):
         gray = getGrayImage(image)
         success, corners = cv2.findChessboardCorners(gray, self.chessboardPattern, None)
-        return self.objp, corners
+        return self.objp, corners if success else None
 
     def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
         gray = getGrayImage(image)
