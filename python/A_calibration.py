@@ -26,12 +26,12 @@ def performCalibration(profile: str, tagLength: float, detector: TagDetector, ge
 
     index = 0
     # position around which images are created
-    baseTranslation = np.array([0, 0, 0.25])
+    baseTranslation = np.array([0, 0, 0.15])
     baseRotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
-    positionSamples = 50
-    rotationSamples = 2
-    deviationTranslation = np.array([0.15, 0.03, 0.1])  # in meters
-    angleRotation = 40  # in degrees
+    positionSamples = 5
+    rotationSamples = 10
+    deviationTranslation = np.array([0.08, 0.02, 0.05])  # in meters
+    angleRotation = 50  # in degrees
     for _ in range(0, positionSamples):
         translation = baseTranslation + generateRandomNormVector() * deviationTranslation
         for _ in range(0, rotationSamples):
@@ -67,7 +67,7 @@ def testRun():
     patternWidth = 0.1
     patternHeight = 0.1 * 9 / 11
     squareSize = patternWidth / 11
-    # performCalibrationOnExistingImages("test", ChessboardDetector(None, None, chessboardPattern, squareSize))
+    # performCalibrationOnExistingImages("test", patternWidth, ChessboardDetector(None, None, chessboardPattern, squareSize))
     performCalibration(
         "test", patternWidth,
         ChessboardDetector(None, None, chessboardPattern, squareSize),
