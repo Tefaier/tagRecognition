@@ -37,8 +37,9 @@ class ChessboardDetector(TagDetector):
     def detect(self, image: np.ndarray, tagLength: float) -> (list, list, list):
         gray = getGrayImage(image)
         success, corners = cv2.findChessboardCorners(gray, self.chessboardPattern, None)
-        if not success: return self.objp, None, None
+        if not success: return None, None, None
         cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), self.criteria)
         success, rvec, tvec = cv2.solvePnP(self.objp, corners, self.cameraMatrix, self.distortionCoefficients)
+        rvec = rvec.reshape((3,))
         rvec = self.rectifyRotation(Rotation.from_rotvec(rvec, degrees=False)).as_rotvec(degrees=False)
-        return tvec.reshape((3,)), rvec.reshape((3,)), None
+        return tvec.reshape((1,3)), rvec.reshape((1,3)), None

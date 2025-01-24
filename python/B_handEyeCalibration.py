@@ -54,6 +54,8 @@ def performEyeHand(profile: str, tagLength: float, detector: TagDetector, genera
     rotationsFromBaseReverse = [rot.as_rotvec(degrees=False) for rot in rotationsFromBaseReverse]
     rotationOfCamera, translationOfCamera = cv2.calibrateHandEye(rotationsFromBaseReverse, translationsFromBaseReverse, rotationsFromCamera, translationsFromCamera,
                                             method=cv2.CALIB_HAND_EYE_PARK)
+    translationOfCamera = translationOfCamera.reshape((3,)).tolist()
+    rotationOfCamera = Rotation.from_matrix(rotationOfCamera).as_rotvec(degrees=False).tolist()
     updateJSON({"cameraTranslation": translationOfCamera, "cameraRotation": rotationOfCamera},
                f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json')
     return translationOfCamera, rotationOfCamera
@@ -66,7 +68,7 @@ def performEyeHandDetection(profile: str, tagLength: float, detector: TagDetecto
     for i in range(0, number):
         img = cv2.imread(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/{i}.png')
         tvec, rvec, ids = detector.detect(img, tagLength)
-        if len(ids) == 0:
+        if rvec is None:
             detectedMask[i] = False
             continue
         tvec = tvec[0]
@@ -86,8 +88,8 @@ def testRun():
     # performCalibrationOnExistingImages("test", patternWidth, ChessboardDetector(None, None, chessboardPattern, squareSize))
     performEyeHand(
         "test", patternWidth,
-        ChessboardDetector(dict.get("CameraMatrix"), dict.get("distortionCoefficients"), chessboardPattern, squareSize),
-        VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', testCameraMatrix, patternWidth,
+        ChessboardDetector(np.array(dict.get("cameraMatrix")), np.array(dict.get("distortionCoefficients")), chessboardPattern, squareSize),
+        VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', np.array(testCameraMatrix), patternWidth,
                      patternHeight)
     )
     # performCalibration(
