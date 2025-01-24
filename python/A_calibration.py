@@ -1,11 +1,9 @@
+import os
 import os.path
-import time
-from random import Random
 
 import numpy as np
 import cv2
 import glob
-import json
 
 from scipy.spatial.transform import Rotation
 
@@ -20,12 +18,13 @@ from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVec
 
 
 def performCalibration(profile: str, tagLength: float, detector: TagDetector, generator: ImageGenerator) -> (list, list):
-    random = Random()
-    random.seed(int(time.time()))
     ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
+    files = glob.glob(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/*")
+    for f in files:
+        os.remove(f)
 
-    index = 0
     # position around which images are created
+    index = 0
     baseTranslation = np.array([0, 0, 0.15])
     baseRotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
     positionSamples = 5
