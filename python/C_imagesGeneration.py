@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
-from python.settings import generatedInfoFolder, analyseImagesFolder, imageInfoFilename, generalInfoFilename, \
+from python.settings import generatedInfoFolder, analyseImagesFolder, imageInfoFilename, \
     tagImagesFolder, imageHeight, imageWidth, testCameraMatrix
 from python.utils import deviateTransform, generateNormalDistributionValue, ensureFolderExists, updateJSON
 

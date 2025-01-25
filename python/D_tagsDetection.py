@@ -1,62 +1,65 @@
-# read csv
-# for entry perform action
+import json
+import os
+
 import cv2
 import pandas as pd
 import numpy as np
 
-from python.algoContainers import arucoDetector, apriltagDetector, Algo
-from python.constantsForCheck import csvName, detectionFile, collectionFolder, resultFolder, tagLength
+from python.models.detectors.arucoDetector import ArucoDetector
+from python.models.detectors.detector import TagDetector
+from python.settings import generatedInfoFolder, imageInfoFilename, detectionInfoFilename, analyseImagesFolder, \
+    generalInfoFilename
 
 
-methodDataFinal = []
-detectedTFinal = []
-detectedRFinal = []
+def openAndPrepareRawInfo(path: str) -> pd.DataFrame:
+    info = pd.read_csv(path)
+    # info = info.reset_index()
+    return info
 
-# simple detection of one tag on image
-def detectionToResult(translations: list, rotations: list, ids: list) -> (list, list):
+def basicDetectionToResult(translations: list, rotations: list, ids: list) -> (list, list):
     if len(translations) == 0:
         return ([], [])
     return (list(translations[0]), list(rotations[0]))
 
-def performDetection(method: Algo, dframe: pd.DataFrame, translationWrite: list, rotationWrite: list):
-    for _, row in dframe.iterrows():
-        t, r, ids = method.detect(image=cv2.imread(collectionFolder + "/" + row["imageName"]),
-                                  tagLength=tagLength)
-        t, r = detectionToResult(t, r, ids)
-        translationWrite.append([float(val) for val in t])
-        rotationWrite.append([float(val) for val in r])
-
-def analyseInfo(method: Algo, dframe: pd.DataFrame):
-    methodData = np.full((dframe.shape[0],), method.name)
+def analyseInfo(imagesFolder: str, detector: TagDetector, dframe: pd.DataFrame, parser):
+    detectorName = np.full((dframe.shape[0],), detector.name)
     detectedT = []
     detectedR = []
 
-    performDetection(method, dframe, detectedT, detectedR)
+    performDetection(imagesFolder, detector, dframe, detectedT, detectedR, parser)
+    dframe["method"] = detectorName
+    dframe["detectedT"] = detectedT
+    dframe["detectedR"] = detectedR
 
-    methodDataFinal.extend(methodData)
-    detectedTFinal.extend(detectedT)
-    detectedRFinal.extend(detectedR)
+def performDetection(imagesFolder: str, detector: TagDetector, dframe: pd.DataFrame, translationWrite: list, rotationWrite: list, parser):
+    for _, row in dframe.iterrows():
+        t, r, ids = detector.detect(image=cv2.imread(f"{imagesFolder}/{row["imageName"]}"))
+        t, r = parser(t, r, ids)
+        translationWrite.append([float(val) for val in t])
+        rotationWrite.append([float(val) for val in r])
 
+def writeInfo(path: str, dframe: pd.DataFrame, detectionSettings: dict, replace: bool):
+    dframe["detectionSettings"] = np.full((dframe.shape[0],), detectionSettings)
 
-def openAndPrepareRawInfo(path: str) -> pd.DataFrame:
-    info = pd.read_csv(path, usecols=["imageName", "arucoAvailable", "realT", "realR", "otherInfo"])
-    # info = info.reset_index()
-    return info
+    if replace or not os.path.exists(path):
+        dframe.to_csv(path, header=True, mode='w', index=False)
+        return
+    df = pd.read_csv(path)
+    pd.concat([df, dframe]).to_csv(path, header=True, mode='w', index=False)
 
-def writeInfo(writeTo: str):
-    if len(methodDataFinal) / toCheck.shape[0] == 2:
-        toWrite = pd.concat([toCheck, toCheck], axis=0)
-    else:
-        toWrite = toCheck
-    toWrite["method"] = methodDataFinal
-    toWrite["detectedT"] = detectedTFinal
-    toWrite["detectedR"] = detectedRFinal
+def performDetection(profile: str, detector: TagDetector, detectionSettings: dict, tagsLocationsParser, replaceInfo: bool):
+    profilePath = f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}"
+    imagesInfo = openAndPrepareRawInfo(f"{profilePath}/{imageInfoFilename}.csv")
+    analyseInfo(f"{profilePath}/{analyseImagesFolder}", detector, imagesInfo, tagsLocationsParser)
+    writeInfo(
+        f"{profilePath}/{detectionInfoFilename}.csv",
+        imagesInfo,
+        detectionSettings,
+        replaceInfo
+    )
 
-    toWrite.drop(columns=['otherInfo'])  # not sure if to drop or not to drop
-    toWrite.to_csv(writeTo, header=True, mode='w', index=False)
+def testRun():
+    with open(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/test/{generalInfoFilename}.json', 'r') as f:
+        info: dict = json.load(f)
 
-toCheck = openAndPrepareRawInfo(collectionFolder + "/" + csvName)
-analyseInfo(arucoDetector, toCheck)
-toCheck = openAndPrepareRawInfo(collectionFolder + "/" + csvName)
-analyseInfo(apriltagDetector, toCheck)
-writeInfo(resultFolder + "/" + detectionFile)
+    performDetection("test", ArucoDetector(info["cameraMatrix"], info["distortionCoefficients"], info["tagLength"], int(info["arucoFamily"])), {}, lambda trs, rts, ids: (trs[0], rts[0]), True)

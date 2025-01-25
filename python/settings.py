@@ -5,6 +5,7 @@ calibrationImagesFolder = 'calibration'
 analyseImagesFolder = 'analyse'
 generalInfoFilename = 'profileInfo'
 imageInfoFilename = 'imageInfo'
+detectionInfoFilename = 'detectionInfo'
 
 tagImagesFolder = 'tagImages'
 
