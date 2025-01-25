@@ -1,8 +1,10 @@
 import numpy as np
 
 generatedInfoFolder = 'generatedInfo'
-generalInfoFilename = 'profileInfo'
 calibrationImagesFolder = 'calibration'
+analyseImagesFolder = 'analyse'
+generalInfoFilename = 'profileInfo'
+imageInfoFilename = 'imageInfo'
 
 tagImagesFolder = 'tagImages'
 

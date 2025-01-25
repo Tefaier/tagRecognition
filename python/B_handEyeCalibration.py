@@ -18,12 +18,14 @@ from python.settings import generatedInfoFolder, calibrationImagesFolder, imageW
     testCameraMatrix, generalInfoFilename
 from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVector, updateJSON
 
-
-def performEyeHand(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
-    ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
-    files = glob.glob(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/*")
+def prepareFolder(path: str):
+    ensureFolderExists(path)
+    files = glob.glob(f"{path}/*")
     for f in files:
         os.remove(f)
+
+def performEyeHand(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
+    prepareFolder(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
 
     # position around which images are created
     index = 0

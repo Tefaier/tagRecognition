@@ -1,6 +1,7 @@
 import ast
 import json
 import math
+import os
 import time
 from pathlib import Path
 from typing import Tuple, List, Any
@@ -11,6 +12,8 @@ import numpy.random
 import scipy.stats
 from pandas import Series
 from scipy.spatial.transform import Rotation
+
+from python.settings import generatedInfoFolder, generalInfoFilename
 
 randomGenerator = numpy.random.Generator(np.random.default_rng(int(time.time())).bit_generator)
 
@@ -67,8 +70,16 @@ def generateRandomNormVector() -> np.array:
     return randomVector / math.sqrt(length)
 
 def updateJSON(newInfo: dict, path: str):
-    with open(path, 'r') as f:
-        dic = json.load(f)
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            dic = json.load(f)
+    else:
+        dic = {}
     dic.update(newInfo)
     with open(path, 'w') as f:
         json.dump(dic, f)
+
+def writeInfoToProfile(profile: str, info: dict):
+    path = f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json'
+    ensureFolderExists(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}')
+    updateJSON(info, path)

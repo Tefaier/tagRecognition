@@ -4,7 +4,6 @@ import cv2.aruco as aruco
 
 from python.models.detectors.detector import TagDetector
 
-
 class ArucoDetector(TagDetector):
     def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagLength: float, tagFamily: int, name: str = 'aruco'):
         super().__init__(name, cameraMatrix, distortionCoefficients)

@@ -6,10 +6,8 @@ from scipy.spatial.transform import Rotation
 # y-to down
 # z-into image
 class ImageGenerator:
-    def __init__(self, imageWidth, imageHeight, planeImagePath):
-        self.imageWidth = imageWidth
-        self.imageHeight = imageHeight
-        self.planeImagePath = planeImagePath
+    def __init__(self):
+        pass
 
-    def makeImageWithPlane(self, planeTranslation: np.array, planeRotation: Rotation, imagePath: str):
+    def makeImageWithPlane(self, planeTranslation: np.array, planeRotation: Rotation, savePath: str):
         pass

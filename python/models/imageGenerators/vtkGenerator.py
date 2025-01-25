@@ -16,7 +16,10 @@ class VTKGenerator(ImageGenerator):
     cameraTranslation: np.array
 
     def __init__(self, imageWidth, imageHeight, imagePath, cameraMatrix, planeWidth: float, planeHeight: float, bkgColor=None, cameraRotation: Rotation=None, cameraTranslation: np.array=None):
-        super().__init__(imageWidth, imageHeight, imagePath)
+        super().__init__()
+        self.imageWidth = imageWidth
+        self.imageHeight = imageHeight
+        self.planeImagePath = imagePath
         self.cameraMatrix = cameraMatrix
         self.planeWidth = planeWidth
         self.planeHeight = planeHeight
@@ -38,7 +41,7 @@ class VTKGenerator(ImageGenerator):
 
         self.init_vtk()
 
-    def makeImageWithPlane(self, planeTranslation: np.array, planeRotation: Rotation, imagePath: str):
+    def makeImageWithPlane(self, planeTranslation: np.array, planeRotation: Rotation, savePath: str):
         self.plane = vtkPlaneSource()
         self.plane.SetOrigin(-self.planeWidth * 0.5, -self.planeHeight * 0.5, 0.0)
         self.plane.SetPoint1(self.planeWidth * 0.5, -self.planeHeight * 0.5, 0.0)
@@ -61,7 +64,7 @@ class VTKGenerator(ImageGenerator):
         w2if.Update()
 
         writer = vtkPNGWriter()
-        writer.SetFileName(imagePath)
+        writer.SetFileName(savePath)
         writer.SetInputData(w2if.GetOutput())
         writer.Write()
         self.renderer.RemoveActor(planeActor)

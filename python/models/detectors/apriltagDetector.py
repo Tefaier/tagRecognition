@@ -34,7 +34,7 @@ class ApriltagDetector(TagDetector):
 
     def rectifyRotation(self, rotation: Rotation):
         extraRotation = Rotation.from_rotvec(rotation.apply([180, 0, 0]), degrees=True)
-        return extraRotation * rotation
+        return rotation * extraRotation
 
     def detect(self, image: np.ndarray) -> (list, list, list):
         imageGray = getGrayImage(image)

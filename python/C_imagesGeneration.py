@@ -1,87 +1,163 @@
+import glob
 import os
 
+import cv2.aruco
 import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 
-from python.constantsForCheck import collectionFolder, csvName, tagLength, tagImagesFolder, imageWidth, imageHeight, camMatrix
-from python.utils import deviateTransform, generateNormalDistributionValue
-from python.virtualCamera import PlaneRenderer
+from python.models.imageGenerators.imageGenerator import ImageGenerator
+from python.models.imageGenerators.vtkGenerator import VTKGenerator
+from python.settings import generatedInfoFolder, analyseImagesFolder, imageInfoFilename, generalInfoFilename, \
+    tagImagesFolder, imageHeight, imageWidth, testCameraMatrix
+from python.utils import deviateTransform, generateNormalDistributionValue, ensureFolderExists, updateJSON
 
-# fields: imageName, tagFamily, tagId, translation, rotation
-imageNames = []
-arucoAvailables = []
-translations = []
-rotations = []
-otherInfos = []
+class ImageGenerationSettings:
+    clearExistingImages: bool
+    tagLength: float
+    isAruco: bool
+    arucoFamily: str
+    isApriltag: bool
+    apriltagFamily: str
 
-files = os.listdir(collectionFolder + "/")
-files = list(filter(lambda name: name.split('.')[-1]=='png', files))
-files = [int(name.split('.')[0]) for name in files]
-toWriteFrom = max(files, default=-1) + 1
-iterationIndex = 0
+    def __init__(
+            self,
+            clearExistingImages: bool,
+            tagLength: float,
+            isAruco: bool,
+            arucoFamily: str,
+            isApriltag: bool,
+            apriltagFamily: str
+    ):
+        self.clearExistingImages = clearExistingImages
+        self.tagLength = tagLength
+        self.isAruco = isAruco
+        self.arucoFamily = arucoFamily
+        self.isApriltag = isApriltag
+        self.apriltagFamily = apriltagFamily
 
-tagImage = tagImagesFolder + '/' + 'aruco_5x5_2.png'
-ratioOfImageToTag = 10 / 8
-renderer = PlaneRenderer(imageWidth, imageHeight, camMatrix, tagImage)
+    def dictVersion(self) -> dict:
+        return {"clearExistingImages": self.clearExistingImages, "tagLength": self.tagLength, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily}
 
-def getImageWithParams(translation: list, rotation: Rotation, planeSize: float, saveDestination: str):
-    renderer.renderPlane(translation, rotation, planeSize, saveDestination)
 
-def makeOutput(index: int, translation: list, rotation: list, isAruco: bool = False, extraInfo: dict = None):
-    if extraInfo is None:
-        extraInfo = {}
-    # fill values
-    imageNames.append(str(toWriteFrom + index) + str(".png"))
-    arucoAvailables.append(isAruco)
+def makeOutput(imageNames: list, name: str, translations: list, translation: list, rotations: list, rotation: list):
+    imageNames.append(f"{name}.png")
     translations.append([float(val) for val in translation])
-    rotations.append(rotation)
-    otherInfos.append(extraInfo)
+    rotations.append([float(val) for val in rotation])
 
-def rotationWithRectify(toMake: Rotation) -> Rotation:
-    rectify = Rotation.from_euler('xyz', [180, 0, 0], degrees=True)
-    return toMake * rectify
+def saveProfileInfo(path: str, settings: ImageGenerationSettings):
+    updateJSON(settings.dictVersion(), path)
 
-defaultTranslation = [0.0, 0.0, 4.0]
-samplesToGet = 50
-p_bar = tqdm(range(samplesToGet * (50 + 50)), ncols=100)
+def saveGeneratedInfo(path: str, imageNames: list, translations: list, rotations: list, replaceInfo: bool):
+    collectedInfo = pd.DataFrame.from_dict({
+        "imageName": imageNames,
+        "realT": translations,
+        "realR": rotations
+    })
+    if replaceInfo or not os.path.exists(path):
+        collectedInfo.to_csv(path, header=True, mode='w', index=False)
+        return
+    df = pd.read_csv(path)
+    pd.concat([df, collectedInfo]).to_csv(path, header=True, mode='w', index=False)
 
-startStop, spots = (-85, 85), 50
-for x in np.linspace(startStop[0], startStop[1], spots):
-    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-    rawTranslation = defaultTranslation
-    rawRotation = [x, 0, 0]
-    for i in range(0, samplesToGet):
-        translation, rotationEuler = deviateTransform(rawTranslation, rawRotation, rx=generateNormalDistributionValue(maxDeviation=deviateValue))
-        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
-        getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-        makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-        iterationIndex += 1
-        p_bar.update()
-        p_bar.refresh()
+def prepareFolder(path: str, clear: bool) -> int:
+    ensureFolderExists(path)
+    files = glob.glob(f"{path}/*.png")
+    if clear:
+        for f in files:
+            os.remove(f)
+        return 0
+    files = [int(name.split('.')[0]) for name in files]
+    toWriteFrom = max(files, default=-1) + 1
+    return toWriteFrom
 
-startStop, spots = (-85, 85), 50
-for y in np.linspace(startStop[0], startStop[1], spots):
-    deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-    rawTranslation = defaultTranslation
-    rawRotation = [0, y, 0]
-    for i in range(0, samplesToGet):
-        translation, rotationEuler = deviateTransform(rawTranslation, rawRotation, ry=generateNormalDistributionValue(maxDeviation=deviateValue))
-        rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
-        getImageWithParams(translation, rotationWithRectify(rotation), tagLength * ratioOfImageToTag, collectionFolder + "/" + str(toWriteFrom + iterationIndex) + ".png")
-        makeOutput(iterationIndex, translation, rotation.as_rotvec(degrees=False).tolist(), True, extraInfo={'tagLength': tagLength, 'tagFamily': 'tag36h11', 'tagId': 0})
-        iterationIndex += 1
-        p_bar.update()
-        p_bar.refresh()
+def generateImages(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list, rotations: list):
+    toWriteFrom = prepareFolder(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}", settings.clearExistingImages)
+    saveProfileInfo(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generatedInfoFolder}.json", settings)
+
+    imageNames = []
+    translations = []
+    rotations = []
+
+    iterationIndex = 0
+    defaultTranslation = [0.0, 0.0, 4.0]
+    samplesToGet = 50
+    p_bar = tqdm(range(samplesToGet * (50 + 50)), ncols=100)
+
+    startStop, spots = (-85, 85), 50
+    for x in np.linspace(startStop[0], startStop[1], spots):
+        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
+        rawTranslation = defaultTranslation
+        rawRotation = [x + 180, 0, 0]
+        for i in range(0, samplesToGet):
+            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
+                                                          rx=generateNormalDistributionValue(maxDeviation=deviateValue))
+            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+            generator.makeImageWithPlane(translation, rotation, f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}/{toWriteFrom + iterationIndex}.png")
+            makeOutput(imageNames, iterationIndex, translations, translation, rotations, rotation.as_rotvec(degrees=False).tolist())
+            iterationIndex += 1
+            p_bar.update()
+            p_bar.refresh()
+
+    startStop, spots = (-85, 85), 50
+    for y in np.linspace(startStop[0], startStop[1], spots):
+        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
+        rawTranslation = defaultTranslation
+        rawRotation = [180, y, 0]
+        for i in range(0, samplesToGet):
+            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
+                                                          ry=generateNormalDistributionValue(maxDeviation=deviateValue))
+            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+            generator.makeImageWithPlane(translation, rotation, f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}/{toWriteFrom + iterationIndex}.png")
+            makeOutput(imageNames, iterationIndex, translations, translation, rotations, rotation.as_rotvec(degrees=False).tolist())
+            iterationIndex += 1
+            p_bar.update()
+            p_bar.refresh()
+
+    saveGeneratedInfo(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{imageInfoFilename}.csv", imageNames, translations, rotations, settings.clearExistingImages)
 
 
-# creates DataFrame and appends it to file
-collectedInfo = pd.DataFrame.from_dict({
-    "imageName": imageNames,
-    "arucoAvailable": arucoAvailables,
-    "realT": translations,
-    "realR": rotations,
-    "otherInfo": otherInfos
-})
-collectedInfo.to_csv(collectionFolder + "/" + csvName, header=True, mode='w', index=False)
+def testRun():
+    translations = []
+    rotations = []
+    defaultTranslation = [0.0, 0.0, 4.0]
+    samplesToGet = 50
+
+    startStop, spots = (-85, 85), 50
+    for x in np.linspace(startStop[0], startStop[1], spots):
+        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
+        rawTranslation = defaultTranslation
+        rawRotation = [x + 180, 0, 0]
+        for i in range(0, samplesToGet):
+            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
+                                                          rx=generateNormalDistributionValue(maxDeviation=deviateValue))
+            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+            translations.append(translation)
+            rotations.append(rotation.as_rotvec(degrees=False))
+
+    startStop, spots = (-85, 85), 50
+    for y in np.linspace(startStop[0], startStop[1], spots):
+        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
+        rawTranslation = defaultTranslation
+        rawRotation = [180, y, 0]
+        for i in range(0, samplesToGet):
+            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
+                                                          ry=generateNormalDistributionValue(maxDeviation=deviateValue))
+            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+            translations.append(translation)
+            rotations.append(rotation.as_rotvec(degrees=False))
+
+    generateImages(
+        "test",
+        VTKGenerator(
+            imageWidth,
+            imageHeight,
+            f'{os.path.dirname(__file__)}/{tagImagesFolder}/aruco_1.png',
+            testCameraMatrix,
+            0.1,
+            0.1),
+        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
+        translations,
+        rotations
+    )

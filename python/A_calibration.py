@@ -16,12 +16,14 @@ from python.settings import generatedInfoFolder, calibrationImagesFolder, imageW
     testCameraMatrix, generalInfoFilename
 from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVector, updateJSON
 
-
-def performCalibration(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
-    ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
-    files = glob.glob(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/*")
+def prepareFolder(path: str):
+    ensureFolderExists(path)
+    files = glob.glob(f"{path}/*")
     for f in files:
         os.remove(f)
+
+def performCalibration(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
+    prepareFolder(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
 
     # position around which images are created
     index = 0
@@ -43,10 +45,10 @@ def performCalibration(profile: str, detector: TagDetector, generator: ImageGene
 
 def performCalibrationOnExistingImages(profile: str, detector: TagDetector) -> (list, list):
     ensureFolderExists(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
-    objpoints = []
-    imgpoints = []
     images = glob.glob(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/*.png')
 
+    objpoints = []
+    imgpoints = []
     for name in images:
         image = cv2.imread(name)
         objp, imgp = detector.detectObjectPoints(image)
