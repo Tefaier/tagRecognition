@@ -1,9 +1,18 @@
+import numpy as np
+from scipy.spatial.transform import Rotation
+
 from python.models.transformsParser.transformsParser import TransformsParser
 
-
-class SimpleParser(TransformsParser):
-    def __init__(self, translations: list, rotations: list, ids: list):
+# for a set of tags on top of a cube in an order of x+, y+, z+, x-, y-, z-
+# image alignment of x axis is towards cubes y+, x-, y+, y-, x+, x+
+class CubeParser(TransformsParser):
+    def __init__(self, ids: list, cubeSize: float):
+        xRotate = Rotation.from_rotvec([90, 0, 0], degrees=True)
+        yRotate = Rotation.from_rotvec([0, 90, 0], degrees=True)
+        zRotate = Rotation.from_rotvec([0, 0, 90], degrees=True)
+        xVector = np.array([1, 0, 0])
+        yVector = np.array([0, 1, 0])
+        zVector = np.array([0, 0, 1])
+        translations = [xVector, yVector, zVector, -xVector, -yVector, -zVector]
+        rotations = [xRotate * yRotate, yVector * yRotate * xRotate.inv(), zRotate, zRotate.inv() * xRotate, xRotate, xRotate * xRotate]
         super().__init__(translations, rotations, ids)
-
-    def getParentTransform(self, translations: list, rotations: list, ids: list) -> (list, list):
-        pass
