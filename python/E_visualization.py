@@ -57,20 +57,20 @@ def readInfo(profiles: list[str]):
     return result
 
 # show x rotation [0, 100)
-def makeXAxisInfo(specificMask: np.array, isTranslation: bool, xAxisPartToShow: str):
+def makeXAxisInfo(info: dict, specificMask: np.array, isTranslation: bool, xAxisPartToShow: str):
     if isTranslation:
-        return [realT[index][axisToIndex(xAxisPartToShow)] for index in specificMask]
+        return [info["realT"][index][axisToIndex(xAxisPartToShow)] for index in specificMask]
     else:
-        return [getRotationEuler(realR[index], xAxisPartToShow, True) for index in specificMask]
+        return [getRotationEuler(info["realR"][index], xAxisPartToShow, True) for index in specificMask]
 
-def makeYAxisInfo(specificMask: np.array, isTranslation: bool, yAxisPartToShow: str):
+def makeYAxisInfo(info: dict, specificMask: np.array, isTranslation: bool, yAxisPartToShow: str):
     if isTranslation:
-        return [errorT[index][axisToIndex(yAxisPartToShow)] for index in specificMask]
+        return [info["errorT"][index][axisToIndex(yAxisPartToShow)] for index in specificMask]
     else:
-        return [getRotationEuler(errorR[index], yAxisPartToShow, True) for index in specificMask]
+        return [getRotationEuler(info["errorR"][index], yAxisPartToShow, True) for index in specificMask]
 
-def maskBySuccess(mask: np.array):
-    return np.intersect1d(mask, successMask)
+def maskBySuccess(info: dict, mask: np.array):
+    return np.intersect1d(mask, info["successMask"])
 
 def initSubplot(plotRow: int, plotColumn: int, plotNumber: int, plotTitle: str, plotXAxisTitle: str, plotYAxisTitle: str):
     plt.subplot(plotRow, plotColumn, plotNumber)
@@ -98,11 +98,12 @@ def makeDislpay(
         xAxisPartToShow: str,
         yAxisPartToShow: str,
         binsToMake: int,
-        infoRange: tuple[float, float]
+        infoRange: tuple[float, float],
+        info: dict
 ):
-    mask = maskBySuccess(generalMask)
-    xInfo = makeXAxisInfo(mask, isTranslation, xAxisPartToShow)
-    yInfo = makeYAxisInfo(mask, isTranslation, yAxisPartToShow)
+    mask = maskBySuccess(info, generalMask)
+    xInfo = makeXAxisInfo(info, mask, isTranslation, xAxisPartToShow)
+    yInfo = makeYAxisInfo(info, mask, isTranslation, yAxisPartToShow)
 
     if binsToMake != 0:
         x, y = binifyInfo(xInfo, yInfo, binsToMake, infoRange)
@@ -131,25 +132,25 @@ def savePlot(
     plt.savefig(path, dpi='figure', bbox_inches='tight', pad_inches=0.2, edgecolor='blue')
     plt.close(figure)
 
-
+generalInfo = readInfo(["test"])
 fig = initFigure("Errors in detected rotation and real rotation")
 iFrom, iTo = 0, 2500
 initSubplot(1, 2, 1,
          "Aruco",
          "Real rotation around x, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
 
 iFrom, iTo = iFrom + 5000, iTo + 5000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real rotation around x, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
 savePlot(fig, resultFolder + '/RotationX.png')
 
 fig = initFigure("Errors in detected rotation and real rotation")
@@ -158,17 +159,17 @@ initSubplot(1, 2, 1,
          "Aruco",
          "Real rotation around y, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
 
 iFrom, iTo = iFrom + 5000, iTo + 5000
 initSubplot(1, 2, 2,
          "Apriltag",
          "Real rotation around y, degrees",
          "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85))
-makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85))
-makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85))
+makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
+makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
 savePlot(fig, resultFolder + '/RotationY.png')
 
