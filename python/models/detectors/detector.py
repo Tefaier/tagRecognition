@@ -20,3 +20,6 @@ class TagDetector:
     # returns (translations, rotations, ids)
     def detect(self, image: np.ndarray) -> (list, list, list):
         pass
+
+    def detectorSettings(self) -> dict:
+        pass

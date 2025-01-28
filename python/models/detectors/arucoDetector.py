@@ -5,11 +5,11 @@ import cv2.aruco as aruco
 from python.models.detectors.detector import TagDetector
 
 class ArucoDetector(TagDetector):
-    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagLength: float, tagFamily: int, name: str = 'aruco'):
+    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagLength: float, settings: cv2.aruco.DetectorParameters, tagFamily: int, name: str = 'aruco'):
         super().__init__(name, cameraMatrix, distortionCoefficients)
         self.dictionary = aruco.getPredefinedDictionary(tagFamily)
-        self.detectorParams = aruco.DetectorParameters()
-        self.detector = aruco.ArucoDetector(self.dictionary, self.detectorParams)
+        self.settings = settings
+        self.detector = aruco.ArucoDetector(self.dictionary, self.settings)
         self.objPoints = np.array([[-tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, tagLength / 2, 0],
                               [tagLength / 2, -tagLength / 2, 0],
@@ -36,3 +36,8 @@ class ArucoDetector(TagDetector):
                     rotations.append(rvec)
                     translations.append(tvec)
         return translations, rotations, ids
+
+    def detectorSettings(self) -> dict:
+        return {
+
+        }

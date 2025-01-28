@@ -43,3 +43,6 @@ class ChessboardDetector(TagDetector):
         rvec = rvec.reshape((3,))
         rvec = self.rectifyRotation(Rotation.from_rotvec(rvec, degrees=False)).as_rotvec(degrees=False)
         return tvec.reshape((1,3)), rvec.reshape((1,3)), None
+
+    def detectorSettings(self) -> dict:
+        return {}

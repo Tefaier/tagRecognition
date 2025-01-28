@@ -36,6 +36,9 @@ def getRotationEuler(rotation: list, part: str, degrees: bool = False) -> float:
 def readStringOfList(listStr: Series) -> list:
     return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
 
+def readStringOfDict(listStr: Series) -> list[dict]:
+    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
+
 def generateNormalDistributionValue(center: float = 0, maxDeviation: float = 3) -> float:
     return min(
         max(
@@ -79,7 +82,16 @@ def updateJSON(newInfo: dict, path: str):
     with open(path, 'w') as f:
         json.dump(dic, f)
 
-def writeInfoToProfile(profile: str, info: dict):
+def writeInfoToProfileJSON(profile: str, info: dict):
     path = f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json'
     ensureFolderExists(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}')
     updateJSON(info, path)
+
+def readProfileJSON(profile: str) -> dict:
+    path = f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json'
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            dic = json.load(f)
+    else:
+        dic = {}
+    return dic

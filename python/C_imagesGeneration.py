@@ -38,7 +38,7 @@ class ImageGenerationSettings:
         self.apriltagFamily = apriltagFamily
 
     def dictVersion(self) -> dict:
-        return {"clearExistingImages": self.clearExistingImages, "tagLength": self.tagLength, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily}
+        return {"tagLength": self.tagLength, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily}
 
 
 def makeOutput(imageNames: list, name: str, translations: list, translation: list, rotations: list, rotation: list):

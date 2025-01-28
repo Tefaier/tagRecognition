@@ -1,28 +1,61 @@
 from cProfile import label
 
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 from python.constantsForCheck import resultFolder, analiseFile
-from python.utils import readStringOfList, getRotationEuler, axisToIndex
+from python.settings import generatedInfoFolder, detectionInfoFilename
+from python.utils import readStringOfList, getRotationEuler, axisToIndex, readProfileJSON, readStringOfDict
 
-analizationResults = pd.read_csv(resultFolder + "/" + analiseFile)
+# [[profileStr,
+#   tagSize,
+#   arucoFamily,
+#   apriltagFamily,
+#   [    detectionSetting,
+#        {   'method': [],
+#            'realT': [],
+#            'realR': [],
+#            'errorT': [],
+#            'errorR': [],
+#            'isSuccess': [],
+#            'successMask': []
+#        }
+#   ]
+# ]]
+def readInfo(profiles: list[str]):
+    result = []
+    for profile in profiles:
+        analizationResults = pd.read_csv(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{detectionInfoFilename}.csv")
+        jsonInfo = readProfileJSON(profile)
+        resultProfile = [profile, jsonInfo["tagSize"], jsonInfo["arucoFamily"], jsonInfo["apriltagFamily"], []]
 
-realT = np.array(readStringOfList(analizationResults['realT']))
-realR = np.array(readStringOfList(analizationResults['realR']))
-detectedT = readStringOfList(analizationResults['detectedT'])
-detectedR = readStringOfList(analizationResults['detectedR'])
-errorT = readStringOfList(analizationResults['errorT'])
-errorR = readStringOfList(analizationResults['errorR'])
-isSuccess = np.array(analizationResults['isSuccess'])
-usedMethod = np.array(analizationResults['method'])
-successMask = np.where(isSuccess == True)
+        realT = np.array(readStringOfList(analizationResults['realT']))
+        realR = np.array(readStringOfList(analizationResults['realR']))
+        errorT = readStringOfList(analizationResults['errorT'])
+        errorR = readStringOfList(analizationResults['errorR'])
+        isSuccess = np.array(analizationResults['isSuccess'])
+        method = np.array(analizationResults['method'])
+        detectionSettings = readStringOfDict(analizationResults['detectionSettings'])
 
-# arucoIndexes = np.where(usedMethod == arucoDetector.name)
-# apriltagIndexes = np.where(usedMethod == apriltagDetector.name)
+        dictBySettingsEquals = {}
+        for index, setting in enumerate(detectionSettings):
+            dictBySettingsEquals.setdefault(setting, []).append(index)
+        for key, value in dictBySettingsEquals.items():
+            resultProfile[-1].append([
+                detectionSettings[dictBySettingsEquals[key][0]], {}
+            ])
+            resultProfile[-1][1]['method'] = [method[index] for index in value]
+            resultProfile[-1][1]['realT'] = np.array([realT[index] for index in value])
+            resultProfile[-1][1]['realR'] = np.array([realR[index] for index in value])
+            resultProfile[-1][1]['errorT'] = [errorT[index] for index in value]
+            resultProfile[-1][1]['errorR'] = [errorR[index] for index in value]
+            resultProfile[-1][1]['isSuccess'] = np.array([isSuccess[index] for index in value])
+            resultProfile[-1][1]['successMask'] = np.where(resultProfile[-1][1]['isSuccess'] == True)
+        result.append(resultProfile)
+    return result
 
-offset = 400
 # show x rotation [0, 100)
 def makeXAxisInfo(specificMask: np.array, isTranslation: bool, xAxisPartToShow: str):
     if isTranslation:

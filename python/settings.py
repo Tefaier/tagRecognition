@@ -6,6 +6,7 @@ analyseImagesFolder = 'analyse'
 generalInfoFilename = 'profileInfo'
 imageInfoFilename = 'imageInfo'
 detectionInfoFilename = 'detectionInfo'
+plotsFolder = 'plots'
 
 tagImagesFolder = 'tagImages'
 
