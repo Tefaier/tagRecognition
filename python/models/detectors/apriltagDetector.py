@@ -36,6 +36,12 @@ class ApriltagDetector(TagDetector):
         extraRotation = Rotation.from_rotvec(rotation.apply([180, 0, 0]), degrees=True)
         return rotation * extraRotation
 
+    def detectObjectPoints(self, image: np.ndarray) -> (list, list):
+        imageGray = getGrayImage(image)
+        results = self.detector.detect(imageGray)
+        markerCorners = [r.corners for r in results]
+        return self.objPoints.copy(), markerCorners[0].reshape((4, 1, 2)) if len(markerCorners) > 0 else None
+
     def detect(self, image: np.ndarray) -> (list, list, list):
         imageGray = getGrayImage(image)
         imageGray = cv2.undistort(imageGray, self.cameraMatrix, self.distortionCoefficients, None)
