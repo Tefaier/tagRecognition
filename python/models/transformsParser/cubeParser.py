@@ -10,9 +10,9 @@ class CubeParser(TransformsParser):
         xRotate = Rotation.from_rotvec([90, 0, 0], degrees=True)
         yRotate = Rotation.from_rotvec([0, 90, 0], degrees=True)
         zRotate = Rotation.from_rotvec([0, 0, 90], degrees=True)
-        xVector = np.array([1, 0, 0])
-        yVector = np.array([0, 1, 0])
-        zVector = np.array([0, 0, 1])
+        xVector = np.array([cubeSize, 0, 0])
+        yVector = np.array([0, cubeSize, 0])
+        zVector = np.array([0, 0, cubeSize])
         translations = [xVector, yVector, zVector, -xVector, -yVector, -zVector]
         rotations = [xRotate * yRotate, yVector * yRotate * xRotate.inv(), zRotate, zRotate.inv() * xRotate, xRotate, xRotate * xRotate]
         super().__init__(translations, rotations, ids)

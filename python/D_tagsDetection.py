@@ -7,7 +7,7 @@ import numpy as np
 
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.detector import TagDetector
-from python.models.transformsParser.simpleParser import SimpleParser
+from python.models.transformsParser.cubeParser import SimpleParser
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import generatedInfoFolder, imageInfoFilename, detectionInfoFilename, analyseImagesFolder, \
     generalInfoFilename
