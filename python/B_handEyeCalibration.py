@@ -70,7 +70,7 @@ def performEyeHandDetection(profile: str, detector: TagDetector, number: int) ->
     for i in range(0, number):
         img = cv2.imread(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/{i}.png')
         tvec, rvec, ids = detector.detect(img)
-        if rvec is None:
+        if len(rvec) == 0:
             detectedMask[i] = False
             continue
         tvec = tvec[0]
@@ -88,15 +88,14 @@ def testRun():
     patternHeight = 0.1 * 9 / 11
     squareSize = patternWidth / 11
     # performCalibrationOnExistingImages("test", patternWidth, ChessboardDetector(None, None, chessboardPattern, squareSize))
+    # performEyeHand(
+    #     "test",
+    #     ChessboardDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), chessboardPattern, squareSize),
+    #     VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', np.array(testCameraMatrix), patternWidth,
+    #                  patternHeight)
+    # )
     performEyeHand(
         "test",
-        ChessboardDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), chessboardPattern, squareSize),
-        VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', np.array(testCameraMatrix), patternWidth,
-                     patternHeight)
+        ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), patternWidth, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50),
+        VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/aruco_1.png', testCameraMatrix, patternWidth, patternWidth)
     )
-    # performCalibration(
-    #     "test",
-    #     ArucoDetector(info.get("CameraMatrix"), info.get("distortionCoefficients"), patternWidth, cv2.aruco.DICT_5X5_50),
-    #     VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/aruco_1.png', testCameraMatrix, patternWidth,
-    #                  patternWidth)
-    # )

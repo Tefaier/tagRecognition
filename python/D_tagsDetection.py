@@ -4,10 +4,10 @@ import os
 import cv2
 import pandas as pd
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.detector import TagDetector
-from python.models.transformsParser.cubeParser import SimpleParser
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import generatedInfoFolder, imageInfoFilename, detectionInfoFilename, analyseImagesFolder, \
     generalInfoFilename
@@ -92,4 +92,4 @@ def testRun():
     with open(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/test/{generalInfoFilename}.json', 'r') as f:
         info: dict = json.load(f)
 
-    performDetection("test", ArucoDetector(info["cameraMatrix"], info["distortionCoefficients"], info["tagLength"], int(info["arucoFamily"])), {}, SimpleParser([[0, 0, 0]], [[0, 0, 0]], [5]), True)
+    performDetection("test", ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), info["tagLength"], cv2.aruco.DetectorParameters(), int(info["arucoFamily"])), TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [5]), True)

@@ -11,7 +11,9 @@ from python.models.imageGenerators.imageGenerator import ImageGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.settings import generatedInfoFolder, analyseImagesFolder, imageInfoFilename, \
     tagImagesFolder, imageHeight, imageWidth, testCameraMatrix
-from python.utils import deviateTransform, generateNormalDistributionValue, ensureFolderExists, updateJSON
+from python.utils import deviateTransform, generateNormalDistributionValue, ensureFolderExists, updateJSON, \
+    writeInfoToProfileJSON
+
 
 class ImageGenerationSettings:
     clearExistingImages: bool
@@ -46,8 +48,8 @@ def makeOutput(imageNames: list, name: str, translations: list, translation: lis
     translations.append([float(val) for val in translation])
     rotations.append([float(val) for val in rotation])
 
-def saveProfileInfo(path: str, settings: ImageGenerationSettings):
-    updateJSON(settings.dictVersion(), path)
+def saveProfileInfo(profile: str, settings: ImageGenerationSettings):
+    writeInfoToProfileJSON(profile, settings.dictVersion())
 
 def saveGeneratedInfo(path: str, imageNames: list, translations: list, rotations: list, replaceInfo: bool):
     collectedInfo = pd.DataFrame.from_dict({
@@ -74,7 +76,7 @@ def prepareFolder(path: str, clear: bool) -> int:
 
 def generateImages(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list, rotations: list):
     toWriteFrom = prepareFolder(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}", settings.clearExistingImages)
-    saveProfileInfo(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generatedInfoFolder}.json", settings)
+    saveProfileInfo(profile, settings)
 
     imageNames = []
     translations = []

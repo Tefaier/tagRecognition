@@ -57,7 +57,7 @@ def performCalibrationOnExistingImages(profile: str, detector: TagDetector) -> (
             imgpoints.append(imgp)
 
     ret, cameraMatrix, distortionCoefficients, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, getGrayImage(cv2.imread(images[-1])).shape[::-1], None, None, flags = cv2.CALIB_USE_LU)
-    cameraMatrix = cameraMatrix.reshape((4, 4)).tolist()
+    cameraMatrix = cameraMatrix.reshape((3, 3)).tolist()
     distortionCoefficients = distortionCoefficients.reshape((5,)).tolist()
     updateJSON({"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients},
                f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json')

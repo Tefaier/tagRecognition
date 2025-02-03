@@ -3,9 +3,6 @@ from math import degrees
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-from calibrationTesting.handToEye import translation
-
-
 class TransformsParser:
     def __init__(self, translations: list[np.array], rotations: list[Rotation], ids: list[int]):
         self.translations = translations
