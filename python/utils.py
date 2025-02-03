@@ -95,3 +95,11 @@ def readProfileJSON(profile: str) -> dict:
     else:
         dic = {}
     return dic
+
+def copyCameraProfileInfo(fromProfile: str, toProfile: str):
+    info = readProfileJSON(fromProfile)
+    toLeaveList = ["cameraMatrix", "distortionCoefficients", "cameraTranslation", "cameraTranslation"]
+    toLeaveDict = {}
+    for key in toLeaveList:
+        toLeaveDict[key] = info[key]
+    writeInfoToProfileJSON(toProfile, toLeaveDict)
