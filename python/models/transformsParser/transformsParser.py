@@ -26,4 +26,4 @@ class TransformsParser:
         parentTranslations = np.array(parentTranslations)
         parentTranslation = parentTranslations.mean(axis=0)
         parentRotation = Rotation.concatenate(parentRotations).mean()
-        return parentTranslation.to_list(), parentRotation.as_rotvec(degrees=False)
+        return parentTranslation.tolist(), parentRotation.as_rotvec(degrees=False)

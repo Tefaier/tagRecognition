@@ -74,50 +74,40 @@ def prepareFolder(path: str, clear: bool) -> int:
     toWriteFrom = max(files, default=-1) + 1
     return toWriteFrom
 
-def generateImages(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list, rotations: list):
+def generateImages(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list[list], rotations: list[Rotation]):
     toWriteFrom = prepareFolder(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}", settings.clearExistingImages)
     saveProfileInfo(profile, settings)
 
     imageNames = []
-    translations = []
-    rotations = []
+    translationsWrite = []
+    rotationsWrite = []
 
-    iterationIndex = 0
-    defaultTranslation = [0.0, 0.0, 4.0]
-    samplesToGet = 50
-    p_bar = tqdm(range(samplesToGet * (50 + 50)), ncols=100)
+    p_bar = tqdm(range(len(translations)), ncols=100)
 
-    startStop, spots = (-85, 85), 50
-    for x in np.linspace(startStop[0], startStop[1], spots):
-        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-        rawTranslation = defaultTranslation
-        rawRotation = [x + 180, 0, 0]
-        for i in range(0, samplesToGet):
-            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
-                                                          rx=generateNormalDistributionValue(maxDeviation=deviateValue))
-            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
-            generator.makeImageWithPlane(translation, rotation, f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}/{toWriteFrom + iterationIndex}.png")
-            makeOutput(imageNames, iterationIndex, translations, translation, rotations, rotation.as_rotvec(degrees=False).tolist())
-            iterationIndex += 1
-            p_bar.update()
-            p_bar.refresh()
+    for iterationIndex in range(len(translations)):
+        generator.makeImageWithPlane(
+            translations[iterationIndex],
+            rotations[iterationIndex],
+            f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}/{toWriteFrom + iterationIndex}.png"
+        )
+        makeOutput(
+            imageNames,
+            toWriteFrom + iterationIndex,
+            translationsWrite,
+            translations[iterationIndex],
+            rotationsWrite,
+            rotations[iterationIndex].as_rotvec(degrees=False).tolist()
+        )
+        p_bar.update()
+        p_bar.refresh()
 
-    startStop, spots = (-85, 85), 50
-    for y in np.linspace(startStop[0], startStop[1], spots):
-        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-        rawTranslation = defaultTranslation
-        rawRotation = [180, y, 0]
-        for i in range(0, samplesToGet):
-            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
-                                                          ry=generateNormalDistributionValue(maxDeviation=deviateValue))
-            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
-            generator.makeImageWithPlane(translation, rotation, f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}/{toWriteFrom + iterationIndex}.png")
-            makeOutput(imageNames, iterationIndex, translations, translation, rotations, rotation.as_rotvec(degrees=False).tolist())
-            iterationIndex += 1
-            p_bar.update()
-            p_bar.refresh()
-
-    saveGeneratedInfo(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{imageInfoFilename}.csv", imageNames, translations, rotations, settings.clearExistingImages)
+    saveGeneratedInfo(
+        f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{imageInfoFilename}.csv",
+        imageNames,
+        translationsWrite,
+        rotationsWrite,
+        settings.clearExistingImages
+    )
 
 
 def testRun():
@@ -136,7 +126,7 @@ def testRun():
                                                           rx=generateNormalDistributionValue(maxDeviation=deviateValue))
             rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
             translations.append(translation)
-            rotations.append(rotation.as_rotvec(degrees=False))
+            rotations.append(rotation)
 
     startStop, spots = (-85, 85), 50
     for y in np.linspace(startStop[0], startStop[1], spots):
@@ -148,7 +138,7 @@ def testRun():
                                                           ry=generateNormalDistributionValue(maxDeviation=deviateValue))
             rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
             translations.append(translation)
-            rotations.append(rotation.as_rotvec(degrees=False))
+            rotations.append(rotation)
 
     generateImages(
         "test",

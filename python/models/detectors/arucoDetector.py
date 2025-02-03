@@ -32,7 +32,7 @@ class ArucoDetector(TagDetector):
                 rvec = rvec.reshape((3,))
                 tvec = tvec.reshape((3,))
                 if success:
-                    ids.append(markerIds[i])
+                    ids.append(markerIds[i][0])
                     rotations.append(rvec)
                     translations.append(tvec)
         return translations, rotations, ids

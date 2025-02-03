@@ -5,6 +5,7 @@ import cv2
 import pandas as pd
 import numpy as np
 from scipy.spatial.transform import Rotation
+from tqdm import tqdm
 
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.detector import TagDetector
@@ -37,17 +38,29 @@ def analyseInfo(imagesFolder: str, detector: TagDetector, dframe: pd.DataFrame, 
     detectedT = []
     detectedR = []
 
-    writeDetectionInfo(imagesFolder, detector, dframe, detectedT, detectedR, parser)
+    p_bar = tqdm(range(dframe.shape[0]), ncols=100)
+    writeDetectionInfo(p_bar, imagesFolder, detector, dframe, detectedT, detectedR, parser)
+    p_bar.close()
     dframe["method"] = detectorName
     dframe["detectedT"] = detectedT
     dframe["detectedR"] = detectedR
-    writeErrorInfo(dframe)
+    p_bar = tqdm(range(dframe.shape[0]), ncols=100)
+    writeErrorInfo(p_bar, dframe)
 
-def writeErrorInfo(dframe: pd.DataFrame):
+def writeDetectionInfo(bar: tqdm, imagesFolder: str, detector: TagDetector, dframe: pd.DataFrame, translationWrite: list, rotationWrite: list, parser: TransformsParser):
+    for _, row in dframe.iterrows():
+        t, r, ids = detector.detect(image=cv2.imread(f"{imagesFolder}/{row["imageName"]}"))
+        t, r = parser.getParentTransform(t, [Rotation.from_rotvec(rotation, degrees=False) for rotation in r], ids)
+        translationWrite.append([float(val) for val in t])
+        rotationWrite.append([float(val) for val in r])
+        bar.update()
+        bar.refresh()
+
+def writeErrorInfo(bar: tqdm, dframe: pd.DataFrame):
     realT = readStringOfList(dframe['realT'])
     realR = readStringOfList(dframe['realR'])
-    detectedT = readStringOfList(dframe['detectedT'])
-    detectedR = readStringOfList(dframe['detectedR'])
+    detectedT = dframe['detectedT']
+    detectedR = dframe['detectedR']
 
     errorT = []
     errorR = []
@@ -56,17 +69,12 @@ def writeErrorInfo(dframe: pd.DataFrame):
         errorT.append(getVectorError(realT[i], detectedT[i]))
         errorR.append(getRotationError(realR[i], detectedR[i]))
         isSuccess[i] = len(errorT[-1]) != 0 and len(errorR[-1]) != 0
+        bar.update()
+        bar.refresh()
 
     dframe['isSuccess'] = isSuccess
     dframe['errorT'] = errorT
     dframe['errorR'] = errorR
-
-def writeDetectionInfo(imagesFolder: str, detector: TagDetector, dframe: pd.DataFrame, translationWrite: list, rotationWrite: list, parser: TransformsParser):
-    for _, row in dframe.iterrows():
-        t, r, ids = detector.detect(image=cv2.imread(f"{imagesFolder}/{row["imageName"]}"))
-        t, r = parser.getParentTransform(t, r, ids)
-        translationWrite.append([float(val) for val in t])
-        rotationWrite.append([float(val) for val in r])
 
 def writeInfoToFile(path: str, dframe: pd.DataFrame, detectionSettings: dict, replace: bool):
     dframe["detectionSettings"] = np.full((dframe.shape[0],), detectionSettings)
@@ -92,4 +100,4 @@ def testRun():
     with open(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/test/{generalInfoFilename}.json', 'r') as f:
         info: dict = json.load(f)
 
-    performDetection("test", ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), info["tagLength"], cv2.aruco.DetectorParameters(), int(info["arucoFamily"])), TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [5]), True)
+    performDetection("test", ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), info["tagLength"], cv2.aruco.DetectorParameters(), int(info["arucoFamily"])), TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [2]), True)
