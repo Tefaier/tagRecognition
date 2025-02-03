@@ -29,7 +29,7 @@ def readInfo(profiles: list[str]):
     for profile in profiles:
         analizationResults = pd.read_csv(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{detectionInfoFilename}.csv")
         jsonInfo = readProfileJSON(profile)
-        resultProfile = [profile, jsonInfo["tagSize"], jsonInfo["arucoFamily"], jsonInfo["apriltagFamily"], []]
+        resultProfile = [profile, jsonInfo["tagLength"], jsonInfo["arucoFamily"], jsonInfo["apriltagFamily"]]
 
         realT = np.array(readStringOfList(analizationResults['realT']))
         realR = np.array(readStringOfList(analizationResults['realR']))
@@ -41,9 +41,9 @@ def readInfo(profiles: list[str]):
 
         dictBySettingsEquals = {}
         for index, setting in enumerate(detectionSettings):
-            dictBySettingsEquals.setdefault(setting, []).append(index)
+            dictBySettingsEquals.setdefault(tuple(sorted(setting.items())), []).append(index)
         for key, value in dictBySettingsEquals.items():
-            resultProfile[-1].append([
+            resultProfile.append([
                 detectionSettings[dictBySettingsEquals[key][0]], {}
             ])
             resultProfile[-1][1]['method'] = [method[index] for index in value]
