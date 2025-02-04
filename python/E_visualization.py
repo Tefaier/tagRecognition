@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 from python.constantsForCheck import resultFolder, analiseFile
-from python.settings import generatedInfoFolder, detectionInfoFilename
+from python.settings import generatedInfoFolder, detectionInfoFilename, plotsFolder
 from python.utils import readStringOfList, getRotationEuler, axisToIndex, readProfileJSON, readStringOfDict
 
 # [[profileStr,
@@ -132,7 +132,50 @@ def savePlot(
     plt.savefig(path, dpi='figure', bbox_inches='tight', pad_inches=0.2, edgecolor='blue')
     plt.close(figure)
 
-generalInfo = readInfo(["test"])
+def getInfoPart(info: list, profile: str, requiredTuple: tuple):
+    profileIndex = -1
+    for i in range(len(info)):
+        if info[i][0] == profile:
+            profileIndex = i
+            break
+    if profileIndex == -1: raise ValueError(f"Didn't find profile {profile}")
+
+    dictIndex = -1
+    for i in range(len(info[profileIndex][-1])):
+        if info[profileIndex][-1][i][0] == requiredTuple:
+            dictIndex = i
+            break
+    if dictIndex == -1: raise ValueError(f"Didn't find dictionary with {requiredTuple}")
+
+    return info[profileIndex][-1][dictIndex][1]
+
+def testRun():
+    generalInfo = readInfo(["test"])
+    arucoAll = getInfoPart(generalInfo, "test", ())
+    fig = initFigure("Errors in detected rotation and real rotation")
+    iFrom, iTo = 0, 2500
+    initSubplot(1, 1, 1,
+                "Aruco",
+                "Real rotation around x, degrees",
+                "Deviation, degrees")
+    makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), arucoAll)
+    makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), arucoAll)
+    makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), arucoAll)
+    savePlot(fig, f'{plotsFolder}/RotationX.png')
+
+    fig = initFigure("Errors in detected rotation and real rotation")
+    iFrom, iTo = 2500, 5000
+    initSubplot(1, 1, 1,
+                "Aruco",
+                "Real rotation around y, degrees",
+                "Deviation, degrees")
+    makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), arucoAll)
+    makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), arucoAll)
+    makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), arucoAll)
+    savePlot(fig, f'{plotsFolder}/RotationY.png')
+
+
+'''
 fig = initFigure("Errors in detected rotation and real rotation")
 iFrom, iTo = 0, 2500
 initSubplot(1, 2, 1,
@@ -172,4 +215,4 @@ makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), generalI
 makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
 makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
 savePlot(fig, resultFolder + '/RotationY.png')
-
+'''
