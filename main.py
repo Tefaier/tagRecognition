@@ -1,7 +1,7 @@
-from python.A_calibration import testRun as calibrationTest
-from python.B_handEyeCalibration import testRun as handEyeTest
-from python.C_imagesGeneration import testRun as imagesGenerationTest
-from python.D_tagsDetection import testRun as tagsDetectionTest
+from python.A_calibration import test_run as calibrationTest
+from python.B_handEyeCalibration import test_run as handEyeTest
+from python.C_imagesGeneration import test_run as imagesGenerationTest
+from python.D_tagsDetection import test_run as tagsDetectionTest
 
 if __name__ == "__main__":
     # calibrationTest()

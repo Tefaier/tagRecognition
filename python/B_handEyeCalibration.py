@@ -1,7 +1,5 @@
 import json
 import os.path
-import time
-from random import Random
 
 import numpy as np
 import cv2
@@ -14,88 +12,89 @@ from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.imageGenerator import ImageGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
-from python.settings import generatedInfoFolder, calibrationImagesFolder, imageWidth, imageHeight, tagImagesFolder, \
-    testCameraMatrix, generalInfoFilename
-from python.utils import ensureFolderExists, getGrayImage, generateRandomNormVector, updateJSON
+from python.models.transformsParser.transformsParser import TransformsParser
+from python.settings import generated_info_folder, calibration_images_folder, image_width, image_height, tag_images_folder, \
+    test_camera_matrix, general_info_filename
+from python.utils import ensure_folder_exists, generate_random_norm_vector, update_json
 
-def prepareFolder(path: str):
-    ensureFolderExists(path)
+def prepare_folder(path: str):
+    ensure_folder_exists(path)
     files = glob.glob(f"{path}/*")
     for f in files:
         os.remove(f)
 
-def performEyeHand(profile: str, detector: TagDetector, generator: ImageGenerator) -> (list, list):
-    prepareFolder(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}")
+def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator) -> (list, list):
+    prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
 
     # position around which images are created
     index = 0
-    baseTranslation = np.array([0, 0, 0.15])
-    baseRotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
-    positionSamples = 5
-    rotationSamples = 10
-    deviationTranslation = np.array([0.08, 0.02, 0.05])  # in meters
-    angleRotation = 50  # in degrees
+    base_translation = np.array([0, 0, 0.15])
+    base_rotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
+    position_samples = 5
+    rotation_samples = 10
+    deviation_translation = np.array([0.08, 0.02, 0.05])  # in meters
+    angle_rotation = 50  # in degrees
 
-    translationsFromBase = []
-    rotationsFromBase = []
-    for _ in range(0, positionSamples):
-        translation = baseTranslation + generateRandomNormVector() * deviationTranslation
-        for _ in range(0, rotationSamples):
-            rotation = baseRotation * Rotation.from_rotvec(generateRandomNormVector() * angleRotation, degrees=True)
-            translationsFromBase.append(translation)
-            rotationsFromBase.append(rotation.as_rotvec(degrees=False))
-            generator.makeImageWithPlane(translation, rotation, f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/{index}.png')
+    translations_from_base = []
+    rotations_from_base = []
+    for _ in range(0, position_samples):
+        translation = base_translation + generate_random_norm_vector() * deviation_translation
+        for _ in range(0, rotation_samples):
+            rotation = base_rotation * Rotation.from_rotvec(generate_random_norm_vector() * angle_rotation, degrees=True)
+            translations_from_base.append(translation)
+            rotations_from_base.append(rotation.as_rotvec(degrees=False))
+            generator.generate_image_with_obj_at_transform(translation, rotation, f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{index}.png')
             index += 1
 
-    number = len(translationsFromBase)
-    detectedMask, translationsFromCamera, rotationsFromCamera = performEyeHandDetection(profile, detector, number)
-    translationsFromBase = np.array(translationsFromBase)[detectedMask]
-    rotationsFromBase = np.array(rotationsFromBase)[detectedMask]
-    rotationsFromBaseReverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotationsFromBase]
-    translationsFromBaseReverse = [-1 * rotationsFromBaseReverse[index].apply(tr) for index, tr in enumerate(translationsFromBase)]
-    rotationsFromBaseReverse = [rot.as_rotvec(degrees=False) for rot in rotationsFromBaseReverse]
-    rotationOfCamera, translationOfCamera = cv2.calibrateHandEye(rotationsFromBaseReverse, translationsFromBaseReverse, rotationsFromCamera, translationsFromCamera,
+    number = len(translations_from_base)
+    detected_mask, translations_from_camera, rotations_from_camera = perform_eye_hand_detection(profile, detector, parser, number)
+    translations_from_base = np.array(translations_from_base)[detected_mask]
+    rotations_from_base = np.array(rotations_from_base)[detected_mask]
+    rotations_from_base_reverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotations_from_base]
+    translations_from_base_reverse = [-1 * rotations_from_base_reverse[index].apply(tr) for index, tr in enumerate(translations_from_base)]
+    rotations_from_base_reverse = [rot.as_rotvec(degrees=False) for rot in rotations_from_base_reverse]
+    cameraRotation, cameraTranslation = cv2.calibrateHandEye(rotations_from_base_reverse, translations_from_base_reverse, rotations_from_camera, translations_from_camera,
                                             method=cv2.CALIB_HAND_EYE_PARK)
-    translationOfCamera = translationOfCamera.reshape((3,)).tolist()
-    rotationOfCamera = Rotation.from_matrix(rotationOfCamera).as_rotvec(degrees=False).tolist()
-    updateJSON({"cameraTranslation": translationOfCamera, "cameraRotation": rotationOfCamera},
-               f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json')
-    return translationOfCamera, rotationOfCamera
+    cameraTranslation = cameraTranslation.reshape((3,)).tolist()
+    cameraRotation = Rotation.from_matrix(cameraRotation).as_rotvec(degrees=False).tolist()
+    update_json({"cameraTranslation": cameraTranslation, "cameraRotation": cameraRotation},
+               f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{general_info_filename}.json')
+    return cameraTranslation, cameraRotation
 
-def performEyeHandDetection(profile: str, detector: TagDetector, number: int) -> (list, list, list):
-    translationsFromCamera = []
-    rotationsFromCamera = []
-    detectedMask = [True] * number
+def perform_eye_hand_detection(profile: str, detector: TagDetector, parser: TransformsParser, number: int) -> (list, list, list):
+    translations_from_camera = []
+    rotations_from_camera = []
+    detected_mask = [True] * number
 
     for i in range(0, number):
-        img = cv2.imread(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{calibrationImagesFolder}/{i}.png')
+        img = cv2.imread(f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{i}.png')
         tvec, rvec, ids = detector.detect(img)
+        tvec, rvec = parser.get_parent_transform(tvec, [Rotation.from_rotvec(rotation, degrees=False) for rotation in rvec], ids)
         if len(rvec) == 0:
-            detectedMask[i] = False
+            detected_mask[i] = False
             continue
-        tvec = tvec[0]
-        rvec = rvec[0]
-        translationsFromCamera.append(tvec)
-        rotationsFromCamera.append(rvec)
+        translations_from_camera.append(tvec)
+        rotations_from_camera.append(rvec)
 
-    return detectedMask, translationsFromCamera, rotationsFromCamera
+    return detected_mask, translations_from_camera, rotations_from_camera
 
-def testRun():
-    with open(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/test/{generalInfoFilename}.json', 'r') as f:
+def test_run():
+    with open(f'{os.path.dirname(__file__)}/{generated_info_folder}/test/{general_info_filename}.json', 'r') as f:
         info: dict = json.load(f)
-    chessboardPattern = (8, 6)
-    patternWidth = 0.1
-    patternHeight = 0.1 * 9 / 11
-    squareSize = patternWidth / 11
-    # performCalibrationOnExistingImages("test", patternWidth, ChessboardDetector(None, None, chessboardPattern, squareSize))
+    chessboard_pattern = (8, 6)
+    pattern_width = 0.1
+    pattern_height = 0.1 * 9 / 11
+    square_size = pattern_width / 11
+    # performCalibrationOnExistingImages("test", pattern_width, ChessboardDetector(None, None, chessboard_pattern, square_size))
     # performEyeHand(
     #     "test",
-    #     ChessboardDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), chessboardPattern, squareSize),
-    #     VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', np.array(testCameraMatrix), patternWidth,
-    #                  patternHeight)
+    #     ChessboardDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), chessboard_pattern, square_size),
+    #     VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/chessboard.png', np.array(testCameraMatrix), pattern_width,
+    #                  pattern_height)
     # )
-    performEyeHand(
+    perform_eye_hand(
         "test",
-        ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), patternWidth, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50),
-        VTKGenerator(imageWidth, imageHeight, f'{os.path.dirname(__file__)}/{tagImagesFolder}/aruco_1.png', testCameraMatrix, patternWidth, patternWidth)
+        ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), pattern_width, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50),
+        TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [2]),
+        VTKGenerator(image_width, image_height, f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png', test_camera_matrix, pattern_width, pattern_width)
     )

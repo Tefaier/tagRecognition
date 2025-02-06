@@ -1,20 +1,20 @@
 import numpy as np
 
-generatedInfoFolder = 'generatedInfo'
-calibrationImagesFolder = 'calibration'
-analyseImagesFolder = 'analyse'
-generalInfoFilename = 'profileInfo'
-imageInfoFilename = 'imageInfo'
-detectionInfoFilename = 'detectionInfo'
-plotsFolder = 'plots'
+generated_info_folder = 'generatedInfo'
+calibration_images_folder = 'calibration'
+analyse_images_folder = 'analyse'
+general_info_filename = 'profileInfo'
+image_info_filename = 'imageInfo'
+detection_info_filename = 'detectionInfo'
+plots_folder = 'plots'
 
-tagImagesFolder = 'tagImages'
+tag_images_folder = 'tagImages'
 
-imageWidth = 1920
-imageHeight = 1280
+image_width = 1920
+image_height = 1280
 
-testCameraMatrix=np.array(
-        [[1000.0, 0.0, imageWidth / 2.0],
-         [0.0, 1000.0, imageHeight / 2.0],
+test_camera_matrix=np.array(
+        [[1000.0, 0.0, image_width / 2.0],
+         [0.0, 1000.0, image_height / 2.0],
          [0.0, 0.0, 1.0]])
-testDistortionCoefficients=np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+test_distortion_coefficients=np.array([0.0, 0.0, 0.0, 0.0, 0.0])

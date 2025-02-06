@@ -1,13 +1,9 @@
-from cProfile import label
-
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial.transform import Rotation
-from python.constantsForCheck import resultFolder, analiseFile
-from python.settings import generatedInfoFolder, detectionInfoFilename, plotsFolder
-from python.utils import readStringOfList, getRotationEuler, axisToIndex, readProfileJSON, readStringOfDict
+from python.settings import generated_info_folder, detection_info_filename, plots_folder
+from python.utils import read_string_of_list, get_rotation_euler, axis_to_index, read_profile_json, read_string_of_dict
 
 # [[profileStr,
 #   tagSize,
@@ -24,97 +20,104 @@ from python.utils import readStringOfList, getRotationEuler, axisToIndex, readPr
 #        }
 #   ]
 # ]]
-def readInfo(profiles: list[str]):
+def read_info(profiles: list[str]) -> list[list]:
     result = []
     for profile in profiles:
-        analizationResults = pd.read_csv(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{detectionInfoFilename}.csv")
-        jsonInfo = readProfileJSON(profile)
-        resultProfile = [profile, jsonInfo["tagLength"], jsonInfo["arucoFamily"], jsonInfo["apriltagFamily"]]
+        analyze_results = pd.read_csv(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{detection_info_filename}.csv")
+        json_info = read_profile_json(profile)
+        result_profile = [profile, json_info["tagSize"], json_info["arucoFamily"], json_info["apriltagFamily"]]
 
-        realT = np.array(readStringOfList(analizationResults['realT']))
-        realR = np.array(readStringOfList(analizationResults['realR']))
-        errorT = readStringOfList(analizationResults['errorT'])
-        errorR = readStringOfList(analizationResults['errorR'])
-        isSuccess = np.array(analizationResults['isSuccess'])
-        method = np.array(analizationResults['method'])
-        detectionSettings = readStringOfDict(analizationResults['detectionSettings'])
+        realT = np.array(read_string_of_list(analyze_results['realT']))
+        realR = np.array(read_string_of_list(analyze_results['realR']))
+        errorT = read_string_of_list(analyze_results['errorT'])
+        errorR = read_string_of_list(analyze_results['errorR'])
+        isSuccess = np.array(analyze_results['isSuccess'])
+        method = np.array(analyze_results['method'])
+        detectionSettings = read_string_of_dict(analyze_results['detectionSettings'])
 
-        dictBySettingsEquals = {}
+        dict_of_settings_classes = {}
         for index, setting in enumerate(detectionSettings):
-            dictBySettingsEquals.setdefault(tuple(sorted(setting.items())), []).append(index)
-        for key, value in dictBySettingsEquals.items():
-            resultProfile.append([
-                detectionSettings[dictBySettingsEquals[key][0]], {}
+            dict_of_settings_classes.setdefault(tuple(sorted(setting.items())), []).append(index)
+        for key, value in dict_of_settings_classes.items():
+            result_profile.append([
+                detectionSettings[dict_of_settings_classes[key][0]], {}
             ])
-            resultProfile[-1][1]['method'] = [method[index] for index in value]
-            resultProfile[-1][1]['realT'] = np.array([realT[index] for index in value])
-            resultProfile[-1][1]['realR'] = np.array([realR[index] for index in value])
-            resultProfile[-1][1]['errorT'] = [errorT[index] for index in value]
-            resultProfile[-1][1]['errorR'] = [errorR[index] for index in value]
-            resultProfile[-1][1]['isSuccess'] = np.array([isSuccess[index] for index in value])
-            resultProfile[-1][1]['successMask'] = np.where(resultProfile[-1][1]['isSuccess'] == True)
-        result.append(resultProfile)
+            result_profile[-1][1]['method'] = [method[index] for index in value]
+            result_profile[-1][1]['realT'] = np.array([realT[index] for index in value])
+            result_profile[-1][1]['realR'] = np.array([realR[index] for index in value])
+            result_profile[-1][1]['errorT'] = [errorT[index] for index in value]
+            result_profile[-1][1]['errorR'] = [errorR[index] for index in value]
+            result_profile[-1][1]['isSuccess'] = np.array([isSuccess[index] for index in value])
+            result_profile[-1][1]['successMask'] = np.where(result_profile[-1][1]['isSuccess'] == True)
+        result.append(result_profile)
     return result
 
 # show x rotation [0, 100)
-def makeXAxisInfo(info: dict, specificMask: np.array, isTranslation: bool, xAxisPartToShow: str):
-    if isTranslation:
-        return [info["realT"][index][axisToIndex(xAxisPartToShow)] for index in specificMask]
+def make_x_axis_info(info: dict, specific_mask: np.array, is_translation: bool, x_axis_part_to_show: str):
+    if is_translation:
+        return [info["realT"][index][axis_to_index(x_axis_part_to_show)] for index in specific_mask]
     else:
-        return [getRotationEuler(info["realR"][index], xAxisPartToShow, True) for index in specificMask]
+        return [get_rotation_euler(info["realR"][index], x_axis_part_to_show, True) for index in specific_mask]
 
-def makeYAxisInfo(info: dict, specificMask: np.array, isTranslation: bool, yAxisPartToShow: str):
-    if isTranslation:
-        return [info["errorT"][index][axisToIndex(yAxisPartToShow)] for index in specificMask]
+def make_y_axis_info(info: dict, specific_mask: np.array, is_translation: bool, y_axis_part_to_show: str):
+    if is_translation:
+        return [info["errorT"][index][axis_to_index(y_axis_part_to_show)] for index in specific_mask]
     else:
-        return [getRotationEuler(info["errorR"][index], yAxisPartToShow, True) for index in specificMask]
+        return [get_rotation_euler(info["errorR"][index], y_axis_part_to_show, True) for index in specific_mask]
 
-def maskBySuccess(info: dict, mask: np.array):
+def mask_by_success(info: dict, mask: np.array):
     return np.intersect1d(mask, info["successMask"])
 
-def initSubplot(plotRow: int, plotColumn: int, plotNumber: int, plotTitle: str, plotXAxisTitle: str, plotYAxisTitle: str):
-    plt.subplot(plotRow, plotColumn, plotNumber)
-    plt.title(plotTitle)
-    plt.xlabel(plotXAxisTitle)
-    plt.ylabel(plotYAxisTitle)
+def init_subplot(plot_row: int, plot_column: int, plot_number: int, plot_title: str, plot_x_axis_title: str, plot_y_axis_title: str):
+    plt.subplot(plot_row, plot_column, plot_number)
+    plt.title(plot_title)
+    plt.xlabel(plot_x_axis_title)
+    plt.ylabel(plot_y_axis_title)
 
-def binifyInfo(x: list, y: list, bins: int, infoRange: tuple[float, float]):
-    binEdges = None
-    if (infoRange is None):
-        binEdges = np.histogram_bin_edges(x, bins)
+def binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
+    bin_edges = None
+    if info_range is None:
+        bin_edges = np.histogram_bin_edges(x, bins)
     else:
-        infoPoints = np.linspace(infoRange[0], infoRange[1], bins)
-        offset = infoPoints[1] - infoPoints[0]
-        binEdges = np.concat([[min(min(x), infoPoints[0] - 0.5 * offset)], (infoPoints[1:] + infoPoints[:-1]) * 0.5, [max(max(x), infoPoints[-1] + 0.5 * offset)]], axis=0)
+        infoPoints = np.linspace(info_range[0], info_range[1], bins)
+        offset = float(infoPoints[1] - infoPoints[0])
+        bin_edges = np.concat(
+            (
+                [min(min(x), float(infoPoints[0]) - 0.5 * offset)],
+                (infoPoints[1:] + infoPoints[:-1]) * 0.5,
+                [max(max(x), float(infoPoints[-1]) + 0.5 * offset)]
+            ),
+            axis=0
+        )
 
-    binMiddles = (binEdges[1:] + binEdges[:-1]) * 0.5
-    binCounters = np.histogram(x, binEdges)[0]
-    return (binMiddles, np.divide(np.histogram(x, binEdges, weights=y)[0], binCounters))
+    bin_middles = (bin_edges[1:] + bin_edges[:-1]) * 0.5
+    bin_counters = np.histogram(x, bin_edges)[0]
+    return bin_middles, np.divide(np.histogram(x, bin_edges, weights=y)[0], bin_counters)
 
-def makeDislpay(
-        plotLabel: str,
-        generalMask: np.array,
-        isTranslation: bool,
-        xAxisPartToShow: str,
-        yAxisPartToShow: str,
-        binsToMake: int,
-        infoRange: tuple[float, float],
+def make_display(
+        plot_label: str,
+        general_mask: np.array,
+        is_translation: bool,
+        x_axis_part_to_show: str,
+        y_axis_part_to_show: str,
+        bins_to_make: int,
+        info_range: tuple[float, float],
         info: dict
 ):
-    mask = maskBySuccess(info, generalMask)
-    xInfo = makeXAxisInfo(info, mask, isTranslation, xAxisPartToShow)
-    yInfo = makeYAxisInfo(info, mask, isTranslation, yAxisPartToShow)
+    mask = mask_by_success(info, general_mask)
+    x_info = make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
+    y_info = make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
 
-    if binsToMake != 0:
-        x, y = binifyInfo(xInfo, yInfo, binsToMake, infoRange)
+    if bins_to_make != 0:
+        x, y = binify_info(x_info, y_info, bins_to_make, info_range)
     else:
-        x = xInfo
-        y = yInfo
+        x = x_info
+        y = y_info
 
-    plt.plot(x, y, label=plotLabel)
+    plt.plot(x, y, label=plot_label)
     plt.legend(loc=1)
 
-def initFigure(
+def init_figure(
         title: str,
         size: tuple = None
 ):
@@ -124,7 +127,7 @@ def initFigure(
     return fig
 
 
-def savePlot(
+def save_plot(
         figure: plt.figure,
         path: str,
 ):
@@ -132,47 +135,47 @@ def savePlot(
     plt.savefig(path, dpi='figure', bbox_inches='tight', pad_inches=0.2, edgecolor='blue')
     plt.close(figure)
 
-def getInfoPart(info: list, profile: str, requiredTuple: tuple):
-    profileIndex = -1
+def get_info_part(info: list, profile: str, required_tuple: tuple):
+    profile_index = -1
     for i in range(len(info)):
         if info[i][0] == profile:
-            profileIndex = i
+            profile_index = i
             break
-    if profileIndex == -1: raise ValueError(f"Didn't find profile {profile}")
+    if profile_index == -1: raise ValueError(f"Didn't find profile {profile}")
 
-    dictIndex = -1
-    for i in range(len(info[profileIndex][-1])):
-        if info[profileIndex][-1][i][0] == requiredTuple:
-            dictIndex = i
+    dict_index = -1
+    for i in range(len(info[profile_index][-1])):
+        if info[profile_index][-1][i][0] == required_tuple:
+            dict_index = i
             break
-    if dictIndex == -1: raise ValueError(f"Didn't find dictionary with {requiredTuple}")
+    if dict_index == -1: raise ValueError(f"Didn't find dictionary with {required_tuple}")
 
-    return info[profileIndex][-1][dictIndex][1]
+    return info[profile_index][-1][dict_index][1]
 
-def testRun():
-    generalInfo = readInfo(["test"])
-    arucoAll = getInfoPart(generalInfo, "test", ())
-    fig = initFigure("Errors in detected rotation and real rotation")
+def test_run():
+    general_info = read_info(["test"])
+    aruco_all = get_info_part(general_info, "test", ())
+    fig = init_figure("Errors in detected rotation and real rotation")
     iFrom, iTo = 0, 2500
-    initSubplot(1, 1, 1,
+    init_subplot(1, 1, 1,
                 "Aruco",
                 "Real rotation around x, degrees",
                 "Deviation, degrees")
-    makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), arucoAll)
-    makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), arucoAll)
-    makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), arucoAll)
-    savePlot(fig, f'{plotsFolder}/RotationX.png')
+    make_display("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), aruco_all)
+    make_display("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), aruco_all)
+    make_display("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), aruco_all)
+    save_plot(fig, f'{plots_folder}/RotationX.png')
 
-    fig = initFigure("Errors in detected rotation and real rotation")
+    fig = init_figure("Errors in detected rotation and real rotation")
     iFrom, iTo = 2500, 5000
-    initSubplot(1, 1, 1,
+    init_subplot(1, 1, 1,
                 "Aruco",
                 "Real rotation around y, degrees",
                 "Deviation, degrees")
-    makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), arucoAll)
-    makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), arucoAll)
-    makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), arucoAll)
-    savePlot(fig, f'{plotsFolder}/RotationY.png')
+    make_display("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), aruco_all)
+    make_display("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), aruco_all)
+    make_display("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), aruco_all)
+    save_plot(fig, f'{plots_folder}/RotationY.png')
 
 
 '''

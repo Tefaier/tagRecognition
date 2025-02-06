@@ -4,91 +4,103 @@ import math
 import os
 import time
 from pathlib import Path
-from typing import Tuple, List, Any
 import cv2
 
 import numpy as np
 import numpy.random
-import scipy.stats
 from pandas import Series
 from scipy.spatial.transform import Rotation
 
-from python.settings import generatedInfoFolder, generalInfoFilename
+from python.settings import generated_info_folder, general_info_filename
 
-randomGenerator = numpy.random.Generator(np.random.default_rng(int(time.time())).bit_generator)
+random_generator = numpy.random.Generator(np.random.default_rng(int(time.time())).bit_generator)
 
-def axisToIndex(axis: str):
+
+def axis_to_index(axis: str):
     return 0 if axis == 'x' else (1 if axis == 'y' else 2)
 
-def parseRotation(rotation: list) -> Rotation:
-    if (len(rotation) == 0): return None
+
+def parse_rotation(rotation: list) -> Rotation:
+    if len(rotation) == 0: return None
     rotation = np.array(rotation)
     if rotation.size == 9:
         return Rotation.from_matrix(rotation)
     else:
         return Rotation.from_rotvec(rotation, degrees=False)
 
-def getRotationEuler(rotation: list, part: str, degrees: bool = False) -> float:
-    rotation = parseRotation(rotation)
+
+def get_rotation_euler(rotation: list, part: str, degrees: bool = False) -> float:
+    rotation = parse_rotation(rotation)
     parts = rotation.as_euler('xyz', degrees=degrees)
-    return float(parts[axisToIndex(part)])
+    return float(parts[axis_to_index(part)])
 
-def readStringOfList(listStr: Series) -> list:
-    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
 
-def readStringOfDict(listStr: Series) -> list[dict]:
-    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in listStr.values]
+def read_string_of_list(list_of_str: Series[str]) -> list[list]:
+    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in list_of_str.values]
 
-def generateNormalDistributionValue(center: float = 0, maxDeviation: float = 3) -> float:
+
+def read_string_of_dict(list_of_str: Series[str]) -> list[dict]:
+    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in list_of_str.values]
+
+
+def generate_normal_distribution_value(center: float = 0, max_deviation: float = 3) -> float:
     return min(
         max(
-            -maxDeviation,
-            randomGenerator.normal(loc=center, scale=maxDeviation / 3, size=None)),
-        maxDeviation
+            -max_deviation,
+            random_generator.normal(loc=center, scale=max_deviation / 3, size=None)),
+        max_deviation
     )
 
-def deviateTransform(position: list, rotation: list, px: float = 0, py: float = 0, pz: float = 0, rx: float = 0, ry: float = 0, rz: float = 0) -> list[list[float]]:
+
+def deviate_transform(translation: list, rotation: list, px: float = 0, py: float = 0, pz: float = 0, rx: float = 0,
+                      ry: float = 0, rz: float = 0) -> list[list[float]]:
     answer = [[], []]
-    if (px == 0 and py == 0 and pz == 0):
-        answer[0] = position
+    if px == 0 and py == 0 and pz == 0:
+        answer[0] = translation
     else:
-        answer[0] = [position[0] + px, position[1] + py, position[2] + pz]
-    if (rx == 0 and ry == 0 and rz == 0):
+        answer[0] = [translation[0] + px, translation[1] + py, translation[2] + pz]
+    if rx == 0 and ry == 0 and rz == 0:
         answer[1] = rotation
     else:
         answer[1] = [rotation[0] + rx, rotation[1] + ry, rotation[2] + rz]
     return answer
 
-def ensureFolderExists(relativePath: str):
-    Path(relativePath).mkdir(parents=True, exist_ok=True)
 
-def getGrayImage(image: np.ndarray) -> np.ndarray:
+def ensure_folder_exists(relative_path: str):
+    Path(relative_path).mkdir(parents=True, exist_ok=True)
+
+
+def get_gray_image(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-def generateRandomNormVector() -> np.array:
-    randomVector = (np.random.rand(3) * 2) - 1
-    length = randomVector.dot(randomVector)
-    if abs(length) < 1e-2:
-        return generateRandomNormVector()
-    return randomVector / math.sqrt(length)
 
-def updateJSON(newInfo: dict, path: str):
+def generate_random_norm_vector() -> np.array:
+    random_vector = (np.random.rand(3) * 2) - 1
+    length = random_vector.dot(random_vector)
+    if abs(length) < 1e-2:
+        return generate_random_norm_vector()
+    return random_vector / math.sqrt(length)
+
+
+def update_json(new_info: dict, path: str):
     if os.path.exists(path):
         with open(path, 'r') as f:
             dic = json.load(f)
     else:
         dic = {}
-    dic.update(newInfo)
+    dic.update(new_info)
     with open(path, 'w') as f:
         json.dump(dic, f)
 
-def writeInfoToProfileJSON(profile: str, info: dict):
-    path = f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json'
-    ensureFolderExists(f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}')
-    updateJSON(info, path)
 
-def readProfileJSON(profile: str) -> dict:
-    path = f'{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{generalInfoFilename}.json'
+def write_info_to_profile_json(profile: str, info: dict):
+    path = f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{general_info_filename}.json'
+    ensure_folder_exists(f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}')
+    update_json(info, path)
+
+
+def read_profile_json(profile: str) -> dict:
+    path = f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{general_info_filename}.json'
     if os.path.exists(path):
         with open(path, 'r') as f:
             dic = json.load(f)
@@ -96,10 +108,11 @@ def readProfileJSON(profile: str) -> dict:
         dic = {}
     return dic
 
-def copyCameraProfileInfo(fromProfile: str, toProfile: str):
-    info = readProfileJSON(fromProfile)
-    toLeaveList = ["cameraMatrix", "distortionCoefficients", "cameraTranslation", "cameraTranslation"]
-    toLeaveDict = {}
-    for key in toLeaveList:
-        toLeaveDict[key] = info[key]
-    writeInfoToProfileJSON(toProfile, toLeaveDict)
+
+def copy_camera_profile_info(from_profile: str, to_profile: str):
+    info = read_profile_json(from_profile)
+    to_leave_list = ["cameraMatrix", "distortionCoefficients", "cameraTranslation", "cameraTranslation"]
+    to_leave_dict = {}
+    for key in to_leave_list:
+        to_leave_dict[key] = info[key]
+    write_info_to_profile_json(to_profile, to_leave_dict)

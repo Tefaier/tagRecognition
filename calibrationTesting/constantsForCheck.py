@@ -17,7 +17,7 @@ analiseFile = "analysis.csv"
 acceptedTranslationError = 0.01
 # in pure degrees
 acceptedRotationError = 0.01
-tagLength = 0.07
+tagSize = 0.07
 imageWidth = 1920
 imageHeight = 1080
 camMatrix=np.array(

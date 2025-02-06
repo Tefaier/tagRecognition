@@ -9,15 +9,15 @@ from tqdm import tqdm
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
-from python.settings import generatedInfoFolder, analyseImagesFolder, imageInfoFilename, \
-    tagImagesFolder, imageHeight, imageWidth, testCameraMatrix
-from python.utils import deviateTransform, generateNormalDistributionValue, ensureFolderExists, updateJSON, \
-    writeInfoToProfileJSON
+from python.settings import generated_info_folder, analyse_images_folder, image_info_filename, \
+    tag_images_folder, image_height, image_width, test_camera_matrix
+from python.utils import deviate_transform, generate_normal_distribution_value, ensure_folder_exists, \
+    write_info_to_profile_json
 
 
 class ImageGenerationSettings:
-    clearExistingImages: bool
-    tagLength: float
+    clear_existing_images: bool
+    tagSize: float
     isAruco: bool
     arucoFamily: str
     isApriltag: bool
@@ -25,128 +25,130 @@ class ImageGenerationSettings:
 
     def __init__(
             self,
-            clearExistingImages: bool,
-            tagLength: float,
+            clear_existing_images: bool,
+            tagSize: float,
             isAruco: bool,
             arucoFamily: str,
             isApriltag: bool,
             apriltagFamily: str
     ):
-        self.clearExistingImages = clearExistingImages
-        self.tagLength = tagLength
+        self.clear_existing_images = clear_existing_images
+        self.tagSize = tagSize
         self.isAruco = isAruco
         self.arucoFamily = arucoFamily
         self.isApriltag = isApriltag
         self.apriltagFamily = apriltagFamily
 
-    def dictVersion(self) -> dict:
-        return {"tagLength": self.tagLength, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily}
+    def dict_version(self) -> dict:
+        return {"tagSize": self.tagSize, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily}
 
 
-def makeOutput(imageNames: list, name: str, translations: list, translation: list, rotations: list, rotation: list):
-    imageNames.append(f"{name}.png")
+def make_output(image_names: list, name: str, translations: list, translation: list, rotations: list, rotation: list):
+    image_names.append(f"{name}.png")
     translations.append([float(val) for val in translation])
     rotations.append([float(val) for val in rotation])
 
-def saveProfileInfo(profile: str, settings: ImageGenerationSettings):
-    writeInfoToProfileJSON(profile, settings.dictVersion())
+def save_profile_info(profile: str, settings: ImageGenerationSettings):
+    write_info_to_profile_json(profile, settings.dict_version())
 
-def saveGeneratedInfo(path: str, imageNames: list, translations: list, rotations: list, replaceInfo: bool):
-    collectedInfo = pd.DataFrame.from_dict({
+def save_generated_info(path: str, imageNames: list, translations: list, rotations: list, replace_info: bool):
+    collected_info = pd.DataFrame.from_dict({
         "imageName": imageNames,
         "realT": translations,
         "realR": rotations
     })
-    if replaceInfo or not os.path.exists(path):
-        collectedInfo.to_csv(path, header=True, mode='w', index=False)
+    if replace_info or not os.path.exists(path):
+        collected_info.to_csv(path, header=True, mode='w', index=False)
         return
     df = pd.read_csv(path)
-    pd.concat([df, collectedInfo]).to_csv(path, header=True, mode='w', index=False)
+    pd.concat([df, collected_info]).to_csv(path, header=True, mode='w', index=False)
 
-def prepareFolder(path: str, clear: bool) -> int:
-    ensureFolderExists(path)
+def prepare_folder(path: str, clear: bool) -> int:
+    ensure_folder_exists(path)
     files = glob.glob(f"{path}/*.png")
     if clear:
         for f in files:
             os.remove(f)
         return 0
     files = [int(name.split('.')[0]) for name in files]
-    toWriteFrom = max(files, default=-1) + 1
-    return toWriteFrom
+    to_write_from = max(files, default=-1) + 1
+    return to_write_from
 
-def generateImages(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list[list], rotations: list[Rotation]):
-    toWriteFrom = prepareFolder(f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}", settings.clearExistingImages)
-    saveProfileInfo(profile, settings)
+def generate_images(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list[list], rotations: list[Rotation]):
+    to_write_from = prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{analyse_images_folder}", settings.clear_existing_images)
+    save_profile_info(profile, settings)
 
     imageNames = []
-    translationsWrite = []
-    rotationsWrite = []
+    translations_write = []
+    rotations_write = []
 
     p_bar = tqdm(range(len(translations)), ncols=100)
 
-    for iterationIndex in range(len(translations)):
-        generator.makeImageWithPlane(
-            translations[iterationIndex],
-            rotations[iterationIndex],
-            f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{analyseImagesFolder}/{toWriteFrom + iterationIndex}.png"
+    for iteration_index in range(len(translations)):
+        generator.generate_image_with_obj_at_transform(
+            translations[iteration_index],
+            rotations[iteration_index],
+            f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{analyse_images_folder}/{to_write_from + iteration_index}.png"
         )
-        makeOutput(
+        make_output(
             imageNames,
-            toWriteFrom + iterationIndex,
-            translationsWrite,
-            translations[iterationIndex],
-            rotationsWrite,
-            rotations[iterationIndex].as_rotvec(degrees=False).tolist()
+            str(to_write_from + iteration_index),
+            translations_write,
+            translations[iteration_index],
+            rotations_write,
+            rotations[iteration_index].as_rotvec(degrees=False).tolist()
         )
         p_bar.update()
         p_bar.refresh()
 
-    saveGeneratedInfo(
-        f"{os.path.dirname(__file__)}/{generatedInfoFolder}/{profile}/{imageInfoFilename}.csv",
+    save_generated_info(
+        f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{image_info_filename}.csv",
         imageNames,
-        translationsWrite,
-        rotationsWrite,
-        settings.clearExistingImages
+        translations_write,
+        rotations_write,
+        settings.clear_existing_images
     )
 
 
-def testRun():
+def test_run():
     translations = []
     rotations = []
-    defaultTranslation = [0.0, 0.0, 4.0]
-    samplesToGet = 50
+    default_translation = [0.0, 0.0, 4.0]
+    samples_to_get = 50
 
-    startStop, spots = (-85, 85), 50
-    for x in np.linspace(startStop[0], startStop[1], spots):
-        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-        rawTranslation = defaultTranslation
-        rawRotation = [x + 180, 0, 0]
-        for i in range(0, samplesToGet):
-            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
-                                                          rx=generateNormalDistributionValue(maxDeviation=deviateValue))
-            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+    start_stop, spots = (-85, 85), 50
+    for x in np.linspace(start_stop[0], start_stop[1], spots):
+        deviate_value = (start_stop[1] - start_stop[0]) / (spots * 2)
+        raw_translation = default_translation
+        raw_rotation = [x + 180, 0, 0]
+        for i in range(0, samples_to_get):
+            translation, rotation_euler = deviate_transform(raw_translation, raw_rotation,
+                                                            rx=generate_normal_distribution_value(
+                                                            max_deviation=deviate_value))
+            rotation = Rotation.from_euler('xyz', rotation_euler, degrees=True)
             translations.append(translation)
             rotations.append(rotation)
 
-    startStop, spots = (-85, 85), 50
-    for y in np.linspace(startStop[0], startStop[1], spots):
-        deviateValue = (startStop[1] - startStop[0]) / (spots * 2)
-        rawTranslation = defaultTranslation
-        rawRotation = [180, y, 0]
-        for i in range(0, samplesToGet):
-            translation, rotationEuler = deviateTransform(rawTranslation, rawRotation,
-                                                          ry=generateNormalDistributionValue(maxDeviation=deviateValue))
-            rotation = Rotation.from_euler('xyz', rotationEuler, degrees=True)
+    start_stop, spots = (-85, 85), 50
+    for y in np.linspace(start_stop[0], start_stop[1], spots):
+        deviate_value = (start_stop[1] - start_stop[0]) / (spots * 2)
+        raw_translation = default_translation
+        raw_rotation = [180, y, 0]
+        for i in range(0, samples_to_get):
+            translation, rotation_euler = deviate_transform(raw_translation, raw_rotation,
+                                                           ry=generate_normal_distribution_value(
+                                                              max_deviation=deviate_value))
+            rotation = Rotation.from_euler('xyz', rotation_euler, degrees=True)
             translations.append(translation)
             rotations.append(rotation)
 
-    generateImages(
+    generate_images(
         "test",
         VTKGenerator(
-            imageWidth,
-            imageHeight,
-            f'{os.path.dirname(__file__)}/{tagImagesFolder}/aruco_1.png',
-            testCameraMatrix,
+            image_width,
+            image_height,
+            f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png',
+            test_camera_matrix,
             0.1,
             0.1),
         ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
