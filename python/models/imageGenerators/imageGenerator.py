@@ -9,5 +9,5 @@ class ImageGenerator:
     def __init__(self):
         pass
 
-    def generate_image_with_obj_at_transform(self, plane_translation: np.array, plane_rotation: Rotation, save_path: str):
+    def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str):
         pass

@@ -9,17 +9,20 @@ from vtkmodules.vtkRenderingCore import vtkTexture, vtkPolyDataMapper, vtkActor,
     vtkWindowToImageFilter
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
+from python.utils import global_local_to_global
 
 
 class VTKGenerator(ImageGenerator):
     camera_rotation: Rotation
     camera_translation: np.array
 
-    def __init__(self, image_width, image_height, image_path, cameraMatrix, plane_width: float, plane_height: float, bkg_color=None, camera_rotation: Rotation=None, camera_translation: np.array=None):
+    def __init__(self, image_width, image_height, local_translations: list[np.array], local_rotations: list[Rotation], image_paths: list[str], cameraMatrix, plane_width: float, plane_height: float, bkg_color=None, camera_rotation: Rotation=None, camera_translation: np.array=None):
         super().__init__()
         self.image_width = image_width
         self.image_height = image_height
-        self.plane_image_path = image_path
+        self.local_translations = local_translations
+        self.local_rotations = local_rotations
+        self.image_paths = image_paths
         self.cameraMatrix = cameraMatrix
         self.plane_width = plane_width
         self.plane_height = plane_height
@@ -41,23 +44,27 @@ class VTKGenerator(ImageGenerator):
 
         self.init_vtk()
 
-    def generate_image_with_obj_at_transform(self, plane_translation: np.array, plane_rotation: Rotation, save_path: str):
-        self.plane = vtkPlaneSource()
-        self.plane.SetOrigin(-self.plane_width * 0.5, -self.plane_height * 0.5, 0.0)
-        self.plane.SetPoint1(self.plane_width * 0.5, -self.plane_height * 0.5, 0.0)
-        self.plane.SetPoint2(-self.plane_width * 0.5, self.plane_height * 0.5, 0.0)
-        self.plane.SetCenter(plane_translation[0], plane_translation[1], plane_translation[2])
-        rotVec = plane_rotation.as_rotvec(degrees=True)
-        self.plane.Rotate(numpy.linalg.norm(rotVec), (rotVec[0], rotVec[1], rotVec[2]))
+    def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str):
+        planeActors = []
+        for index in range(len(self.image_paths)):
+            plane = vtkPlaneSource()
+            plane.SetOrigin(-self.plane_width * 0.5, -self.plane_height * 0.5, 0.0)
+            plane.SetPoint1(self.plane_width * 0.5, -self.plane_height * 0.5, 0.0)
+            plane.SetPoint2(-self.plane_width * 0.5, self.plane_height * 0.5, 0.0)
+            translation, rotation = global_local_to_global(obj_translation, obj_rotation, self.local_translations[index], self.local_rotations[index])
+            plane.SetCenter(translation[0], translation[1], translation[2])
+            rotVec = rotation.as_rotvec(degrees=True)
+            plane.Rotate(numpy.linalg.norm(rotVec), (rotVec[0], rotVec[1], rotVec[2]))
 
-        planeMapper = vtkPolyDataMapper()
-        planeMapper.SetInputConnection(self.plane.GetOutputPort())
+            planeMapper = vtkPolyDataMapper()
+            planeMapper.SetInputConnection(plane.GetOutputPort())
 
-        planeActor = vtkActor()
-        planeActor.SetMapper(planeMapper)
-        planeActor.SetTexture(self.textureMap)
-        planeActor.GetProperty().LightingOff()
-        self.renderer.AddActor(planeActor)
+            planeActor = vtkActor()
+            planeActor.SetMapper(planeMapper)
+            planeActor.SetTexture(self.textureMaps[index])
+            planeActor.GetProperty().LightingOff()
+            self.renderer.AddActor(planeActor)
+            planeActors.append(planeActor)
 
         w2if = vtkWindowToImageFilter()
         w2if.SetInput(self.renWin)
@@ -67,20 +74,22 @@ class VTKGenerator(ImageGenerator):
         writer.SetFileName(save_path)
         writer.SetInputData(w2if.GetOutput())
         writer.Write()
-        self.renderer.RemoveActor(planeActor)
+        for actor in planeActors:
+            self.renderer.RemoveActor(actor)
 
     def init_vtk(self):
         self.colors = vtkNamedColors()
         self.colors.SetColor('BkgColor', self.bkg_color)
 
-        readerFactory = vtkImageReader2Factory()
-        textureFile = readerFactory.CreateImageReader2(self.plane_image_path)
-        textureFile.SetFileName(self.plane_image_path)
-        textureFile.Update()
-
-        self.textureMap = vtkTexture()
-        self.textureMap.SetInputConnection(textureFile.GetOutputPort())
-        self.textureMap.InterpolateOff()
+        self.textureMaps = []
+        for index in range(len(self.image_paths)):
+            readerFactory = vtkImageReader2Factory()
+            textureFile = readerFactory.CreateImageReader2(self.image_paths[index])
+            textureFile.SetFileName(str(index))
+            textureFile.Update()
+            self.textureMaps.append(vtkTexture())
+            self.textureMaps[-1].SetInputConnection(textureFile.GetOutputPort())
+            self.textureMaps[-1].InterpolateOff()
 
         self.renderer = vtkRenderer()
         self.renWin = vtkRenderWindow()

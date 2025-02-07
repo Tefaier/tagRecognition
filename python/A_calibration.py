@@ -71,7 +71,7 @@ def test_run():
     perform_calibration(
         "test",
         ChessboardDetector(None, None, chessboard_pattern, square_size),
-        VTKGenerator(image_width, image_height, f'{os.path.dirname(__file__)}/{tag_images_folder}/chessboard.png', test_camera_matrix, pattern_width,
+        VTKGenerator(image_width, image_height, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])], [f'{os.path.dirname(__file__)}/{tag_images_folder}/chessboard.png'], test_camera_matrix, pattern_width,
                      pattern_height)
     )
     # performCalibration(

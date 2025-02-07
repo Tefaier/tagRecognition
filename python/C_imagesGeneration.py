@@ -147,7 +147,9 @@ def test_run():
         VTKGenerator(
             image_width,
             image_height,
-            f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png',
+            [np.array([0, 0, 0])],
+            [Rotation.from_rotvec([0, 0, 0])],
+            [f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png'],
             test_camera_matrix,
             0.1,
             0.1),

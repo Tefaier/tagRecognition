@@ -116,3 +116,10 @@ def copy_camera_profile_info(from_profile: str, to_profile: str):
     for key in to_leave_list:
         to_leave_dict[key] = info[key]
     write_info_to_profile_json(to_profile, to_leave_dict)
+
+
+def global_local_to_global(parent_translation: np.array, parent_rotation: Rotation, local_translation: np.array, local_rotation: Rotation) -> (np.array, Rotation):
+    global_rotation = local_rotation * parent_rotation
+    global_translation = parent_translation + parent_rotation.apply(local_translation)
+    return global_translation, global_rotation
+
