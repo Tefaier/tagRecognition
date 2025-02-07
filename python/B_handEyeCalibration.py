@@ -15,7 +15,7 @@ from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import generated_info_folder, calibration_images_folder, image_width, image_height, tag_images_folder, \
     test_camera_matrix, general_info_filename
-from python.utils import ensure_folder_exists, generate_random_norm_vector, update_json
+from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json
 
 def prepare_folder(path: str):
     ensure_folder_exists(path)
@@ -57,8 +57,7 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
                                             method=cv2.CALIB_HAND_EYE_PARK)
     cameraTranslation = cameraTranslation.reshape((3,)).tolist()
     cameraRotation = Rotation.from_matrix(cameraRotation).as_rotvec(degrees=False).tolist()
-    update_json({"cameraTranslation": cameraTranslation, "cameraRotation": cameraRotation},
-               f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{general_info_filename}.json')
+    write_info_to_profile_json(profile, {"cameraTranslation": cameraTranslation, "cameraRotation": cameraRotation})
     return cameraTranslation, cameraRotation
 
 def perform_eye_hand_detection(profile: str, detector: TagDetector, parser: TransformsParser, number: int) -> (list, list, list):

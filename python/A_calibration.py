@@ -13,8 +13,8 @@ from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.imageGenerator import ImageGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.settings import generated_info_folder, calibration_images_folder, image_width, image_height, tag_images_folder, \
-    test_camera_matrix, general_info_filename
-from python.utils import ensure_folder_exists, get_gray_image, generate_random_norm_vector, update_json
+    test_camera_matrix
+from python.utils import ensure_folder_exists, get_gray_image, generate_random_norm_vector, write_info_to_profile_json
 
 def prepare_folder(path: str):
     ensure_folder_exists(path)
@@ -59,8 +59,7 @@ def perform_calibration_on_existing_images(profile: str, detector: TagDetector) 
     ret, cameraMatrix, distortionCoefficients, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, get_gray_image(cv2.imread(images[-1])).shape[::-1], None, None, flags = cv2.CALIB_USE_LU)
     cameraMatrix = cameraMatrix.reshape((3, 3)).tolist()
     distortionCoefficients = distortionCoefficients.reshape((5,)).tolist()
-    update_json({"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients},
-               f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{general_info_filename}.json')
+    write_info_to_profile_json(profile, {"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients})
     return cameraMatrix, distortionCoefficients
 
 def test_run():

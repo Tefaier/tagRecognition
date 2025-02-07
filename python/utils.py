@@ -82,7 +82,7 @@ def generate_random_norm_vector() -> np.array:
     return random_vector / math.sqrt(length)
 
 
-def update_json(new_info: dict, path: str):
+def _update_json(new_info: dict, path: str):
     if os.path.exists(path):
         with open(path, 'r') as f:
             dic = json.load(f)
@@ -96,7 +96,7 @@ def update_json(new_info: dict, path: str):
 def write_info_to_profile_json(profile: str, info: dict):
     path = f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{general_info_filename}.json'
     ensure_folder_exists(f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}')
-    update_json(info, path)
+    _update_json(info, path)
 
 
 def read_profile_json(profile: str) -> dict:
