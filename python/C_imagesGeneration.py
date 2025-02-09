@@ -74,35 +74,41 @@ def prepare_folder(path: str, clear: bool) -> int:
     to_write_from = max(files, default=-1) + 1
     return to_write_from
 
-def generate_images(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list[list], rotations: list[Rotation]):
-    to_write_from = prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{analyse_images_folder}", settings.clear_existing_images)
+def generate_images(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list[list], rotations: list[Rotation], samples: int = 1):
+    profile_folder = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}"
+    to_write_from = prepare_folder(f"{profile_folder}/{analyse_images_folder}", settings.clear_existing_images)
     save_profile_info(profile, settings)
 
     imageNames = []
     translations_write = []
     rotations_write = []
 
-    p_bar = tqdm(range(len(translations)), ncols=100)
+    p_bar = tqdm(range(len(translations) * samples), ncols=100)
 
     for iteration_index in range(len(translations)):
-        generator.generate_image_with_obj_at_transform(
-            translations[iteration_index],
-            rotations[iteration_index],
-            f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{analyse_images_folder}/{to_write_from + iteration_index}.png"
+        translation = translations[iteration_index]
+        rotation = rotations[iteration_index]
+        generator.generate_images_with_obj_at_transform(
+            translation,
+            rotation,
+            [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)]
         )
-        make_output(
-            imageNames,
-            str(to_write_from + iteration_index),
-            translations_write,
-            translations[iteration_index],
-            rotations_write,
-            rotations[iteration_index].as_rotvec(degrees=False).tolist()
-        )
-        p_bar.update()
+
+        rotation = rotation.as_rotvec(degrees=False).tolist()
+        for i in range(samples):
+            make_output(
+                imageNames,
+                str(to_write_from + iteration_index * samples + i),
+                translations_write,
+                translation,
+                rotations_write,
+                rotation
+            )
+        p_bar.update(samples)
         p_bar.refresh()
 
     save_generated_info(
-        f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{image_info_filename}.csv",
+        f"{profile_folder}/{image_info_filename}.csv",
         imageNames,
         translations_write,
         rotations_write,
@@ -111,6 +117,7 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
 
 
 def test_run():
+    # images present in tagImages for resized from 354 to 450 with new pixels being white border
     translations = []
     rotations = []
     default_translation = [0.0, 0.0, 4.0]
@@ -151,8 +158,8 @@ def test_run():
             [Rotation.from_rotvec([0, 0, 0])],
             [f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png'],
             test_camera_matrix,
-            0.1,
-            0.1),
+            0.1 * 450.0 / 354.0,
+            0.1 * 450.0 / 354.0),
         ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
         translations,
         rotations

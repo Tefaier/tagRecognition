@@ -77,6 +77,13 @@ class VTKGenerator(ImageGenerator):
         for actor in planeActors:
             self.renderer.RemoveActor(actor)
 
+    def generate_images_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_paths: list[str]):
+        for path in save_paths:
+            self.generate_image_with_obj_at_transform(obj_translation, obj_rotation, path)
+
+    def check_transform_is_available(self, obj_translation: np.array, obj_rotation: Rotation) -> bool:
+        return True
+
     def init_vtk(self):
         self.colors = vtkNamedColors()
         self.colors.SetColor('BkgColor', self.bkg_color)

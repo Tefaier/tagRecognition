@@ -95,5 +95,5 @@ def test_run():
         "test",
         ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), pattern_width, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50),
         TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [2]),
-        VTKGenerator(image_width, image_height, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],[f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png'], test_camera_matrix, pattern_width, pattern_width)
+        VTKGenerator(image_width, image_height, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],[f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png'], test_camera_matrix, pattern_width * 450 / 354, pattern_width * 450 / 354)
     )
