@@ -119,7 +119,7 @@ def copy_camera_profile_info(from_profile: str, to_profile: str):
 
 
 def global_local_to_global(parent_translation: np.array, parent_rotation: Rotation, local_translation: np.array, local_rotation: Rotation) -> (np.array, Rotation):
-    global_rotation = local_rotation * parent_rotation
+    global_rotation = parent_rotation * local_rotation
     global_translation = parent_translation + parent_rotation.apply(local_translation)
     return global_translation, global_rotation
 

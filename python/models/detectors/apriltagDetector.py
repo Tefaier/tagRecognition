@@ -56,7 +56,10 @@ class ApriltagDetector(TagDetector):
 
     def rectify_rotation(self, rotation: Rotation):
         extra_rotation = Rotation.from_rotvec(rotation.apply([180, 0, 0]), degrees=True)
-        return rotation * extra_rotation
+        # don't change multiply order!
+        # for whatever reason it wants it to be so though there is no maths background
+        # TODO find why
+        return extra_rotation * rotation
 
     def detect_object_points(self, image: np.ndarray) -> (list, list):
         image_gray = get_gray_image(image)
