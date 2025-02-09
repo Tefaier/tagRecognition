@@ -38,14 +38,18 @@ def analyse_info(images_folder: str, detector: TagDetector, dframe: pd.DataFrame
     detectedT = []
     detectedR = []
 
+    print("Start of tags detection")
     p_bar = tqdm(range(dframe.shape[0]), ncols=100)
     write_detection_info(p_bar, images_folder, detector, dframe, detectedT, detectedR, parser)
     p_bar.close()
     dframe["method"] = detector_name
     dframe["detectedT"] = detectedT
     dframe["detectedR"] = detectedR
+
+    print("Start of calculating deviation")
     p_bar = tqdm(range(dframe.shape[0]), ncols=100)
     write_error_info(p_bar, dframe)
+    p_bar.close()
 
 def write_detection_info(bar: tqdm, images_folder: str, detector: TagDetector, dframe: pd.DataFrame, translation_write: list, rotation_write: list, parser: TransformsParser):
     for _, row in dframe.iterrows():

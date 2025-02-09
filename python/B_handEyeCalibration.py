@@ -28,7 +28,7 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
 
     # position around which images are created
     index = 0
-    base_translation = np.array([0, 0, 0.15])
+    base_translation = np.array([0, 0, 0.25])
     base_rotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
     position_samples = 5
     rotation_samples = 10

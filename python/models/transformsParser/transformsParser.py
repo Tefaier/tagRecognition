@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 class TransformsParser:
-    tags: dict[int, list[np.array | Rotation]]
+    tags: dict[int, list]
 
     def __init__(self, translations: list[np.array], rotations: list[Rotation], ids: list[int]):
         self.translations = translations
@@ -12,7 +12,7 @@ class TransformsParser:
         for i in range(0, len(ids)):
             self.tags[ids[i]] = [translations[i], rotations[i]]
 
-    def get_parent_transform(self, translations: list[np.array], rotations: list[Rotation], ids: list[int]) -> (list , list):
+    def get_parent_transform(self, translations: list[np.array], rotations: list[Rotation], ids: list[int]) -> (np.array , np.array):
         parent_translations = []
         parent_rotations = []
         for i in range(0, len(ids)):
@@ -26,4 +26,4 @@ class TransformsParser:
         parent_translations = np.array(parent_translations)
         parent_translation = parent_translations.mean(axis=0)
         parent_rotation = Rotation.concatenate(parent_rotations).mean()
-        return parent_translation.tolist(), parent_rotation.as_rotvec(degrees=False)
+        return parent_translation, parent_rotation.as_rotvec(degrees=False)

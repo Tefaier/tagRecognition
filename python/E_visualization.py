@@ -3,13 +3,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from python.settings import generated_info_folder, detection_info_filename, plots_folder
-from python.utils import read_string_of_list, get_rotation_euler, axis_to_index, read_profile_json, read_string_of_dict
+from python.utils import read_string_of_list, get_rotation_euler, axis_to_index, read_profile_json, read_string_of_dict, \
+    ensure_folder_exists
+
 
 # [[profileStr,
 #   tagSize,
 #   arucoFamily,
 #   apriltagFamily,
-#   [    detectionSetting,
+#   [[    detectionSetting,
 #        {   'method': [],
 #            'realT': [],
 #            'realR': [],
@@ -18,14 +20,14 @@ from python.utils import read_string_of_list, get_rotation_euler, axis_to_index,
 #            'isSuccess': [],
 #            'successMask': []
 #        }
-#   ]
+#   ],...]
 # ]]
 def read_info(profiles: list[str]) -> list[list]:
     result = []
     for profile in profiles:
         analyze_results = pd.read_csv(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{detection_info_filename}.csv")
         json_info = read_profile_json(profile)
-        result_profile = [profile, json_info["tagSize"], json_info["arucoFamily"], json_info["apriltagFamily"]]
+        result_profile = [profile, json_info["tagSize"], json_info["arucoFamily"], json_info["apriltagFamily"], []]
 
         realT = np.array(read_string_of_list(analyze_results['realT']))
         realR = np.array(read_string_of_list(analyze_results['realR']))
@@ -39,20 +41,19 @@ def read_info(profiles: list[str]) -> list[list]:
         for index, setting in enumerate(detectionSettings):
             dict_of_settings_classes.setdefault(tuple(sorted(setting.items())), []).append(index)
         for key, value in dict_of_settings_classes.items():
-            result_profile.append([
+            result_profile[-1].append([
                 detectionSettings[dict_of_settings_classes[key][0]], {}
             ])
-            result_profile[-1][1]['method'] = [method[index] for index in value]
-            result_profile[-1][1]['realT'] = np.array([realT[index] for index in value])
-            result_profile[-1][1]['realR'] = np.array([realR[index] for index in value])
-            result_profile[-1][1]['errorT'] = [errorT[index] for index in value]
-            result_profile[-1][1]['errorR'] = [errorR[index] for index in value]
-            result_profile[-1][1]['isSuccess'] = np.array([isSuccess[index] for index in value])
-            result_profile[-1][1]['successMask'] = np.where(result_profile[-1][1]['isSuccess'] == True)
+            result_profile[-1][-1][1]['method'] = [method[index] for index in value]
+            result_profile[-1][-1][1]['realT'] = np.array([realT[index] for index in value])
+            result_profile[-1][-1][1]['realR'] = np.array([realR[index] for index in value])
+            result_profile[-1][-1][1]['errorT'] = [errorT[index] for index in value]
+            result_profile[-1][-1][1]['errorR'] = [errorR[index] for index in value]
+            result_profile[-1][-1][1]['isSuccess'] = np.array([isSuccess[index] for index in value])
+            result_profile[-1][-1][1]['successMask'] = np.where(result_profile[-1][-1][1]['isSuccess'] == True)
         result.append(result_profile)
     return result
 
-# show x rotation [0, 100)
 def make_x_axis_info(info: dict, specific_mask: np.array, is_translation: bool, x_axis_part_to_show: str):
     if is_translation:
         return [info["realT"][index][axis_to_index(x_axis_part_to_show)] for index in specific_mask]
@@ -74,6 +75,7 @@ def init_subplot(plot_row: int, plot_column: int, plot_number: int, plot_title: 
     plt.xlabel(plot_x_axis_title)
     plt.ylabel(plot_y_axis_title)
 
+# TODO fix it or rather make it merge entries by similar x value
 def binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
     bin_edges = None
     if info_range is None:
@@ -108,11 +110,13 @@ def make_display(
     x_info = make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
     y_info = make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
 
-    if bins_to_make != 0:
+    if bins_to_make != 0 and len(x_info) > bins_to_make * 5:
         x, y = binify_info(x_info, y_info, bins_to_make, info_range)
     else:
-        x = x_info
-        y = y_info
+        sorted_by_x = [[x_info[i], y_info[i]] for i in range(len(x_info))]
+        sorted_by_x.sort(key=lambda val: val[0])
+        x = [val[0] for val in sorted_by_x]
+        y = [val[1] for val in sorted_by_x]
 
     plt.plot(x, y, label=plot_label)
     plt.legend(loc=1)
@@ -131,6 +135,7 @@ def save_plot(
         figure: plt.figure,
         path: str,
 ):
+    ensure_folder_exists('/'.join(path.split('/')[:-1]))
     plt.subplots_adjust(wspace=0.3)
     plt.savefig(path, dpi='figure', bbox_inches='tight', pad_inches=0.2, edgecolor='blue')
     plt.close(figure)
@@ -151,6 +156,25 @@ def get_info_part(info: list, profile: str, required_tuple: tuple):
     if dict_index == -1: raise ValueError(f"Didn't find dictionary with {required_tuple}")
 
     return info[profile_index][-1][dict_index][1]
+
+def simple_show(profiles: list[str]):
+    general_info = read_info(profiles)
+    for profile in general_info:
+        for setting in profile[-1]:
+            info = setting[1]
+            mask = np.arange(0, len(info["method"]))
+            fig = init_figure(f"Plot of {profile[0]} with {setting[0]}")
+            init_subplot(1, 2, 1, 'Rotation', 'Real rotation x, degrees', 'Deviation, degrees')
+            make_display("x", mask, False, 'x', 'x', 50, (-85, 85), info)
+            make_display("y", mask, False, 'x', 'y', 50, (-85, 85), info)
+            make_display("z", mask, False, 'x', 'z', 50, (-85, 85), info)
+
+            init_subplot(1, 2, 2, 'Translation', 'Real translation x, m', 'Deviation, m')
+            make_display("x", mask, True, 'x', 'x', 50, (-1, 1), info)
+            make_display("y", mask, True, 'x', 'y', 50, (-1, 1), info)
+            make_display("z", mask, True, 'x', 'z', 50, (-1, 1), info)
+
+            save_plot(fig, f'{plots_folder}/DeviationsX.png')
 
 def test_run():
     general_info = read_info(["test"])

@@ -88,11 +88,11 @@ class VTKGenerator(ImageGenerator):
         self.colors = vtkNamedColors()
         self.colors.SetColor('BkgColor', self.bkg_color)
 
+        readerFactory = vtkImageReader2Factory()
         self.textureMaps = []
         for index in range(len(self.image_paths)):
-            readerFactory = vtkImageReader2Factory()
             textureFile = readerFactory.CreateImageReader2(self.image_paths[index])
-            textureFile.SetFileName(str(index))
+            textureFile.SetFileName(self.image_paths[index])
             textureFile.Update()
             self.textureMaps.append(vtkTexture())
             self.textureMaps[-1].SetInputConnection(textureFile.GetOutputPort())

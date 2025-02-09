@@ -35,12 +35,12 @@ def get_rotation_euler(rotation: list, part: str, degrees: bool = False) -> floa
     return float(parts[axis_to_index(part)])
 
 
-def read_string_of_list(list_of_str: Series[str]) -> list[list]:
-    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in list_of_str.values]
+def read_string_of_list(list_of_str: list[str]) -> list[list]:
+    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in list_of_str]
 
 
-def read_string_of_dict(list_of_str: Series[str]) -> list[dict]:
-    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in list_of_str.values]
+def read_string_of_dict(list_of_str: list[str]) -> list[dict]:
+    return [ast.literal_eval(lis.replace("np.float64(", '').replace(")", '')) for lis in list_of_str]
 
 
 def generate_normal_distribution_value(center: float = 0, max_deviation: float = 3) -> float:

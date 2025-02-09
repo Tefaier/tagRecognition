@@ -83,6 +83,7 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
     translations_write = []
     rotations_write = []
 
+    print("Start of image generation")
     p_bar = tqdm(range(len(translations) * samples), ncols=100)
 
     for iteration_index in range(len(translations)):
@@ -106,6 +107,7 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
             )
         p_bar.update(samples)
         p_bar.refresh()
+    p_bar.close()
 
     save_generated_info(
         f"{profile_folder}/{image_info_filename}.csv",
