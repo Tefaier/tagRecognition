@@ -96,7 +96,35 @@ def binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
     bin_counters = np.histogram(x, bin_edges)[0]
     return bin_middles, np.divide(np.histogram(x, bin_edges, weights=y)[0], bin_counters)
 
-def make_display(
+# precision 0.1 then multiply 10 round 0 decimal
+# precision 0.01 then multiply 100 round 0 decimal
+# precision 0.05 then multiply 20 round 0 decimal
+def make_display_by_threshold(
+        plot_label: str,
+        general_mask: np.array,
+        is_translation: bool,
+        x_axis_part_to_show: str,
+        y_axis_part_to_show: str,
+        merge_threshold: float,
+        info: dict
+):
+    mask = mask_by_success(info, general_mask)
+    x_info = make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
+    y_info = make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
+    info_size = len(x_info)
+    x_info = np.array(x_info).reshape((info_size, 1))
+    y_info = np.array(y_info).reshape((info_size, 1))
+    for_sorting = np.concatenate([x_info, y_info], axis=1)
+    for_sorting = for_sorting[for_sorting[:, 0].argsort()]
+    x_info = for_sorting[:, 0]
+    y_info = for_sorting[:, 1]
+    x, merge_ranges = np.unique((x_info / merge_threshold).round(decimals=0) * merge_threshold, return_index = True)
+    y = [np.mean(part, axis=0) for part in np.split(y_info, merge_ranges[1:])]
+
+    plt.plot(x, y, label=plot_label)
+    plt.legend(loc=1)
+
+def make_display_by_bins(
         plot_label: str,
         general_mask: np.array,
         is_translation: bool,
@@ -165,14 +193,14 @@ def simple_show(profiles: list[str]):
             mask = np.arange(0, len(info["method"]))
             fig = init_figure(f"Plot of {profile[0]} with {setting[0]}")
             init_subplot(1, 2, 1, 'Rotation', 'Real rotation x, degrees', 'Deviation, degrees')
-            make_display("x", mask, False, 'x', 'x', 50, (-85, 85), info)
-            make_display("y", mask, False, 'x', 'y', 50, (-85, 85), info)
-            make_display("z", mask, False, 'x', 'z', 50, (-85, 85), info)
+            make_display_by_threshold("x", mask, False, 'x', 'x', 0.01, info)
+            make_display_by_threshold("y", mask, False, 'x', 'y', 0.01, info)
+            make_display_by_threshold("z", mask, False, 'x', 'z', 0.01, info)
 
             init_subplot(1, 2, 2, 'Translation', 'Real translation x, m', 'Deviation, m')
-            make_display("x", mask, True, 'x', 'x', 50, (-1, 1), info)
-            make_display("y", mask, True, 'x', 'y', 50, (-1, 1), info)
-            make_display("z", mask, True, 'x', 'z', 50, (-1, 1), info)
+            make_display_by_threshold("x", mask, True, 'x', 'x', 0.01, info)
+            make_display_by_threshold("y", mask, True, 'x', 'y', 0.01, info)
+            make_display_by_threshold("z", mask, True, 'x', 'z', 0.01, info)
 
             save_plot(fig, f'{plots_folder}/DeviationsX.png')
 
@@ -185,9 +213,9 @@ def test_run():
                 "Aruco",
                 "Real rotation around x, degrees",
                 "Deviation, degrees")
-    make_display("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), aruco_all)
-    make_display("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), aruco_all)
-    make_display("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), aruco_all)
+    make_display_by_bins("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), aruco_all)
+    make_display_by_bins("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), aruco_all)
+    make_display_by_bins("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), aruco_all)
     save_plot(fig, f'{plots_folder}/RotationX.png')
 
     fig = init_figure("Errors in detected rotation and real rotation")
@@ -196,9 +224,9 @@ def test_run():
                 "Aruco",
                 "Real rotation around y, degrees",
                 "Deviation, degrees")
-    make_display("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), aruco_all)
-    make_display("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), aruco_all)
-    make_display("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), aruco_all)
+    make_display_by_bins("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), aruco_all)
+    make_display_by_bins("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), aruco_all)
+    make_display_by_bins("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), aruco_all)
     save_plot(fig, f'{plots_folder}/RotationY.png')
 
 

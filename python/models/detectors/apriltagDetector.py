@@ -24,6 +24,7 @@ class ApriltagSettings:
         }
 
 # considers tag orientation on image to be (rectify applied)
+# it's unknown actually, apriltag does something strange with its rotation
 # x-to right
 # y-to down
 # z-from viewer
@@ -38,10 +39,10 @@ class ApriltagDetector(TagDetector):
         self.fy = cameraMatrix[1, 1]
         self.cx = cameraMatrix[0, 2]
         self.cy = cameraMatrix[1, 2]
-        self.objPoints = np.array([[-tagSize / 2, tagSize / 2, 0],
-                                   [tagSize / 2, tagSize / 2, 0],
+        self.objPoints = np.array([[-tagSize / 2, -tagSize / 2, 0],
                                    [tagSize / 2, -tagSize / 2, 0],
-                                   [-tagSize / 2, -tagSize / 2, 0]], dtype=np.float32)
+                                   [tagSize / 2, tagSize / 2, 0],
+                                   [-tagSize / 2, tagSize / 2, 0]], dtype=np.float32)
         self.tagSize = tagSize
         self.settings = settings
         self.detector = Detector(
