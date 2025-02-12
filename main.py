@@ -31,7 +31,8 @@ def test_aruco_simple():
         ChessboardDetector(None, None, (8, 6), square_size),
         VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
                      [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9)
+                     square_size * 11, square_size * 9),
+        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
 
     info = read_profile_json(profile_to_use)
@@ -46,7 +47,7 @@ def test_aruco_simple():
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
 
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator)
+    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
     info = read_profile_json(profile_to_use)
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
     print(f"Got cameraRotation: {info.get("cameraRotation")}")
@@ -73,7 +74,8 @@ def test_apriltag_simple():
         ChessboardDetector(None, None, (8, 6), square_size),
         VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
                      [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9)
+                     square_size * 11, square_size * 9),
+        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
 
     info = read_profile_json(profile_to_use)
@@ -88,7 +90,7 @@ def test_apriltag_simple():
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
 
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator)
+    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
     info = read_profile_json(profile_to_use)
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
     print(f"Got cameraRotation: {info.get("cameraRotation")}")
@@ -115,7 +117,8 @@ def test_aruco_cube():
         ChessboardDetector(None, None, (8, 6), square_size),
         VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
                      [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9)
+                     square_size * 11, square_size * 9),
+        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
 
     info = read_profile_json(profile_to_use)
@@ -135,7 +138,7 @@ def test_aruco_cube():
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
 
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator)
+    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
     info = read_profile_json(profile_to_use)
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
     print(f"Got cameraRotation: {info.get("cameraRotation")}")
@@ -162,7 +165,8 @@ def test_apriltag_cube():
         ChessboardDetector(None, None, (8, 6), square_size),
         VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
                      [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9)
+                     square_size * 11, square_size * 9),
+        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
 
     info = read_profile_json(profile_to_use)
@@ -177,7 +181,7 @@ def test_apriltag_cube():
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
 
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator)
+    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
     info = read_profile_json(profile_to_use)
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
     print(f"Got cameraRotation: {info.get("cameraRotation")}")

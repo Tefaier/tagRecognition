@@ -1,5 +1,6 @@
 import json
 import os.path
+from typing import Tuple
 
 import numpy as np
 import cv2
@@ -15,7 +16,8 @@ from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import generated_info_folder, calibration_images_folder, image_width, image_height, tag_images_folder, \
     test_camera_matrix, general_info_filename
-from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json
+from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json, random_generator
+
 
 def prepare_folder(path: str):
     ensure_folder_exists(path)
@@ -23,28 +25,25 @@ def prepare_folder(path: str):
     for f in files:
         os.remove(f)
 
-def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator) -> (list, list):
+def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator, distance_range: Tuple[float, float], x_deviation_angle: float, y_deviation_angle: float, obj_rotation_limit: float, rotate_from: Rotation) -> (list, list):
     prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
 
     # position around which images are created
     index = 0
-    base_translation = np.array([0, 0, 0.25])
-    base_rotation = Rotation.from_rotvec([180, 0, 0], degrees=True)
     position_samples = 5
     rotation_samples = 10
-    deviation_translation = np.array([0.08, 0.02, 0.05])  # in meters
-    angle_rotation = 50  # in degrees
 
     translations_from_base = []
     rotations_from_base = []
     for _ in range(0, position_samples):
-        translation = base_translation + generate_random_norm_vector() * deviation_translation
+        translation = Rotation.from_euler('xyz', [random_generator.uniform(-x_deviation_angle, x_deviation_angle), random_generator.uniform(-y_deviation_angle, y_deviation_angle), 0], degrees=True).apply(np.array([0, 0, random_generator.uniform(distance_range[0], distance_range[1])]))
         for _ in range(0, rotation_samples):
-            rotation = base_rotation * Rotation.from_rotvec(generate_random_norm_vector() * angle_rotation, degrees=True)
-            translations_from_base.append(translation)
-            rotations_from_base.append(rotation.as_rotvec(degrees=False))
-            generator.generate_image_with_obj_at_transform(translation, rotation, f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{index}.png')
-            index += 1
+            rotation = Rotation.from_rotvec(generate_random_norm_vector() * obj_rotation_limit, degrees=True) * rotate_from
+            success = generator.generate_image_with_obj_at_transform(translation, rotation, f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{index}.png')
+            if success:
+                translations_from_base.append(translation)
+                rotations_from_base.append(rotation.as_rotvec(degrees=False))
+                index += 1
 
     number = len(translations_from_base)
     detected_mask, translations_from_camera, rotations_from_camera = perform_eye_hand_detection(profile, detector, parser, number)
@@ -95,5 +94,6 @@ def test_run():
         "test",
         ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), pattern_width, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50),
         TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [2]),
-        VTKGenerator(image_width, image_height, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],[f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png'], test_camera_matrix, pattern_width * 450 / 354, pattern_width * 450 / 354)
+        VTKGenerator(image_width, image_height, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],[f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_1.png'], test_camera_matrix, pattern_width * 450 / 354, pattern_width * 450 / 354),
+        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
