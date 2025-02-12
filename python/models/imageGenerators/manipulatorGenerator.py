@@ -66,7 +66,7 @@ end\"}}\''''
         r = r.as_rotvec(degrees=False)
         response = os.system(
 f'''ros2 topic pub --once /urscript_interface/script_command std_msgs/msg/String '{{data: \"def my_prog():
-    target_pose = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+    target_pose = p[{t[0]}, {t[1]}, {t[2]}, {r[0]}, {r[1]}, {r[2]}]
     success = is_within_safety_limits(target_pose)
     
     if success:
