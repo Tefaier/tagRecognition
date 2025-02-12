@@ -89,11 +89,20 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
     for iteration_index in range(len(translations)):
         translation = translations[iteration_index]
         rotation = rotations[iteration_index]
-        generator.generate_images_with_obj_at_transform(
+        success = generator.check_transform_is_available(translation, rotation)
+        if not success:
+            p_bar.update(samples)
+            p_bar.refresh()
+            continue
+        success = generator.generate_images_with_obj_at_transform(
             translation,
             rotation,
             [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)]
         )
+        if not success:
+            p_bar.update(samples)
+            p_bar.refresh()
+            continue
 
         rotation = rotation.as_rotvec(degrees=False).tolist()
         for i in range(samples):

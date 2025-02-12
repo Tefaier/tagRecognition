@@ -9,7 +9,7 @@ from vtkmodules.vtkRenderingCore import vtkTexture, vtkPolyDataMapper, vtkActor,
     vtkWindowToImageFilter
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
-from python.utils import global_local_to_global
+from python.utils import from_local_to_global
 
 
 class VTKGenerator(ImageGenerator):
@@ -44,14 +44,14 @@ class VTKGenerator(ImageGenerator):
 
         self.init_vtk()
 
-    def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str):
+    def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str) -> bool:
         planeActors = []
         for index in range(len(self.image_paths)):
             plane = vtkPlaneSource()
             plane.SetOrigin(-self.plane_width * 0.5, -self.plane_height * 0.5, 0.0)
             plane.SetPoint1(self.plane_width * 0.5, -self.plane_height * 0.5, 0.0)
             plane.SetPoint2(-self.plane_width * 0.5, self.plane_height * 0.5, 0.0)
-            translation, rotation = global_local_to_global(obj_translation, obj_rotation, self.local_translations[index], self.local_rotations[index])
+            translation, rotation = from_local_to_global(obj_translation, obj_rotation, self.local_translations[index], self.local_rotations[index])
             plane.SetCenter(translation[0], translation[1], translation[2])
             rotVec = rotation.as_rotvec(degrees=True)
             plane.Rotate(numpy.linalg.norm(rotVec), (rotVec[0], rotVec[1], rotVec[2]))
@@ -76,10 +76,12 @@ class VTKGenerator(ImageGenerator):
         writer.Write()
         for actor in planeActors:
             self.renderer.RemoveActor(actor)
+        return True
 
-    def generate_images_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_paths: list[str]):
+    def generate_images_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_paths: list[str]) -> bool:
         for path in save_paths:
             self.generate_image_with_obj_at_transform(obj_translation, obj_rotation, path)
+        return True
 
     def check_transform_is_available(self, obj_translation: np.array, obj_rotation: Rotation) -> bool:
         return True
