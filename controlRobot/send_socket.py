@@ -5,7 +5,7 @@ import array
 robotIP = "127.0.0.1"
 REALTIME_PORT = 30003
 
-# q_target = get_inverse_kin(target_pose)
+# q_target = get_inverse_kin(target_pose) 
 urscript_command = '''
 def myProg():
     target_pose = p[70, 0.1, 0.1, 0, 0, 0]
