@@ -54,19 +54,19 @@ def read_info(profiles: list[str]) -> list[list]:
         result.append(result_profile)
     return result
 
-def make_x_axis_info(info: dict, specific_mask: np.array, is_translation: bool, x_axis_part_to_show: str):
+def _make_x_axis_info(info: dict, specific_mask: np.array, is_translation: bool, x_axis_part_to_show: str):
     if is_translation:
         return [info["realT"][index][axis_to_index(x_axis_part_to_show)] for index in specific_mask]
     else:
         return [get_rotation_euler(info["realR"][index], x_axis_part_to_show, True) for index in specific_mask]
 
-def make_y_axis_info(info: dict, specific_mask: np.array, is_translation: bool, y_axis_part_to_show: str):
+def _make_y_axis_info(info: dict, specific_mask: np.array, is_translation: bool, y_axis_part_to_show: str):
     if is_translation:
         return [info["errorT"][index][axis_to_index(y_axis_part_to_show)] for index in specific_mask]
     else:
         return [get_rotation_euler(info["errorR"][index], y_axis_part_to_show, True) for index in specific_mask]
 
-def mask_by_success(info: dict, mask: np.array):
+def _mask_by_success(info: dict, mask: np.array):
     return np.intersect1d(mask, info["successMask"])
 
 def init_subplot(plot_row: int, plot_column: int, plot_number: int, plot_title: str, plot_x_axis_title: str, plot_y_axis_title: str):
@@ -75,8 +75,7 @@ def init_subplot(plot_row: int, plot_column: int, plot_number: int, plot_title: 
     plt.xlabel(plot_x_axis_title)
     plt.ylabel(plot_y_axis_title)
 
-# TODO fix it or rather make it merge entries by similar x value
-def binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
+def _binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
     bin_edges = None
     if info_range is None:
         bin_edges = np.histogram_bin_edges(x, bins)
@@ -96,9 +95,6 @@ def binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
     bin_counters = np.histogram(x, bin_edges)[0]
     return bin_middles, np.divide(np.histogram(x, bin_edges, weights=y)[0], bin_counters)
 
-# precision 0.1 then multiply 10 round 0 decimal
-# precision 0.01 then multiply 100 round 0 decimal
-# precision 0.05 then multiply 20 round 0 decimal
 def make_display_by_threshold(
         plot_label: str,
         general_mask: np.array,
@@ -108,9 +104,9 @@ def make_display_by_threshold(
         merge_threshold: float,
         info: dict
 ):
-    mask = mask_by_success(info, general_mask)
-    x_info = make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
-    y_info = make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
+    mask = _mask_by_success(info, general_mask)
+    x_info = _make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
+    y_info = _make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
     info_size = len(x_info)
     x_info = np.array(x_info).reshape((info_size, 1))
     y_info = np.array(y_info).reshape((info_size, 1))
@@ -134,12 +130,12 @@ def make_display_by_bins(
         info_range: tuple[float, float],
         info: dict
 ):
-    mask = mask_by_success(info, general_mask)
-    x_info = make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
-    y_info = make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
+    mask = _mask_by_success(info, general_mask)
+    x_info = _make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
+    y_info = _make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
 
     if bins_to_make != 0 and len(x_info) > bins_to_make * 5:
-        x, y = binify_info(x_info, y_info, bins_to_make, info_range)
+        x, y = _binify_info(x_info, y_info, bins_to_make, info_range)
     else:
         sorted_by_x = [[x_info[i], y_info[i]] for i in range(len(x_info))]
         sorted_by_x.sort(key=lambda val: val[0])

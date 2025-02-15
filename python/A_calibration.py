@@ -19,7 +19,7 @@ from python.utils import ensure_folder_exists, get_gray_image, generate_random_n
     random_generator
 
 
-def prepare_folder(path: str):
+def _prepare_folder(path: str):
     ensure_folder_exists(path)
     files = glob.glob(f"{path}/*")
     for f in files:
@@ -27,7 +27,7 @@ def prepare_folder(path: str):
 
 # angles are in degrees
 def perform_calibration(profile: str, detector: TagDetector, generator: ImageGenerator, distance_range: Tuple[float, float], x_deviation_angle: float, y_deviation_angle: float, obj_rotation_limit: float, rotate_from: Rotation) -> (list, list):
-    prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
+    _prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
 
     # position around which images are created
     index = 0

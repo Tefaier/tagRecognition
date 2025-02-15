@@ -43,15 +43,15 @@ class ImageGenerationSettings:
         return {"tagSize": self.tagSize, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily}
 
 
-def make_output(image_names: list, name: str, translations: list, translation: list, rotations: list, rotation: list):
+def _make_output(image_names: list, name: str, translations: list, translation: list, rotations: list, rotation: list):
     image_names.append(f"{name}.png")
     translations.append([float(val) for val in translation])
     rotations.append([float(val) for val in rotation])
 
-def save_profile_info(profile: str, settings: ImageGenerationSettings):
+def _save_profile_info(profile: str, settings: ImageGenerationSettings):
     write_info_to_profile_json(profile, settings.dict_version())
 
-def save_generated_info(path: str, imageNames: list, translations: list, rotations: list, replace_info: bool):
+def _save_generated_info(path: str, imageNames: list, translations: list, rotations: list, replace_info: bool):
     collected_info = pd.DataFrame.from_dict({
         "imageName": imageNames,
         "realT": translations,
@@ -63,7 +63,7 @@ def save_generated_info(path: str, imageNames: list, translations: list, rotatio
     df = pd.read_csv(path)
     pd.concat([df, collected_info]).to_csv(path, header=True, mode='w', index=False)
 
-def prepare_folder(path: str, clear: bool) -> int:
+def _prepare_folder(path: str, clear: bool) -> int:
     ensure_folder_exists(path)
     files = glob.glob(f"{path}/*.png")
     if clear:
@@ -76,8 +76,8 @@ def prepare_folder(path: str, clear: bool) -> int:
 
 def generate_images(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list[list], rotations: list[Rotation], samples: int = 1):
     profile_folder = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}"
-    to_write_from = prepare_folder(f"{profile_folder}/{analyse_images_folder}", settings.clear_existing_images)
-    save_profile_info(profile, settings)
+    to_write_from = _prepare_folder(f"{profile_folder}/{analyse_images_folder}", settings.clear_existing_images)
+    _save_profile_info(profile, settings)
 
     imageNames = []
     translations_write = []
@@ -106,7 +106,7 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
 
         rotation = rotation.as_rotvec(degrees=False).tolist()
         for i in range(samples):
-            make_output(
+            _make_output(
                 imageNames,
                 str(to_write_from + iteration_index * samples + i),
                 translations_write,
@@ -118,7 +118,7 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
         p_bar.refresh()
     p_bar.close()
 
-    save_generated_info(
+    _save_generated_info(
         f"{profile_folder}/{image_info_filename}.csv",
         imageNames,
         translations_write,

@@ -19,14 +19,14 @@ from python.settings import generated_info_folder, calibration_images_folder, im
 from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json, random_generator
 
 
-def prepare_folder(path: str):
+def _prepare_folder(path: str):
     ensure_folder_exists(path)
     files = glob.glob(f"{path}/*")
     for f in files:
         os.remove(f)
 
 def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator, distance_range: Tuple[float, float], x_deviation_angle: float, y_deviation_angle: float, obj_rotation_limit: float, rotate_from: Rotation) -> (list, list):
-    prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
+    _prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
 
     # position around which images are created
     index = 0
@@ -46,7 +46,7 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
                 index += 1
 
     number = len(translations_from_base)
-    detected_mask, translations_from_camera, rotations_from_camera = perform_eye_hand_detection(profile, detector, parser, number)
+    detected_mask, translations_from_camera, rotations_from_camera = _perform_eye_hand_detection(profile, detector, parser, number)
     translations_from_base = np.array(translations_from_base)[detected_mask]
     rotations_from_base = np.array(rotations_from_base)[detected_mask]
     rotations_from_base_reverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotations_from_base]
@@ -59,7 +59,7 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
     write_info_to_profile_json(profile, {"cameraTranslation": cameraTranslation, "cameraRotation": cameraRotation})
     return cameraTranslation, cameraRotation
 
-def perform_eye_hand_detection(profile: str, detector: TagDetector, parser: TransformsParser, number: int) -> (list, list, list):
+def _perform_eye_hand_detection(profile: str, detector: TagDetector, parser: TransformsParser, number: int) -> (list, list, list):
     translations_from_camera = []
     rotations_from_camera = []
     detected_mask = [True] * number

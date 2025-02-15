@@ -15,17 +15,17 @@ from python.settings import generated_info_folder, image_info_filename, detectio
 from python.utils import parse_rotation, read_string_of_list
 
 
-def open_and_prepare_raw_info(path: str) -> pd.DataFrame:
+def _open_and_prepare_raw_info(path: str) -> pd.DataFrame:
     info = pd.read_csv(path)
     # info = info.reset_index()
     return info
 
-def get_vector_error(vector1: list, vector2: list) -> list:
+def _get_vector_error(vector1: list, vector2: list) -> list:
     if len(vector1) == 0 or len(vector2) == 0: return []
     return [vector2[i] - vector1[i] for i in range(0, len(vector1))]
 
 
-def get_rotation_error(rotation1: list, rotation2: list) -> list:
+def _get_rotation_error(rotation1: list, rotation2: list) -> list:
     rotation1 = parse_rotation(rotation1)
     rotation2 = parse_rotation(rotation2)
     if rotation1 is None or rotation2 is None: return []
@@ -33,14 +33,14 @@ def get_rotation_error(rotation1: list, rotation2: list) -> list:
     rotation1To2 = rotation2 * rotation1.inv()
     return rotation1To2.as_rotvec(degrees=False).tolist()
 
-def analyse_info(images_folder: str, detector: TagDetector, dframe: pd.DataFrame, parser: TransformsParser):
+def _analyse_info(images_folder: str, detector: TagDetector, dframe: pd.DataFrame, parser: TransformsParser):
     detector_name = np.full((dframe.shape[0],), detector.name)
     detectedT = []
     detectedR = []
 
     print("Start of tags detection")
     p_bar = tqdm(range(dframe.shape[0]), ncols=100)
-    write_detection_info(p_bar, images_folder, detector, dframe, detectedT, detectedR, parser)
+    _write_detection_info(p_bar, images_folder, detector, dframe, detectedT, detectedR, parser)
     p_bar.close()
     dframe["method"] = detector_name
     dframe["detectedT"] = detectedT
@@ -48,10 +48,10 @@ def analyse_info(images_folder: str, detector: TagDetector, dframe: pd.DataFrame
 
     print("Start of calculating deviation")
     p_bar = tqdm(range(dframe.shape[0]), ncols=100)
-    write_error_info(p_bar, dframe)
+    _write_error_info(p_bar, dframe)
     p_bar.close()
 
-def write_detection_info(bar: tqdm, images_folder: str, detector: TagDetector, dframe: pd.DataFrame, translation_write: list, rotation_write: list, parser: TransformsParser):
+def _write_detection_info(bar: tqdm, images_folder: str, detector: TagDetector, dframe: pd.DataFrame, translation_write: list, rotation_write: list, parser: TransformsParser):
     for _, row in dframe.iterrows():
         t, r, ids = detector.detect(image=cv2.imread(f"{images_folder}/{row["imageName"]}"))
         t, r = parser.get_parent_transform(t, [Rotation.from_rotvec(rotation, degrees=False) for rotation in r], ids)
@@ -60,7 +60,7 @@ def write_detection_info(bar: tqdm, images_folder: str, detector: TagDetector, d
         bar.update()
         bar.refresh()
 
-def write_error_info(bar: tqdm, dframe: pd.DataFrame):
+def _write_error_info(bar: tqdm, dframe: pd.DataFrame):
     realT = read_string_of_list(dframe['realT'])
     realR = read_string_of_list(dframe['realR'])
     detectedT = dframe['detectedT']
@@ -70,8 +70,8 @@ def write_error_info(bar: tqdm, dframe: pd.DataFrame):
     errorR = []
     isSuccess = np.full((dframe.shape[0],), False)
     for i in range(0, dframe.shape[0]):
-        errorT.append(get_vector_error(realT[i], detectedT[i]))
-        errorR.append(get_rotation_error(realR[i], detectedR[i]))
+        errorT.append(_get_vector_error(realT[i], detectedT[i]))
+        errorR.append(_get_rotation_error(realR[i], detectedR[i]))
         isSuccess[i] = len(errorT[-1]) != 0 and len(errorR[-1]) != 0
         bar.update()
         bar.refresh()
@@ -80,7 +80,7 @@ def write_error_info(bar: tqdm, dframe: pd.DataFrame):
     dframe['errorT'] = errorT
     dframe['errorR'] = errorR
 
-def write_info_to_file(path: str, dframe: pd.DataFrame, detectionSettings: dict, replace: bool):
+def _write_info_to_file(path: str, dframe: pd.DataFrame, detectionSettings: dict, replace: bool):
     dframe["detectionSettings"] = np.full((dframe.shape[0],), detectionSettings)
 
     if replace or not os.path.exists(path):
@@ -91,9 +91,9 @@ def write_info_to_file(path: str, dframe: pd.DataFrame, detectionSettings: dict,
 
 def perform_detection(profile: str, detector: TagDetector, parser: TransformsParser, replace_info: bool):
     profilePath = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}"
-    imagesInfo = open_and_prepare_raw_info(f"{profilePath}/{image_info_filename}.csv")
-    analyse_info(f"{profilePath}/{analyse_images_folder}", detector, imagesInfo, parser)
-    write_info_to_file(
+    imagesInfo = _open_and_prepare_raw_info(f"{profilePath}/{image_info_filename}.csv")
+    _analyse_info(f"{profilePath}/{analyse_images_folder}", detector, imagesInfo, parser)
+    _write_info_to_file(
         f"{profilePath}/{detection_info_filename}.csv",
         imagesInfo,
         detector.detector_settings(),
