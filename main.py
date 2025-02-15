@@ -10,7 +10,7 @@ from python.B_handEyeCalibration import test_run as handEyeTest, perform_eye_han
 from python.C_imagesGeneration import test_run as imagesGenerationTest, generate_images, ImageGenerationSettings
 from python.D_tagsDetection import test_run as tagsDetectionTest, perform_detection
 from python.E_visualization import simple_show
-from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
@@ -175,9 +175,14 @@ def test_apriltag_cube():
 
     used_detector = ApriltagDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
                                      0.1, ApriltagSettings(), image_settings.apriltagFamily)
-    used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+    used_transform = CubeParser([0, 1, 2, 3, 4, 5], image_settings.tagSize * 450 / 354)
     used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
-                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_0.png'],
+                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_0.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_1.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_2.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_3.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_4.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_5.png'],
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
 
@@ -217,5 +222,5 @@ if __name__ == "__main__":
     # imagesGenerationTest()
     # tagsDetectionTest()
 
-    test_apriltag_cube()
+    test_aruco_cube()
 
