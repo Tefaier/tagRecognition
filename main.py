@@ -10,7 +10,7 @@ from python.B_handEyeCalibration import test_run as handEyeTest, perform_eye_han
 from python.C_imagesGeneration import test_run as imagesGenerationTest, generate_images, ImageGenerationSettings
 from python.D_tagsDetection import test_run as tagsDetectionTest, perform_detection
 from python.E_visualization import simple_show
-# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
@@ -32,7 +32,7 @@ def test_aruco_simple():
         VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
                      [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
                      square_size * 11, square_size * 9),
-        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
+        (0.2, 0.3), 15, 5, 30, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
 
     info = read_profile_json(profile_to_use)
@@ -118,7 +118,7 @@ def test_aruco_cube():
         VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
                      [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
                      square_size * 11, square_size * 9),
-        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
+        (0.2, 0.3), 5, 15, 30, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
 
     info = read_profile_json(profile_to_use)

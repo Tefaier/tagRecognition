@@ -31,12 +31,12 @@ def perform_calibration(profile: str, detector: TagDetector, generator: ImageGen
 
     # position around which images are created
     index = 0
-    position_samples = 5
-    rotation_samples = 10
+    position_samples = 10
+    rotation_samples = 5
     for _ in range(0, position_samples):
         translation = Rotation.from_euler('xyz', [random_generator.uniform(-x_deviation_angle, x_deviation_angle), random_generator.uniform(-y_deviation_angle, y_deviation_angle), 0], degrees=True).apply(np.array([0, 0, random_generator.uniform(distance_range[0], distance_range[1])]))
         for _ in range(0, rotation_samples):
-            rotation = Rotation.from_rotvec(generate_random_norm_vector() * obj_rotation_limit, degrees=True) * rotate_from
+            rotation = Rotation.from_rotvec(generate_random_norm_vector() * random_generator.random() * obj_rotation_limit, degrees=True) * rotate_from
             generator.generate_image_with_obj_at_transform(translation, rotation, f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{index}.png')
             index += 1
 
@@ -49,13 +49,16 @@ def perform_calibration_on_existing_images(profile: str, detector: TagDetector) 
 
     objpoints = []
     imgpoints = []
+    passed_count = 0
     for name in images:
         image = cv2.imread(name)
         objp, imgp = detector.detect_object_points(image)
         if imgp is not None:
+            passed_count += 1
             objpoints.append(objp)
             imgpoints.append(imgp)
 
+    print(f"Out of {len(images)} {passed_count} were successfully detected")
     ret, cameraMatrix, distortionCoefficients, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, get_gray_image(cv2.imread(images[-1])).shape[::-1], None, None, flags = cv2.CALIB_USE_LU)
     cameraMatrix = cameraMatrix.reshape((3, 3)).tolist()
     distortionCoefficients = distortionCoefficients.reshape((5,)).tolist()

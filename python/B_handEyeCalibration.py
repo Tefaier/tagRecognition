@@ -30,15 +30,15 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
 
     # position around which images are created
     index = 0
-    position_samples = 5
-    rotation_samples = 10
+    position_samples = 10
+    rotation_samples = 5
 
     translations_from_base = []
     rotations_from_base = []
     for _ in range(0, position_samples):
         translation = Rotation.from_euler('xyz', [random_generator.uniform(-x_deviation_angle, x_deviation_angle), random_generator.uniform(-y_deviation_angle, y_deviation_angle), 0], degrees=True).apply(np.array([0, 0, random_generator.uniform(distance_range[0], distance_range[1])]))
         for _ in range(0, rotation_samples):
-            rotation = Rotation.from_rotvec(generate_random_norm_vector() * obj_rotation_limit, degrees=True) * rotate_from
+            rotation = Rotation.from_rotvec(generate_random_norm_vector() * random_generator.random() * obj_rotation_limit, degrees=True) * rotate_from
             success = generator.generate_image_with_obj_at_transform(translation, rotation, f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{index}.png')
             if success:
                 translations_from_base.append(translation)
