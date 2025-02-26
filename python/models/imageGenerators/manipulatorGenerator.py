@@ -1,5 +1,4 @@
 import array
-import os
 
 import cv2
 import numpy as np
@@ -27,6 +26,7 @@ class ManipulatorGenerator(ImageGenerator):
         self.robot_port = REALTIME_PORT
         self.current_pos = None
         self.last_joints_pos = None
+        self.listener = JointStateListener()
 
         self.camera_translation = camera_translation
         self.camera_rotation = camera_rotation
@@ -73,7 +73,7 @@ class ManipulatorGenerator(ImageGenerator):
         )
 
     def _send_cached_move_command(self, t: np.array, r: np.array) -> bool:
-        if self.current_pos is not None and self.current_pos == np.concatenate([t, r]): return True
+        if self.current_pos is not None and np.max(np.abs(self.current_pos - np.concatenate([t, r]))) < 1e-8: return True
         success = self._send_command_with_response(self._make_move_command(t, r), 10)
         if success: self.current_pos = np.concatenate([t, r])
         return success
@@ -87,20 +87,20 @@ class ManipulatorGenerator(ImageGenerator):
 
             s.sendall(command.encode('utf-8'))
 
-            # ans = s.recv(1220)
-
             s.close()
 
-            js = OneTimeJointStateListener.get_joint_state(timeout)
-            if js is None: return False
-            if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]):
-                if self.last_joints_pos is None: return True
-                if self.last_joints_pos != js.position:
-                    self.last_joints_pos = js.position
-                    return True
-                else:
-                    self.last_joints_pos = js.position
-                    return False
+            start_time = time.monotonic()
+            while time.monotonic() - start_time < timeout:
+                # TODO check minimum time that needs to get info from joint_states
+                js = self.listener.listen_once(max(0.5, timeout / 10))
+                if js is None: continue
+                if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]):
+                    if self.last_joints_pos is None: return True
+                    if self.last_joints_pos != js.position:
+                        self.last_joints_pos = js.position
+                        return True
+                    else:
+                        return False
             return False
 
         except Exception as e:
@@ -125,9 +125,10 @@ myProg()
         return urscript_command
 
 
-class OneTimeJointStateListener(Node):
+class JointStateListener(Node):
     def __init__(self):
-        super().__init__('one_time_joint_state_listener')
+        rclpy.init(args=None)
+        super().__init__('joint_state_listener')
         self.joint_state = None
         self.subscription = self.create_subscription(
             JointState,
@@ -140,18 +141,14 @@ class OneTimeJointStateListener(Node):
         self.joint_state = msg
         # self.get_logger().info("Получено сообщение /joint_states")
 
-    @staticmethod
-    def get_joint_state(timeout=5.0):
-        rclpy.init(args=None)
-        node = OneTimeJointStateListener()
+    def listen_once(self, timeout=0.5, listen_time=0.1):
         start_time = time.monotonic()
-
         while time.monotonic() - start_time < timeout:
-            rclpy.spin_once(node, timeout_sec=0.1)
-            if node.joint_state is not None:
+            rclpy.spin_once(self, timeout_sec=listen_time)
+            if self.joint_state is not None:
                 break
+        return self.joint_state
 
-        joint_state = node.joint_state
-        node.destroy_node()
+    def __del__(self):
+        self.destroy_node()
         rclpy.shutdown()
-        return joint_state
