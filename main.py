@@ -6,7 +6,7 @@ from scipy.spatial.transform import Rotation
 from python.A_calibration import test_run as calibrationTest, perform_calibration
 from python.B_handEyeCalibration import test_run as handEyeTest, perform_eye_hand
 from python.C_imagesGeneration import test_run as imagesGenerationTest, generate_images, ImageGenerationSettings, \
-    testManipulator
+    test_manipulator
 from python.D_tagsDetection import test_run as tagsDetectionTest, perform_detection
 from python.E_visualization import simple_show
 from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
@@ -223,5 +223,5 @@ if __name__ == "__main__":
 
     #test_aruco_cube()
 
-    testManipulator('192.168.1.101', 30002)
+    test_manipulator('192.168.1.101', 30002)
 

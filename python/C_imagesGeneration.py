@@ -178,7 +178,7 @@ def test_run():
         rotations
     )
 
-def testManipulator(robot_ip, robot_port):
+def test_manipulator(robot_ip, robot_port):
     profile = "manipulator test"
     translations = []
     rotations = []
