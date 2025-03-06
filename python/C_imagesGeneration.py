@@ -1,5 +1,6 @@
 import glob
 import os
+import time
 
 import cv2.aruco
 import numpy as np
@@ -8,6 +9,7 @@ from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
+from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.settings import generated_info_folder, analyse_images_folder, image_info_filename, \
     tag_images_folder, image_height, image_width, test_camera_matrix
@@ -175,3 +177,46 @@ def test_run():
         translations,
         rotations
     )
+
+def testManipulator(robot_ip, robot_port):
+    profile = "manipulator test"
+    translations = []
+    rotations = []
+
+    for x in np.linspace(-0.2, 0.2, 5):
+        for y in np.linspace(-0.2, 0.2, 5):
+            for rx in np.linspace(-70, 70, 5):
+                for ry in np.linspace(-70, 70, 5):
+                    translations.append([x, y, 0.8])
+                    rotations.append(Rotation.from_rotvec([rx, ry, 0], degrees=True))
+
+    camera_translation = np.array([1, 0, 0.3])
+    camera_rotation = Rotation.from_rotvec([-90, 0, 0], degrees=True) * Rotation.from_rotvec([0, 90, 0], degrees=True)
+    gripper_to_object_translation = np.array([0, 0, 0])
+    gripper_to_object_rotation = Rotation.from_rotvec([0, 0, 0], degrees=True)
+
+    start_time = time.monotonic()
+    generate_images(
+        profile,
+        ManipulatorGenerator(
+            robot_ip,
+            robot_port,
+            camera_translation,
+            camera_rotation,
+            gripper_to_object_translation,
+            gripper_to_object_rotation,
+            take_screenshot=True
+        ),
+        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
+        translations,
+        rotations
+    )
+    end_time = time.monotonic()
+
+    print(f"Total time taken (s): {round(end_time - start_time, 2)}")
+    data = pd.read_csv(f"{profile}/{image_info_filename}.csv")
+    entries = data.shape[0]
+    images = glob.glob(f"{profile}/{analyse_images_folder}/*.png")
+    print(f"{len(translations)} images were requested")
+    print(f"{len(images)} images were saved as png")
+    print(f"{entries} images were saved as csv entries")

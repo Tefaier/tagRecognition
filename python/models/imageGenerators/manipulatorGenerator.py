@@ -8,6 +8,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import JointState
 import time
 import socket
+import pyautogui
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
 from python.utils import from_local_to_global, from_global_in_local_to_global_of_local
@@ -19,7 +20,7 @@ class ManipulatorGenerator(ImageGenerator):
     object_translation_local_to_gripper: Rotation
     object_rotation_local_to_gripper: Rotation
 
-    def __init__(self, robotIP: str, REALTIME_PORT: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0):
+    def __init__(self, robotIP: str, REALTIME_PORT: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0, take_screenshot: bool = False):
         super().__init__()
 
         self.robot_ip = robotIP
@@ -33,7 +34,13 @@ class ManipulatorGenerator(ImageGenerator):
         self.object_translation_local_to_gripper = object_translation_local_to_gripper
         self.object_rotation_local_to_gripper = object_rotation_local_to_gripper
 
-        self.camera = cv2.VideoCapture(camera_port)
+        if take_screenshot:
+            class ScreenshotCamera:
+                def read(self):
+                    return pyautogui.screenshot(), True
+            self.camera = ScreenshotCamera()
+        else:
+            self.camera = cv2.VideoCapture(camera_port)
 
     def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str) -> bool:
         t, r = self._convert_from_camera_to_gripper(obj_translation, obj_rotation)
