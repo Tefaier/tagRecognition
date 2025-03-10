@@ -188,7 +188,7 @@ def test_manipulator(robot_ip, robot_port):
             for rx in np.linspace(-70, 70, 5):
                 for ry in np.linspace(-70, 70, 5):
                     translations.append([x, y, 0.8])
-                    rotations.append(Rotation.from_rotvec([rx, ry, 0], degrees=True))
+                    rotations.append(Rotation.from_rotvec([rx, ry, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
 
     camera_translation = np.array([1, 0, 0.3])
     camera_rotation = Rotation.from_rotvec([-90, 0, 0], degrees=True) * Rotation.from_rotvec([0, 90, 0], degrees=True)
