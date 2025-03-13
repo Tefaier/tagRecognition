@@ -31,8 +31,8 @@ def perform_calibration(profile: str, detector: TagDetector, generator: ImageGen
 
     # position around which images are created
     index = 0
-    position_samples = 10
-    rotation_samples = 5
+    position_samples = 50
+    rotation_samples = 1
     for _ in range(0, position_samples):
         translation = Rotation.from_euler('xyz', [random_generator.uniform(-x_deviation_angle, x_deviation_angle), random_generator.uniform(-y_deviation_angle, y_deviation_angle), 0], degrees=True).apply(np.array([0, 0, random_generator.uniform(distance_range[0], distance_range[1])]))
         for _ in range(0, rotation_samples):

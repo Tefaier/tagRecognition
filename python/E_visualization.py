@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from python.settings import generated_info_folder, detection_info_filename, plots_folder
 from python.utils import read_string_of_list, get_rotation_euler, axis_to_index, read_profile_json, read_string_of_dict, \
     ensure_folder_exists
+from enum import Enum
 
 
 # [[profileStr,
@@ -95,27 +96,49 @@ def _binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
     bin_counters = np.histogram(x, bin_edges)[0]
     return bin_middles, np.divide(np.histogram(x, bin_edges, weights=y)[0], bin_counters)
 
+def _perform_x_center_shift(x: np.array, prev_center: float) -> np.array:
+    x[x > 0] -= prev_center
+    x[x <= 0] += prev_center
+    return x
+
+class Merge_methods(Enum):
+    mean = 0,
+    mean_divergence = 0
+
 def make_display_by_threshold(
         plot_label: str,
         general_mask: np.array,
-        is_translation: bool,
+        x_is_translation: bool,
         x_axis_part_to_show: str,
+        y_is_translation: bool,
         y_axis_part_to_show: str,
         merge_threshold: float,
-        info: dict
+        info: dict,
+        merge_entries_method: Merge_methods,
+        x_center_to_shift: float = 0.0
 ):
     mask = _mask_by_success(info, general_mask)
-    x_info = _make_x_axis_info(info, mask, is_translation, x_axis_part_to_show)
-    y_info = _make_y_axis_info(info, mask, is_translation, y_axis_part_to_show)
+    x_info = _make_x_axis_info(info, mask, x_is_translation, x_axis_part_to_show)
+    y_info = _make_y_axis_info(info, mask, y_is_translation, y_axis_part_to_show)
     info_size = len(x_info)
     x_info = np.array(x_info).reshape((info_size, 1))
     y_info = np.array(y_info).reshape((info_size, 1))
+    if x_center_to_shift != 0.0: x_info = _perform_x_center_shift(x_info, x_center_to_shift)
     for_sorting = np.concatenate([x_info, y_info], axis=1)
     for_sorting = for_sorting[for_sorting[:, 0].argsort()]
     x_info = for_sorting[:, 0]
     y_info = for_sorting[:, 1]
     x, merge_ranges = np.unique((x_info / merge_threshold).round(decimals=0) * merge_threshold, return_index = True)
-    y = [np.mean(part, axis=0) for part in np.split(y_info, merge_ranges[1:])]
+
+    if merge_entries_method is Merge_methods.mean:
+        y = [np.mean(part, axis=0) for part in np.split(y_info, merge_ranges[1:])]
+    elif merge_entries_method is Merge_methods.mean_divergence:
+        y_parts = np.split(y_info, merge_ranges[1:])
+        y_mean = [np.mean(part, axis=0) for part in y_parts]
+        y_divergence = [part - y_mean[index] for index, part in enumerate(y_parts)]
+        y = [np.mean(part, axis=0) for part in y_divergence]  # y_divergence_mean
+    else:
+        y = y_info[:x.size]
 
     plt.plot(x, y, label=plot_label)
     plt.legend(loc=1)
@@ -181,6 +204,40 @@ def get_info_part(info: list, profile: str, required_tuple: tuple):
 
     return info[profile_index][-1][dict_index][1]
 
+def two_parameter_relation_show(
+        profile: str,
+        x_is_translation: bool,
+        x_axis_part_to_show: str,
+        y_is_translation: bool,
+        y_axis_part_to_show: str,
+        x_center_to_shift: float = 0.0
+):
+    general_info = read_info([profile])
+    for setting in general_info[-1][-1]:
+        info = setting[1]
+        mask = np.arange(0, len(info["method"]))
+        fig = init_figure(f"Plot of {profile} with {setting[0]}")
+        init_subplot(
+            1,
+            1,
+            1,
+            'Relation by mean divergence',
+            f'Real {"translation" if x_is_translation else "rotation"} x, {"m" if x_is_translation else "degrees"}',
+            f'Deviation, {"m" if y_is_translation else "degrees"}')
+        make_display_by_threshold(
+            y_axis_part_to_show,
+            mask,
+            x_is_translation,
+            x_axis_part_to_show,
+            y_is_translation,
+            y_axis_part_to_show,
+            0.01,
+            info,
+            Merge_methods.mean, # for now just mean because mean_divergence turned out to be useless
+            x_center_to_shift)
+
+        save_plot(fig, f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_{y_is_translation}_{y_axis_part_to_show}.png')
+
 def simple_show(profiles: list[str]):
     general_info = read_info(profiles)
     for profile in general_info:
@@ -189,14 +246,14 @@ def simple_show(profiles: list[str]):
             mask = np.arange(0, len(info["method"]))
             fig = init_figure(f"Plot of {profile[0]} with {setting[0]}")
             init_subplot(1, 2, 1, 'Rotation', 'Real rotation x, degrees', 'Deviation, degrees')
-            make_display_by_threshold("x", mask, False, 'x', 'x', 0.01, info)
-            make_display_by_threshold("y", mask, False, 'x', 'y', 0.01, info)
-            make_display_by_threshold("z", mask, False, 'x', 'z', 0.01, info)
+            make_display_by_threshold("x", mask, False, 'x', False, 'x', 0.01, info, Merge_methods.mean)
+            make_display_by_threshold("y", mask, False, 'x', False, 'y', 0.01, info, Merge_methods.mean)
+            make_display_by_threshold("z", mask, False, 'x', False, 'z', 0.01, info, Merge_methods.mean)
 
             init_subplot(1, 2, 2, 'Translation', 'Real translation x, m', 'Deviation, m')
-            make_display_by_threshold("x", mask, True, 'x', 'x', 0.01, info)
-            make_display_by_threshold("y", mask, True, 'x', 'y', 0.01, info)
-            make_display_by_threshold("z", mask, True, 'x', 'z', 0.01, info)
+            make_display_by_threshold("x", mask, True, 'x', True, 'x', 0.01, info, Merge_methods.mean)
+            make_display_by_threshold("y", mask, True, 'x', True, 'y', 0.01, info, Merge_methods.mean)
+            make_display_by_threshold("z", mask, True, 'x', True, 'z', 0.01, info, Merge_methods.mean)
 
             save_plot(fig, f'{plots_folder}/DeviationsX.png')
 

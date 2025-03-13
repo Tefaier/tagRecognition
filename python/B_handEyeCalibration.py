@@ -30,8 +30,8 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
 
     # position around which images are created
     index = 0
-    position_samples = 10
-    rotation_samples = 5
+    position_samples = 50
+    rotation_samples = 1
 
     translations_from_base = []
     rotations_from_base = []
@@ -47,6 +47,8 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
 
     number = len(translations_from_base)
     detected_mask, translations_from_camera, rotations_from_camera = _perform_eye_hand_detection(profile, detector, parser, number)
+    translations_from_camera = np.array(translations_from_camera)
+    rotations_from_camera = np.array(rotations_from_camera)
     translations_from_base = np.array(translations_from_base)[detected_mask]
     rotations_from_base = np.array(rotations_from_base)[detected_mask]
     rotations_from_base_reverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotations_from_base]

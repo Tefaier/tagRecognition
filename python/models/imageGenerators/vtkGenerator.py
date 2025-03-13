@@ -118,7 +118,7 @@ class VTKGenerator(ImageGenerator):
         cam.SetViewUp(self.camera_translation[0] + viewUp[0], self.camera_translation[1] + viewUp[1],
                       self.camera_translation[2] + viewUp[2])
         wcx = -2.0 * (self.c[0] - self.image_width / 2.0) / self.image_width
-        wcy = 2.0 * (self.c[1] - self.image_width / 2.0) / self.image_height
+        wcy = 2.0 * (self.c[1] - self.image_height / 2.0) / self.image_height
         cam.SetWindowCenter(wcx, wcy)
         angle = 180 / np.pi * 2.0 * np.arctan2(self.image_height / 2.0, self.f[1])
         cam.SetViewAngle(angle)

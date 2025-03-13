@@ -11,7 +11,7 @@ plots_folder = 'plots'
 tag_images_folder = 'tagImages'
 
 image_width = 1920
-image_height = 1280
+image_height = 1080
 
 test_camera_matrix=np.array(
         [[1000.0, 0.0, image_width / 2.0],

@@ -111,7 +111,7 @@ def read_profile_json(profile: str) -> dict:
 
 def copy_camera_profile_info(from_profile: str, to_profile: str):
     info = read_profile_json(from_profile)
-    to_leave_list = ["cameraMatrix", "distortionCoefficients", "cameraTranslation", "cameraTranslation"]
+    to_leave_list = ["cameraMatrix", "distortionCoefficients", "cameraTranslation", "cameraRotation"]
     to_leave_dict = {}
     for key in to_leave_list:
         to_leave_dict[key] = info[key]

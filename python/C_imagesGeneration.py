@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
-from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
+#from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.settings import generated_info_folder, analyse_images_folder, image_info_filename, \
     tag_images_folder, image_height, image_width, test_camera_matrix
@@ -196,21 +196,21 @@ def test_manipulator(robot_ip, robot_port):
     gripper_to_object_rotation = Rotation.from_rotvec([0, 0, 0], degrees=True)
 
     start_time = time.monotonic()
-    generate_images(
-        profile,
-        ManipulatorGenerator(
-            robot_ip,
-            robot_port,
-            camera_translation,
-            camera_rotation,
-            gripper_to_object_translation,
-            gripper_to_object_rotation,
-            take_screenshot=True
-        ),
-        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
-        translations,
-        rotations
-    )
+    # generate_images(
+    #     profile,
+    #     ManipulatorGenerator(
+    #         robot_ip,
+    #         robot_port,
+    #         camera_translation,
+    #         camera_rotation,
+    #         gripper_to_object_translation,
+    #         gripper_to_object_rotation,
+    #         take_screenshot=True
+    #     ),
+    #     ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
+    #     translations,
+    #     rotations
+    # )
     end_time = time.monotonic()
 
     print(f"Total time taken (s): {round(end_time - start_time, 2)}")
