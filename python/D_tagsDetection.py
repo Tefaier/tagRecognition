@@ -17,6 +17,8 @@ from python.utils import parse_rotation, read_string_of_list
 
 def _open_and_prepare_raw_info(path: str) -> pd.DataFrame:
     info = pd.read_csv(path)
+    if info.get("time") is not None:
+        info = info.sort_values(by="time").reset_index().drop(columns=["index"])
     # info = info.reset_index()
     return info
 
@@ -51,10 +53,12 @@ def _analyse_info(images_folder: str, detector: TagDetector, dframe: pd.DataFram
     _write_error_info(p_bar, dframe)
     p_bar.close()
 
+# in dframe time if present is expected to be in ascending order
+# it is already fulfilled if dframe is opened using _open_and_prepare_raw_info
 def _write_detection_info(bar: tqdm, images_folder: str, detector: TagDetector, dframe: pd.DataFrame, translation_write: list, rotation_write: list, parser: TransformsParser):
     for _, row in dframe.iterrows():
         t, r, ids = detector.detect(image=cv2.imread(f"{images_folder}/{row["imageName"]}"))
-        t, r = parser.get_parent_transform(t, [Rotation.from_rotvec(rotation, degrees=False) for rotation in r], ids)
+        t, r = parser.get_parent_transform(t, [Rotation.from_rotvec(rotation, degrees=False) for rotation in r], ids, row.get("time"))
         translation_write.append([float(val) for val in t])
         rotation_write.append([float(val) for val in r])
         bar.update()

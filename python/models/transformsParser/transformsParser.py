@@ -12,7 +12,7 @@ class TransformsParser:
         for i in range(0, len(ids)):
             self.tags[ids[i]] = [translations[i], rotations[i]]
 
-    def get_parent_transform(self, translations: list[np.array], rotations: list[Rotation], ids: list[int]) -> (np.array , np.array):
+    def get_parent_transform(self, translations: list[np.array], rotations: list[Rotation], ids: list[int], time: float = None) -> (np.array , np.array):
         parent_translations = []
         parent_rotations = []
         for i in range(0, len(ids)):

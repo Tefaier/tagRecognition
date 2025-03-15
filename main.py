@@ -58,7 +58,7 @@ def test_aruco_simple():
         Rotation.from_rotvec(generate_random_norm_vector() * 80, degrees=True) * Rotation.from_rotvec([180, 0, 0],
                                                                                                       degrees=True) for
         i in range(entries_to_make)]
-    generate_images(profile_to_use, used_generator, image_settings, translations, rotations, 1)
+    generate_images(profile_to_use, used_generator, image_settings, translations, rotations)
 
     perform_detection(profile_to_use, used_detector, used_transform, True)
 
@@ -101,7 +101,7 @@ def test_apriltag_simple():
         Rotation.from_rotvec(generate_random_norm_vector() * 30, degrees=True) * Rotation.from_rotvec([180, 0, 0],
                                                                                                       degrees=True) for
         i in range(entries_to_make)]
-    generate_images(profile_to_use, used_generator, image_settings, translations, rotations, 1)
+    generate_images(profile_to_use, used_generator, image_settings, translations, rotations)
 
     perform_detection(profile_to_use, used_detector, used_transform, True)
 
@@ -149,7 +149,7 @@ def test_aruco_cube():
         Rotation.from_rotvec(generate_random_norm_vector() * 80, degrees=True) * Rotation.from_rotvec([180, 0, 0],
                                                                                                       degrees=True) for
         i in range(entries_to_make)]
-    generate_images(profile_to_use, used_generator, image_settings, translations, rotations, 1)
+    generate_images(profile_to_use, used_generator, image_settings, translations, rotations)
 
     perform_detection(profile_to_use, used_detector, used_transform, True)
 
@@ -197,7 +197,7 @@ def test_apriltag_cube():
         Rotation.from_rotvec(generate_random_norm_vector() * 80, degrees=True) * Rotation.from_rotvec([180, 0, 0],
                                                                                                       degrees=True) for
         i in range(entries_to_make)]
-    generate_images(profile_to_use, used_generator, image_settings, translations, rotations, 1)
+    generate_images(profile_to_use, used_generator, image_settings, translations, rotations)
 
     perform_detection(profile_to_use, used_detector, used_transform, True)
 
@@ -253,15 +253,81 @@ def x_rz_experiment(deviation: float, angle_deviation: float, entries_per_transl
             rotations.append(Rotation.from_rotvec([0, 0, rz], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
     return translations, rotations
 
+def simple_trajectory_experiment() -> (list[list[float]], list[Rotation], list[float]):
+    translations = []
+    rotations = []
+
+    pos = -0.2
+    speed = 0
+    acceleration = 0.05
+    frame_time = 1/20
+    for t in range(0, int(3.9/frame_time)):
+        speed += acceleration * frame_time * 0.5
+        translations.append([pos + speed * frame_time, 0, 0.8])
+        speed += acceleration * frame_time * 0.5
+        pos = translations[-1][0]
+        rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
+    acceleration = -1
+    for t in range(0, int(0.2/frame_time)):
+        speed += acceleration * frame_time * 0.5
+        translations.append([pos + speed * frame_time, 0, 0.8])
+        speed += acceleration * frame_time * 0.5
+        pos = translations[-1][0]
+        rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
+    acceleration = -0.05
+    for t in range(0, int(3.8 / frame_time) + 1):
+        speed += acceleration * frame_time * 0.5
+        translations.append([pos + speed * frame_time, 0, 0.8])
+        speed += acceleration * frame_time * 0.5
+        pos = translations[-1][0]
+        rotations.append(
+            Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
+    acceleration = 1
+    for t in range(0, int(0.2 / frame_time)):
+        speed += acceleration * frame_time * 0.5
+        translations.append([pos + speed * frame_time, 0, 0.8])
+        speed += acceleration * frame_time * 0.5
+        pos = translations[-1][0]
+        rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
+    return translations, rotations, (np.arange(0, len(translations)) * frame_time).tolist()
+
+def simple_trajectory_rotation_experiment() -> (list[list[float]], list[Rotation], list[float]):
+    translations = []
+    rotations = []
+
+    pos = -0.2
+    speed = 0
+    acceleration = 0.05
+    frame_time = 1/20
+    total_time = 0
+    for t in range(0, int(3/frame_time)):
+        speed += acceleration * frame_time * 0.5
+        translations.append([pos + speed * frame_time, np.sin(total_time * 0.9) * 0.05, 0.8])
+        speed += acceleration * frame_time * 0.5
+        pos = translations[-1][0]
+        rotations.append(Rotation.from_rotvec([np.sin(total_time * 2) * 70, np.sin(total_time * 2.6 - 0.5) * 70, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
+        total_time += frame_time
+    acceleration = -0.05
+    for t in range(0, int(3.9/frame_time)):
+        speed += acceleration * frame_time * 0.5
+        translations.append([pos + speed * frame_time, np.sin(total_time * 0.9) * 0.05, 0.8])
+        speed += acceleration * frame_time * 0.5
+        pos = translations[-1][0]
+        rotations.append(Rotation.from_rotvec([np.sin(total_time * 2) * 70, np.sin(total_time * 2.6 - 0.5) * 70, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
+        total_time += frame_time
+    return translations, rotations, (np.arange(0, len(translations)) * frame_time).tolist()
+
 def experiments_test():
-    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "")
-    profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz"]
+    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", False)
+    profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"]
     profiles_transforms = [
         x_y_experiment(0.2, 15),
         x_z_experiment(0.2, 15),
         x_rx_experiment(0.2, 50, 15, 10),
         x_ry_experiment(0.2, 50, 15, 10),
-        x_rz_experiment(0.2, 50, 15, 10)
+        x_rz_experiment(0.2, 50, 15, 10),
+        simple_trajectory_experiment(),
+        simple_trajectory_rotation_experiment()
     ]
 
     square_size = 0.1 / 11
@@ -291,13 +357,17 @@ def experiments_test():
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
     print(f"Got cameraRotation: {info.get("cameraRotation")}")
 
-    # for profile in profiles_to_use[1:]:
-    #     copy_camera_profile_info(profiles_to_use[0], profile)
-    #
-    # for i in range(len(profiles_to_use)):
-    #     generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], 1)
-    #     perform_detection(profiles_to_use[i], used_detector, used_transform, True)
-    #
+    for profile in profiles_to_use[1:]:
+        copy_camera_profile_info(profiles_to_use[0], profile)
+
+    for i in range(len(profiles_to_use) - 2):
+        generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
+        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
+    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
+    for i in range(len(profiles_to_use) - 2, len(profiles_to_use)):
+        generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
+        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
+
     # two_parameter_relation_show(profiles_to_use[0], True, 'x', True, 'y', 0)
     # two_parameter_relation_show(profiles_to_use[1], True, 'x', True, 'z', 0)
     # two_parameter_relation_show(profiles_to_use[2], True, 'x', False, 'x', 0)

@@ -24,6 +24,7 @@ class ImageGenerationSettings:
     arucoFamily: str
     isApriltag: bool
     apriltagFamily: str
+    is_trajectory: bool
 
     def __init__(
             self,
@@ -32,7 +33,8 @@ class ImageGenerationSettings:
             isAruco: bool,
             arucoFamily: str,
             isApriltag: bool,
-            apriltagFamily: str
+            apriltagFamily: str,
+            is_trajectory: bool
     ):
         self.clear_existing_images = clear_existing_images
         self.tagSize = tagSize
@@ -40,25 +42,30 @@ class ImageGenerationSettings:
         self.arucoFamily = arucoFamily
         self.isApriltag = isApriltag
         self.apriltagFamily = apriltagFamily
+        self.is_trajectory = is_trajectory
 
     def dict_version(self) -> dict:
-        return {"tagSize": self.tagSize, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily}
+        return {"tagSize": self.tagSize, "isAruco": self.isAruco, "arucoFamily": self.arucoFamily, "isApriltag": self.isApriltag, "apriltagFamily": self.apriltagFamily, "isTrajectory": self.is_trajectory}
 
 
-def _make_output(image_names: list, name: str, translations: list, translation: list, rotations: list, rotation: list):
+def _make_output(image_names: list, name: str, translations: list, translation: list, rotations: list, rotation: list, timings: list, timing: float):
     image_names.append(f"{name}.png")
     translations.append([float(val) for val in translation])
     rotations.append([float(val) for val in rotation])
+    if timings is not None:
+        timings.append(timing)
 
 def _save_profile_info(profile: str, settings: ImageGenerationSettings):
     write_info_to_profile_json(profile, settings.dict_version())
 
-def _save_generated_info(path: str, imageNames: list, translations: list, rotations: list, replace_info: bool):
+def _save_generated_info(path: str, imageNames: list, translations: list, rotations: list, timings: list, replace_info: bool):
     collected_info = pd.DataFrame.from_dict({
         "imageName": imageNames,
         "realT": translations,
         "realR": rotations
     })
+    if timings is not None:
+        collected_info["time"] = timings
     if replace_info or not os.path.exists(path):
         collected_info.to_csv(path, header=True, mode='w', index=False)
         return
@@ -76,7 +83,17 @@ def _prepare_folder(path: str, clear: bool) -> int:
     to_write_from = max(files, default=-1) + 1
     return to_write_from
 
-def generate_images(profile: str, generator: ImageGenerator, settings: ImageGenerationSettings, translations: list[list], rotations: list[Rotation], samples: int = 1):
+def generate_images(
+        profile: str,
+        generator: ImageGenerator,
+        settings: ImageGenerationSettings,
+        translations: list[list],
+        rotations: list[Rotation],
+        timings: list[float] = None,
+        samples: int = 1
+):
+    if (settings.is_trajectory and (timings is None or not len(timings) == len(translations) or not settings.clear_existing_images)):
+        raise Exception("If you use trajectory you must clear images and have size of time arrays the same as that of transforms")
     profile_folder = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}"
     to_write_from = _prepare_folder(f"{profile_folder}/{analyse_images_folder}", settings.clear_existing_images)
     _save_profile_info(profile, settings)
@@ -84,6 +101,7 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
     imageNames = []
     translations_write = []
     rotations_write = []
+    timings_write = [] if settings.is_trajectory else None
 
     print("Start of image generation")
     p_bar = tqdm(range(len(translations) * samples), ncols=100)
@@ -114,7 +132,9 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
                 translations_write,
                 translation,
                 rotations_write,
-                rotation
+                rotation,
+                timings_write,
+                timings[iteration_index] if settings.is_trajectory else 0.0
             )
         p_bar.update(samples)
         p_bar.refresh()
@@ -125,6 +145,7 @@ def generate_images(profile: str, generator: ImageGenerator, settings: ImageGene
         imageNames,
         translations_write,
         rotations_write,
+        timings_write,
         settings.clear_existing_images
     )
 
@@ -196,21 +217,21 @@ def test_manipulator(robot_ip, robot_port):
     gripper_to_object_rotation = Rotation.from_rotvec([0, 0, 0], degrees=True)
 
     start_time = time.monotonic()
-    # generate_images(
-    #     profile,
-    #     ManipulatorGenerator(
-    #         robot_ip,
-    #         robot_port,
-    #         camera_translation,
-    #         camera_rotation,
-    #         gripper_to_object_translation,
-    #         gripper_to_object_rotation,
-    #         take_screenshot=True
-    #     ),
-    #     ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
-    #     translations,
-    #     rotations
-    # )
+    generate_images(
+        profile,
+        ManipulatorGenerator(
+            robot_ip,
+            robot_port,
+            camera_translation,
+            camera_rotation,
+            gripper_to_object_translation,
+            gripper_to_object_rotation,
+            take_screenshot=True
+        ),
+        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
+        translations,
+        rotations
+    )
     end_time = time.monotonic()
 
     print(f"Total time taken (s): {round(end_time - start_time, 2)}")
