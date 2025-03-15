@@ -127,3 +127,29 @@ def from_global_in_local_to_global_of_local(global_translation: np.array, global
     global_of_local_rotation = local_rotation.inv() * global_rotation
     global_of_local_translation = global_translation - global_of_local_rotation.apply(local_translation)
     return global_of_local_translation, global_of_local_rotation
+
+def norm_vector(vector: np.array) -> np.array:
+    magnitude = np.linalg.norm(vector)
+    if magnitude == 0:
+        return vector
+    return vector / magnitude
+
+def get_perpendicular_vector(vector: np.array) -> np.array:
+    vec2 = np.copy(vector)
+    for i in range(np.shape(vector)[0]):
+        if vector[i] != 0:
+            vec2[0 if i != 0 else 1] += vector[i]
+    return np.cross(vector, vec2)
+
+def rotation_to_vector(vec_from: np.array, vec_to: np.array) -> Rotation:
+    a = norm_vector(vec_from)
+    b = norm_vector(vec_to)
+    v = np.cross(a, b)
+    c = np.dot(a, b)
+    s = np.linalg.norm(v)
+    if s == 0:
+        return Rotation.from_rotvec([0, 0, 0]) if np.allclose(a, b) else Rotation.from_rotvec(
+            180 * norm_vector(get_perpendicular_vector(a)), degrees=True)
+    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
+    return Rotation.from_matrix(rotation_matrix)
