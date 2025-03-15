@@ -253,7 +253,7 @@ def x_rz_experiment(deviation: float, angle_deviation: float, entries_per_transl
             rotations.append(Rotation.from_rotvec([0, 0, rz], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
     return translations, rotations
 
-def simple_trajectory_experiment() -> (list[list[float]], list[Rotation], list[float]):
+def simple_trajectory_experiment(z: float) -> (list[list[float]], list[Rotation], list[float]):
     translations = []
     rotations = []
 
@@ -263,21 +263,21 @@ def simple_trajectory_experiment() -> (list[list[float]], list[Rotation], list[f
     frame_time = 1/20
     for t in range(0, int(3.9/frame_time)):
         speed += acceleration * frame_time * 0.5
-        translations.append([pos + speed * frame_time, 0, 0.8])
+        translations.append([pos + speed * frame_time, 0, z])
         speed += acceleration * frame_time * 0.5
         pos = translations[-1][0]
         rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
     acceleration = -1
     for t in range(0, int(0.2/frame_time)):
         speed += acceleration * frame_time * 0.5
-        translations.append([pos + speed * frame_time, 0, 0.8])
+        translations.append([pos + speed * frame_time, 0, z])
         speed += acceleration * frame_time * 0.5
         pos = translations[-1][0]
         rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
     acceleration = -0.05
     for t in range(0, int(3.8 / frame_time) + 1):
         speed += acceleration * frame_time * 0.5
-        translations.append([pos + speed * frame_time, 0, 0.8])
+        translations.append([pos + speed * frame_time, 0, z])
         speed += acceleration * frame_time * 0.5
         pos = translations[-1][0]
         rotations.append(
@@ -285,13 +285,13 @@ def simple_trajectory_experiment() -> (list[list[float]], list[Rotation], list[f
     acceleration = 1
     for t in range(0, int(0.2 / frame_time)):
         speed += acceleration * frame_time * 0.5
-        translations.append([pos + speed * frame_time, 0, 0.8])
+        translations.append([pos + speed * frame_time, 0, z])
         speed += acceleration * frame_time * 0.5
         pos = translations[-1][0]
         rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
     return translations, rotations, (np.arange(0, len(translations)) * frame_time).tolist()
 
-def simple_trajectory_rotation_experiment() -> (list[list[float]], list[Rotation], list[float]):
+def simple_trajectory_rotation_experiment(z: float) -> (list[list[float]], list[Rotation], list[float]):
     translations = []
     rotations = []
 
@@ -302,7 +302,7 @@ def simple_trajectory_rotation_experiment() -> (list[list[float]], list[Rotation
     total_time = 0
     for t in range(0, int(3/frame_time)):
         speed += acceleration * frame_time * 0.5
-        translations.append([pos + speed * frame_time, np.sin(total_time * 0.9) * 0.05, 0.8])
+        translations.append([pos + speed * frame_time, np.sin(total_time * 0.9) * 0.05, z])
         speed += acceleration * frame_time * 0.5
         pos = translations[-1][0]
         rotations.append(Rotation.from_rotvec([np.sin(total_time * 2) * 70, np.sin(total_time * 2.6 - 0.5) * 70, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
@@ -310,7 +310,7 @@ def simple_trajectory_rotation_experiment() -> (list[list[float]], list[Rotation
     acceleration = -0.05
     for t in range(0, int(3.9/frame_time)):
         speed += acceleration * frame_time * 0.5
-        translations.append([pos + speed * frame_time, np.sin(total_time * 0.9) * 0.05, 0.8])
+        translations.append([pos + speed * frame_time, np.sin(total_time * 0.9) * 0.05, z])
         speed += acceleration * frame_time * 0.5
         pos = translations[-1][0]
         rotations.append(Rotation.from_rotvec([np.sin(total_time * 2) * 70, np.sin(total_time * 2.6 - 0.5) * 70, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
@@ -326,8 +326,8 @@ def experiments_test():
         x_rx_experiment(0.2, 50, 15, 10),
         x_ry_experiment(0.2, 50, 15, 10),
         x_rz_experiment(0.2, 50, 15, 10),
-        simple_trajectory_experiment(),
-        simple_trajectory_rotation_experiment()
+        simple_trajectory_experiment(0.8),
+        simple_trajectory_rotation_experiment(0.8)
     ]
 
     square_size = 0.1 / 11
