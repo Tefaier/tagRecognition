@@ -7,6 +7,7 @@ from python.utils import rotation_to_vector
 
 
 # consider using filterpy.kalman.UnscentedKalmanFilter
+# or something from it kalman related
 
 class SimpleAccelerationConstraintsParser(TransformsParser):
     max_acc: Tuple[float, float]

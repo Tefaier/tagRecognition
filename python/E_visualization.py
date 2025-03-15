@@ -168,6 +168,63 @@ def make_display_by_bins(
     plt.plot(x, y, label=plot_label)
     plt.legend(loc=1)
 
+def make_display_with_missed(
+        plot_label: str,
+        general_mask: np.array,
+        x_is_translation: bool,
+        x_axis_part_to_show: str,
+        merge_threshold: float,
+        info: dict,
+        x_center_to_shift: float = 0.0
+):
+    successes = _mask_by_success(info, general_mask)
+    x_info = _make_x_axis_info(info, general_mask, x_is_translation, x_axis_part_to_show)
+    info_size = len(x_info)
+    y_info = np.zeros((info_size))
+    y_info[successes] = 1
+    y_info = y_info ^ 1
+    x_info = np.array(x_info).reshape((info_size, 1))
+    y_info = np.array(y_info).reshape((info_size, 1))
+    if x_center_to_shift != 0.0: x_info = _perform_x_center_shift(x_info, x_center_to_shift)
+    for_sorting = np.concatenate([x_info, y_info], axis=1)
+    for_sorting = for_sorting[for_sorting[:, 0].argsort()]
+    x_info = for_sorting[:, 0]
+    y_info = for_sorting[:, 1]
+    x, merge_ranges = np.unique((x_info / merge_threshold).round(decimals=0) * merge_threshold, return_index = True)
+
+    y = [np.mean(part, axis=0) for part in np.split(y_info, merge_ranges[1:])]
+    y *= 100
+
+    plt.plot(x, y, label=plot_label)
+    plt.legend(loc=1)
+
+def make_display_trajectory(
+        plot_label: str,
+        general_mask: np.array,
+        y_is_translation: bool,
+        y_axis_part_to_show: str,
+        info: dict,
+        use_detected: bool
+):
+    mask = _mask_by_success(info, general_mask)
+    x_info = info["time"][mask]
+    if y_is_translation:
+        y_info = [info["detectedT" if use_detected else "realT"][index][axis_to_index(y_axis_part_to_show)] for index in mask]
+    else:
+        y_info = [get_rotation_euler(info["detectedR" if use_detected else "realR"][index], y_axis_part_to_show, True) for index in mask]
+    info_size = len(x_info)
+    x_info = np.array(x_info).reshape((info_size, 1))
+    y_info = np.array(y_info).reshape((info_size, 1))
+    for_sorting = np.concatenate([x_info, y_info], axis=1)
+    for_sorting = for_sorting[for_sorting[:, 0].argsort()]
+    x_info = for_sorting[:, 0]
+    y_info = for_sorting[:, 1]
+
+    y = y_info[:x_info.size]
+
+    plt.plot(x_info, y, label=plot_label)
+    plt.legend(loc=1)
+
 def init_figure(
         title: str,
         size: tuple = None
@@ -238,6 +295,71 @@ def two_parameter_relation_show(
 
         save_plot(fig, f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_{y_is_translation}_{y_axis_part_to_show}.png')
 
+def show_missed_count(
+        profile: str,
+        x_is_translation: bool,
+        x_axis_part_to_show: str,
+        x_center_to_shift: float = 0.0
+):
+    general_info = read_info([profile])
+    for setting in general_info[-1][-1]:
+        info = setting[1]
+        mask = np.arange(0, len(info["method"]))
+        fig = init_figure(f"Plot of {profile} with {setting[0]}")
+        init_subplot(
+            1,
+            1,
+            1,
+            'How much detection fails to detect object',
+            f'Real {"translation" if x_is_translation else "rotation"} x, {"m" if x_is_translation else "degrees"}',
+            f'Missed part, %')
+        make_display_with_missed(
+            "missed part",
+            mask,
+            x_is_translation,
+            x_axis_part_to_show,
+            0.01,
+            info,
+            x_center_to_shift)
+
+        save_plot(fig,f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_missings.png')
+
+def show_trajectory(
+        profile: str,
+        y_is_translation: bool,
+        y_axis_part_to_show: str
+):
+    general_info = read_info([profile])
+    for setting in general_info[-1][-1]:
+        info = setting[1]
+        mask = np.arange(0, len(info["method"]))
+        fig = init_figure(f"Plot of {profile} with {setting[0]}")
+        init_subplot(
+            1,
+            1,
+            1,
+            'Detected trajectory',
+            f'Real {"translation" if y_is_translation else "rotation"} x, {"m" if y_is_translation else "degrees"}',
+            f'{"m" if y_is_translation else "degrees"}')
+        make_display_trajectory(
+            "real trajectory",
+            mask,
+            y_is_translation,
+            y_axis_part_to_show,
+            info,
+            False
+        )
+        make_display_trajectory(
+            "detected trajectory",
+            mask,
+            y_is_translation,
+            y_axis_part_to_show,
+            info,
+            True
+        )
+
+        save_plot(fig,f'{plots_folder}/{profile}_{y_is_translation}_{y_axis_part_to_show}_trajectory.png')
+
 def simple_show(profiles: list[str]):
     general_info = read_info(profiles)
     for profile in general_info:
@@ -281,46 +403,3 @@ def test_run():
     make_display_by_bins("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), aruco_all)
     make_display_by_bins("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), aruco_all)
     save_plot(fig, f'{plots_folder}/RotationY.png')
-
-
-'''
-fig = initFigure("Errors in detected rotation and real rotation")
-iFrom, iTo = 0, 2500
-initSubplot(1, 2, 1,
-         "Aruco",
-         "Real rotation around x, degrees",
-         "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
-
-iFrom, iTo = iFrom + 5000, iTo + 5000
-initSubplot(1, 2, 2,
-         "Apriltag",
-         "Real rotation around x, degrees",
-         "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'x', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("y", np.arange(iFrom, iTo), False, 'x', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("z", np.arange(iFrom, iTo), False, 'x', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
-savePlot(fig, resultFolder + '/RotationX.png')
-
-fig = initFigure("Errors in detected rotation and real rotation")
-iFrom, iTo = 2500, 5000
-initSubplot(1, 2, 1,
-         "Aruco",
-         "Real rotation around y, degrees",
-         "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
-
-iFrom, iTo = iFrom + 5000, iTo + 5000
-initSubplot(1, 2, 2,
-         "Apriltag",
-         "Real rotation around y, degrees",
-         "Deviation, degrees")
-makeDislpay("x", np.arange(iFrom, iTo), False, 'y', 'x', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("y", np.arange(iFrom, iTo), False, 'y', 'y', 50, (-85, 85), generalInfo[0][-1][-1])
-makeDislpay("z", np.arange(iFrom, iTo), False, 'y', 'z', 50, (-85, 85), generalInfo[0][-1][-1])
-savePlot(fig, resultFolder + '/RotationY.png')
-'''
