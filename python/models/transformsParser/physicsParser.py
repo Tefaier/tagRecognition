@@ -10,6 +10,8 @@ from python.utils import rotation_to_vector
 # or something from it kalman related
 
 class SimpleAccelerationConstraintsParser(TransformsParser):
+    child_parser: TransformsParser
+
     max_acc: Tuple[float, float]
     max_rot_acc: Tuple[float, float]
     max_transl_glitch: float
@@ -26,7 +28,7 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
 
     def __init__(
             self,
-            *args,
+            child_parser: TransformsParser,
             maximum_acceleration_range: Tuple[float, float],  # from negative to positive (in m/sec)
             maximum_rotation_acceleration_range: Tuple[float, float],  # from negative to positive (in degrees/sec)
             accepted_translation_glitch: float,  # in m
@@ -34,7 +36,9 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
             last_detection_lifetime: float,
             try_flipping_tags: bool
     ):
-        super().__init__(*args)
+        super().__init__(child_parser.translations, child_parser.rotations, child_parser.ids)
+        self.child_parser = child_parser
+
         self.max_acc = maximum_acceleration_range
         self.max_rot_acc = maximum_rotation_acceleration_range
         self.max_transl_glitch = accepted_translation_glitch
@@ -76,7 +80,7 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
                 if deviation_t_1 > deviation_t_2 and deviation_r_1 > deviation_r_2:
                     rotations[i] = r_mirrored
 
-        result = super().get_parent_transform(translations, rotations, ids, time)
+        result = self.child_parser.get_parent_transform(translations, rotations, ids, time)
         if len(result[0]) == 0:
             return result
 
@@ -91,7 +95,7 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
         time_since_last = time - self.last_detection_time
         translation_change = result[0] - self.last_detected_translation
         translation_speed = translation_change / time_since_last
-        rotation_change = result[1] * self.last_detected_rotation.inv()
+        rotation_change = Rotation.from_rotvec(result[1], degrees=False) * self.last_detected_rotation.inv()
         rotation_speed = rotation_change.as_rotvec(degrees=True) / time_since_last
 
         if self.last_detected_translation_speed is None:

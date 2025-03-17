@@ -16,10 +16,13 @@ from enum import Enum
 #        {   'method': [],
 #            'realT': [],
 #            'realR': [],
+#            'detectedT': [],
+#            'detectedR': [],
 #            'errorT': [],
 #            'errorR': [],
 #            'isSuccess': [],
-#            'successMask': []
+#            'successMask': [],
+#            'time': [] # may be empty
 #        }
 #   ],...]
 # ]]
@@ -32,10 +35,13 @@ def read_info(profiles: list[str]) -> list[list]:
 
         realT = np.array(read_string_of_list(analyze_results['realT']))
         realR = np.array(read_string_of_list(analyze_results['realR']))
+        detectedT = read_string_of_list(analyze_results['detectedT'])
+        detectedR = read_string_of_list(analyze_results['detectedR'])
         errorT = read_string_of_list(analyze_results['errorT'])
         errorR = read_string_of_list(analyze_results['errorR'])
         isSuccess = np.array(analyze_results['isSuccess'])
         method = np.array(analyze_results['method'])
+        time = np.array(analyze_results['time']) if analyze_results.get('time') is not None else None
         detectionSettings = read_string_of_dict(analyze_results['detectionSettings'])
 
         dict_of_settings_classes = {}
@@ -48,14 +54,20 @@ def read_info(profiles: list[str]) -> list[list]:
             result_profile[-1][-1][1]['method'] = [method[index] for index in value]
             result_profile[-1][-1][1]['realT'] = np.array([realT[index] for index in value])
             result_profile[-1][-1][1]['realR'] = np.array([realR[index] for index in value])
+            result_profile[-1][-1][1]['detectedT'] = [detectedT[index] for index in value]
+            result_profile[-1][-1][1]['detectedR'] = [detectedR[index] for index in value]
             result_profile[-1][-1][1]['errorT'] = [errorT[index] for index in value]
             result_profile[-1][-1][1]['errorR'] = [errorR[index] for index in value]
             result_profile[-1][-1][1]['isSuccess'] = np.array([isSuccess[index] for index in value])
             result_profile[-1][-1][1]['successMask'] = np.where(result_profile[-1][-1][1]['isSuccess'] == True)
+            if time is not None:
+                result_profile[-1][-1][1]['time'] = np.array([time[index] for index in value])
         result.append(result_profile)
     return result
 
 def _make_x_axis_info(info: dict, specific_mask: np.array, is_translation: bool, x_axis_part_to_show: str):
+    if x_axis_part_to_show == 't':
+        return [info["time"][index] for index in specific_mask]
     if is_translation:
         return [info["realT"][index][axis_to_index(x_axis_part_to_show)] for index in specific_mask]
     else:
@@ -103,7 +115,8 @@ def _perform_x_center_shift(x: np.array, prev_center: float) -> np.array:
 
 class Merge_methods(Enum):
     mean = 0,
-    mean_divergence = 0
+    divergence_squared = 1,
+    divergence_module = 2
 
 def make_display_by_threshold(
         plot_label: str,
@@ -132,11 +145,16 @@ def make_display_by_threshold(
 
     if merge_entries_method is Merge_methods.mean:
         y = [np.mean(part, axis=0) for part in np.split(y_info, merge_ranges[1:])]
-    elif merge_entries_method is Merge_methods.mean_divergence:
+    elif merge_entries_method is Merge_methods.divergence_squared:
         y_parts = np.split(y_info, merge_ranges[1:])
         y_mean = [np.mean(part, axis=0) for part in y_parts]
-        y_divergence = [part - y_mean[index] for index, part in enumerate(y_parts)]
-        y = [np.mean(part, axis=0) for part in y_divergence]  # y_divergence_mean
+        y_divergence = [(part - y_mean[index])**2 for index, part in enumerate(y_parts)]
+        y = [np.mean(part, axis=0) for part in y_divergence]
+    elif merge_entries_method is Merge_methods.divergence_module:
+        y_parts = np.split(y_info, merge_ranges[1:])
+        y_mean = [np.mean(part, axis=0) for part in y_parts]
+        y_divergence = [abs(part - y_mean[index]) for index, part in enumerate(y_parts)]
+        y = [np.mean(part, axis=0) for part in y_divergence]
     else:
         y = y_info[:x.size]
 
@@ -180,8 +198,8 @@ def make_display_with_missed(
     successes = _mask_by_success(info, general_mask)
     x_info = _make_x_axis_info(info, general_mask, x_is_translation, x_axis_part_to_show)
     info_size = len(x_info)
-    y_info = np.zeros((info_size))
-    y_info[successes] = 1
+    y_info = np.zeros((info_size,), dtype=bool)
+    y_info[successes] = True
     y_info = y_info ^ 1
     x_info = np.array(x_info).reshape((info_size, 1))
     y_info = np.array(y_info).reshape((info_size, 1))
@@ -192,8 +210,7 @@ def make_display_with_missed(
     y_info = for_sorting[:, 1]
     x, merge_ranges = np.unique((x_info / merge_threshold).round(decimals=0) * merge_threshold, return_index = True)
 
-    y = [np.mean(part, axis=0) for part in np.split(y_info, merge_ranges[1:])]
-    y *= 100
+    y = [np.mean(part, axis=0) * 100 for part in np.split(y_info, merge_ranges[1:])]
 
     plt.plot(x, y, label=plot_label)
     plt.legend(loc=1)
@@ -206,8 +223,8 @@ def make_display_trajectory(
         info: dict,
         use_detected: bool
 ):
-    mask = _mask_by_success(info, general_mask)
-    x_info = info["time"][mask]
+    mask = _mask_by_success(info, general_mask) if use_detected else general_mask
+    x_info = _make_x_axis_info(info, mask, True, 't')
     if y_is_translation:
         y_info = [info["detectedT" if use_detected else "realT"][index][axis_to_index(y_axis_part_to_show)] for index in mask]
     else:
@@ -222,7 +239,7 @@ def make_display_trajectory(
 
     y = y_info[:x_info.size]
 
-    plt.plot(x_info, y, label=plot_label)
+    plt.plot(x_info, y, '.', label=plot_label)
     plt.legend(loc=1)
 
 def init_figure(
@@ -267,7 +284,8 @@ def two_parameter_relation_show(
         x_axis_part_to_show: str,
         y_is_translation: bool,
         y_axis_part_to_show: str,
-        x_center_to_shift: float = 0.0
+        x_center_to_shift: float = 0.0,
+        extra_label: str = ''
 ):
     general_info = read_info([profile])
     for setting in general_info[-1][-1]:
@@ -293,7 +311,7 @@ def two_parameter_relation_show(
             Merge_methods.mean, # for now just mean because mean_divergence turned out to be useless
             x_center_to_shift)
 
-        save_plot(fig, f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_{y_is_translation}_{y_axis_part_to_show}.png')
+        save_plot(fig, f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_{y_is_translation}_{y_axis_part_to_show}{extra_label}.png')
 
 def show_missed_count(
         profile: str,

@@ -8,7 +8,7 @@ from python.B_handEyeCalibration import test_run as handEyeTest, perform_eye_han
 from python.C_imagesGeneration import test_run as imagesGenerationTest, generate_images, ImageGenerationSettings, \
     test_manipulator
 from python.D_tagsDetection import test_run as tagsDetectionTest, perform_detection
-from python.E_visualization import simple_show, two_parameter_relation_show
+from python.E_visualization import simple_show, two_parameter_relation_show, show_missed_count, show_trajectory
 #from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.chessboardDetector import ChessboardDetector
@@ -16,6 +16,7 @@ from python.models.imageGenerators.vtkGenerator import VTKGenerator
 import numpy as np
 
 from python.models.transformsParser.cubeParser import CubeParser
+from python.models.transformsParser.physicsParser import SimpleAccelerationConstraintsParser
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import tag_images_folder, test_camera_matrix
 from python.utils import read_profile_json, generate_random_norm_vector, copy_camera_profile_info
@@ -320,61 +321,87 @@ def simple_trajectory_rotation_experiment(z: float) -> (list[list[float]], list[
 def experiments_test():
     image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", False)
     profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"]
-    profiles_transforms = [
-        x_y_experiment(0.2, 15),
-        x_z_experiment(0.2, 15),
-        x_rx_experiment(0.2, 50, 15, 10),
-        x_ry_experiment(0.2, 50, 15, 10),
-        x_rz_experiment(0.2, 50, 15, 10),
-        simple_trajectory_experiment(0.8),
-        simple_trajectory_rotation_experiment(0.8)
-    ]
-
-    square_size = 0.1 / 11
-    perform_calibration(
-        profiles_to_use[0],
-        ChessboardDetector(None, None, (8, 6), square_size),
-        VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
-                     [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9),
-        (0.2, 0.3), 15, 40, 40, Rotation.from_rotvec([180, 0, 0], degrees=True)
-    )
-
-    info = read_profile_json(profiles_to_use[0])
-    print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
-    print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
-
-    used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
-    # used_detector = ArucoDetector(test_camera_matrix, np.array([0.0, 0.0, 0.0, 0.0, 0.0]), image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
-    used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
-    used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
-                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
-                                  test_camera_matrix, image_settings.tagSize * 450 / 354,
-                                  image_settings.tagSize * 450 / 354)
-
-    perform_eye_hand(profiles_to_use[0], used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
-    info = read_profile_json(profiles_to_use[0])
-    print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
-    print(f"Got cameraRotation: {info.get("cameraRotation")}")
-
-    for profile in profiles_to_use[1:]:
-        copy_camera_profile_info(profiles_to_use[0], profile)
-
-    for i in range(len(profiles_to_use) - 2):
-        generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
-        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
-    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
-    for i in range(len(profiles_to_use) - 2, len(profiles_to_use)):
-        generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
-        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
+    # profiles_transforms = [
+    #     x_y_experiment(0.2, 15),
+    #     x_z_experiment(0.2, 15),
+    #     x_rx_experiment(0.2, 50, 15, 10),
+    #     x_ry_experiment(0.2, 50, 15, 10),
+    #     x_rz_experiment(0.2, 50, 15, 10),
+    #     simple_trajectory_experiment(0.8),
+    #     simple_trajectory_rotation_experiment(0.8)
+    # ]
+    #
+    # square_size = 0.1 / 11
+    # perform_calibration(
+    #     profiles_to_use[0],
+    #     ChessboardDetector(None, None, (8, 6), square_size),
+    #     VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
+    #                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
+    #                  square_size * 11, square_size * 9),
+    #     (0.2, 0.3), 15, 40, 40, Rotation.from_rotvec([180, 0, 0], degrees=True)
+    # )
+    #
+    # info = read_profile_json(profiles_to_use[0])
+    # print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
+    # print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
+    #
+    # used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
+    # # used_detector = ArucoDetector(test_camera_matrix, np.array([0.0, 0.0, 0.0, 0.0, 0.0]), image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
+    # used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+    # used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
+    #                               [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
+    #                               test_camera_matrix, image_settings.tagSize * 450 / 354,
+    #                               image_settings.tagSize * 450 / 354)
+    #
+    # perform_eye_hand(profiles_to_use[0], used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
+    # info = read_profile_json(profiles_to_use[0])
+    # print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
+    # print(f"Got cameraRotation: {info.get("cameraRotation")}")
+    #
+    # for profile in profiles_to_use[1:]:
+    #     copy_camera_profile_info(profiles_to_use[0], profile)
+    #
+    # for i in range(len(profiles_to_use) - 2):
+    #     generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
+    #     perform_detection(profiles_to_use[i], used_detector, used_transform, True)
+    # image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
+    # for i in range(len(profiles_to_use) - 2, len(profiles_to_use)):
+    #     generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
+    #     perform_detection(profiles_to_use[i], used_detector, used_transform, True)
 
     # two_parameter_relation_show(profiles_to_use[0], True, 'x', True, 'y', 0)
     # two_parameter_relation_show(profiles_to_use[1], True, 'x', True, 'z', 0)
     # two_parameter_relation_show(profiles_to_use[2], True, 'x', False, 'x', 0)
     # two_parameter_relation_show(profiles_to_use[3], True, 'x', False, 'y', 0)
     # two_parameter_relation_show(profiles_to_use[4], True, 'x', False, 'z', 0)
+    # two_parameter_relation_show(profiles_to_use[5], True, 'x', True, 'x', 0)
+    two_parameter_relation_show(profiles_to_use[6], True, 'x', True, 'x', 0)
 
-def test_parser():
+def physics_parser_test():
+    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
+    profiles_to_use = ["traj_1", "traj_2"]
+
+    info = read_profile_json(profiles_to_use[0])
+    used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
+                                  image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
+    used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+
+    for i in range(0, len(profiles_to_use)):
+        physics_transform = SimpleAccelerationConstraintsParser(
+            used_transform,
+            (-1, 1),
+            (-1, 1),
+            0.3,
+            5,
+            0.3,
+            False
+        )
+        perform_detection(profiles_to_use[i], used_detector, physics_transform, True)
+
+    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_phys')
+    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_phys')
+
+def generator_test():
     used_transform = CubeParser([0, 1, 2, 3, 4, 5], 0.1 * 450 / 354)
     used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
                                   [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png',
@@ -397,5 +424,6 @@ if __name__ == "__main__":
 
     #test_manipulator('192.168.1.101', 30002)
 
-    experiments_test()
+    # experiments_test()
+    physics_parser_test()
 
