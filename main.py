@@ -394,7 +394,7 @@ def physics_parser_test():
             0.3,
             5,
             0.3,
-            False
+            True
         )
         perform_detection(profiles_to_use[i], used_detector, physics_transform, True)
 

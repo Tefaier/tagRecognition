@@ -71,7 +71,7 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
                 if self.tags.get(ids[i], None) is None:
                     continue
                 l_t = self.tags.get(ids[i])[0]
-                l_r = self.tags.get(l_t, ids[i])[1]
+                l_r = self.tags.get(ids[i])[1]
                 r_mirrored = self._get_mirror_rotation(translations[i], rotations[i])
                 deviation_t_1 = np.linalg.norm(translations[i] - (rotations[i] * l_r.inv()).apply(l_t) - self.last_detected_translation)
                 deviation_t_2 = np.linalg.norm(translations[i] - (r_mirrored * l_r.inv()).apply(l_t) - self.last_detected_translation)
