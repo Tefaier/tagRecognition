@@ -6,3 +6,4 @@ vtk==9.4.0
 pandas==2.2.3
 tqdm==4.67.1
 pyautogui
+filterpy

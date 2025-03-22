@@ -3,7 +3,7 @@ from python.models.transformsParser.transformsParser import TransformsParser
 from scipy.spatial.transform import Rotation
 import numpy as np
 
-from python.utils import rotation_to_vector
+from python.utils import rotation_to_vector, get_mirror_rotation
 
 
 # consider using filterpy.kalman.UnscentedKalmanFilter
@@ -53,12 +53,6 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
 
         self.flip = try_flipping_tags
 
-    def _get_mirror_rotation(self, t: np.ndarray[float], r: Rotation) -> Rotation:
-        # TODO try to implement actual way
-        # now it is just appr of rotating to look at camera and then again
-        rotation_to_face_camera = rotation_to_vector(r.apply([0, 0, 1]), -t)
-        return rotation_to_face_camera * rotation_to_face_camera * r
-
     def get_parent_transform(
             self,
             translations: list[np.array],
@@ -66,13 +60,13 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
             ids: list[int],
             time: float = None
     ) -> (np.array, np.array):
-        if self.flip and self.last_detected_rotation is not None and time - self.last_detection_time > self.last_detection_lifetime:
+        if self.flip and self.last_detected_rotation is not None and time - self.last_detection_time < self.last_detection_lifetime:
             for i in range(0, len(ids)):
                 if self.tags.get(ids[i], None) is None:
                     continue
                 l_t = self.tags.get(ids[i])[0]
                 l_r = self.tags.get(ids[i])[1]
-                r_mirrored = self._get_mirror_rotation(translations[i], rotations[i])
+                r_mirrored = get_mirror_rotation(translations[i], rotations[i])
                 deviation_t_1 = np.linalg.norm(translations[i] - (rotations[i] * l_r.inv()).apply(l_t) - self.last_detected_translation)
                 deviation_t_2 = np.linalg.norm(translations[i] - (r_mirrored * l_r.inv()).apply(l_t) - self.last_detected_translation)
                 deviation_r_1 = (rotations[i] * l_r.inv() * self.last_detected_rotation.inv()).magnitude()

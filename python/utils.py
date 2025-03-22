@@ -153,3 +153,9 @@ def rotation_to_vector(vec_from: np.array, vec_to: np.array) -> Rotation:
     kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
     rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
     return Rotation.from_matrix(rotation_matrix)
+
+def get_mirror_rotation(t: np.ndarray[float], r: Rotation) -> Rotation:
+    # TODO try to implement actual way
+    # now it is just appr of rotating to look at camera and then again
+    rotation_to_face_camera = rotation_to_vector(r.apply([0, 0, 1]), -t)
+    return rotation_to_face_camera * rotation_to_face_camera * r
