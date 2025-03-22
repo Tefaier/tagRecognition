@@ -7,7 +7,14 @@ from python.models.detectors.detector import TagDetector
 from python.utils import get_gray_image
 
 class ApriltagSettings:
-    def __init__(self, nthreads: int = 1, quad_decimate: float = 1.0, quad_sigma: float = 0.0, refine_edges: int = 1, decode_sharpening: float = 0.25):
+    def __init__(
+            self,
+            nthreads: int = 1,
+            quad_decimate: float = 1.0,
+            quad_sigma: float = 0.0,
+            refine_edges: int = 1,
+            decode_sharpening: float = 0.25
+    ):
         self.nthreads = nthreads
         self.quad_decimate = quad_decimate
         self.quad_sigma = quad_sigma
@@ -33,7 +40,15 @@ class ApriltagDetector(TagDetector):
     # fy - y focal length in pixels
     # cx - x of focal center in pixels
     # cy - y of focal center in pixels
-    def __init__(self, cameraMatrix: np.ndarray, distortionCoefficients: np.ndarray, tagSize: float, settings: ApriltagSettings, tag_family: str = "tag36h11", name: str = 'apriltag'):
+    def __init__(
+            self,
+            cameraMatrix: np.ndarray,
+            distortionCoefficients: np.ndarray,
+            tagSize: float,
+            settings: ApriltagSettings,
+            tag_family: str = "tag36h11",
+            name: str = 'apriltag'
+    ):
         super().__init__(name, cameraMatrix, distortionCoefficients)
         self.fx = cameraMatrix[0, 0]
         self.fy = cameraMatrix[1, 1]
