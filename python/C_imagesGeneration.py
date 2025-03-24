@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
-#from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
+from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.settings import generated_info_folder, analyse_images_folder, image_info_filename, \
     tag_images_folder, image_height, image_width, test_camera_matrix
@@ -91,7 +91,7 @@ def generate_images(
         rotations: list[Rotation],
         timings: list[float] = None,
         samples: int = 1
-):
+):  
     if (settings.is_trajectory and (timings is None or not len(timings) == len(translations) or not settings.clear_existing_images)):
         raise Exception("If you use trajectory you must clear images and have size of time arrays the same as that of transforms")
     profile_folder = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}"
@@ -103,22 +103,26 @@ def generate_images(
     rotations_write = []
     timings_write = [] if settings.is_trajectory else None
 
-    print("Start of image generation")
     p_bar = tqdm(range(len(translations) * samples), ncols=100)
+    
+    generator._send_cached_first_move_command() # приводим в стартовое положение
 
     for iteration_index in range(len(translations)):
         translation = translations[iteration_index]
         rotation = rotations[iteration_index]
         success = generator.check_transform_is_available(translation, rotation)
+
         if not success:
             p_bar.update(samples)
             p_bar.refresh()
             continue
+        
         success = generator.generate_images_with_obj_at_transform(
             translation,
             rotation,
             [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)]
         )
+        
         if not success:
             p_bar.update(samples)
             p_bar.refresh()
@@ -194,25 +198,16 @@ def test_run():
             test_camera_matrix,
             0.1 * 450.0 / 354.0,
             0.1 * 450.0 / 354.0),
-        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
+        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, "", False),
         translations,
         rotations
     )
 
-def test_manipulator(robot_ip, robot_port):
+def test_manipulator(robot_ip, robot_port, translations, rotations):
     profile = "manipulator test"
-    translations = []
-    rotations = []
 
-    for x in np.linspace(-0.2, 0.2, 5):
-        for y in np.linspace(-0.2, 0.2, 5):
-            for rx in np.linspace(-70, 70, 5):
-                for ry in np.linspace(-70, 70, 5):
-                    translations.append([x, y, 0.8])
-                    rotations.append(Rotation.from_rotvec([rx, ry, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
-
-    camera_translation = np.array([1, 0, 0.3])
-    camera_rotation = Rotation.from_rotvec([-90, 0, 0], degrees=True) * Rotation.from_rotvec([0, 90, 0], degrees=True)
+    camera_translation = np.array([0, 0, 0]) # пока что будем все измерять относительно стандартной ск
+    camera_rotation = Rotation.from_rotvec([0, 0, 0], degrees=False) * Rotation.from_rotvec([0, 0, 0], degrees=False)
     gripper_to_object_translation = np.array([0, 0, 0])
     gripper_to_object_rotation = Rotation.from_rotvec([0, 0, 0], degrees=True)
 
@@ -226,18 +221,18 @@ def test_manipulator(robot_ip, robot_port):
             camera_rotation,
             gripper_to_object_translation,
             gripper_to_object_rotation,
-            take_screenshot=True
+            take_screenshot=False
         ),
-        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, ""),
+        ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_100), False, "", False),
         translations,
         rotations
     )
     end_time = time.monotonic()
 
     print(f"Total time taken (s): {round(end_time - start_time, 2)}")
-    data = pd.read_csv(f"{profile}/{image_info_filename}.csv")
+    data = pd.read_csv(f"python/generatedInfo/{profile}/{image_info_filename}.csv")
     entries = data.shape[0]
-    images = glob.glob(f"{profile}/{analyse_images_folder}/*.png")
+    images = glob.glob(f"python/generatedInfo/{profile}/{analyse_images_folder}/*.png")
     print(f"{len(translations)} images were requested")
     print(f"{len(images)} images were saved as png")
     print(f"{entries} images were saved as csv entries")

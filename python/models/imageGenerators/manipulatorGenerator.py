@@ -1,5 +1,6 @@
 import array
 
+import time
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -26,7 +27,8 @@ class ManipulatorGenerator(ImageGenerator):
         self.robot_ip = robotIP
         self.robot_port = REALTIME_PORT
         self.current_pos = None
-        self.last_joints_pos = None
+        self.last_joints_pos = [-5.17818, -1.91922, -1.64695, -4.28781, 1.5708, 0.465794] # выбрать какое-то стартовое положение(его нужно указывать в углах суставов для однозначности)
+
         self.listener = JointStateListener()
 
         self.camera_translation = camera_translation
@@ -81,11 +83,15 @@ class ManipulatorGenerator(ImageGenerator):
 
     def _send_cached_move_command(self, t: np.array, r: np.array) -> bool:
         if self.current_pos is not None and np.max(np.abs(self.current_pos - np.concatenate([t, r]))) < 1e-8: return True
-        success = self._send_command_with_response(self._make_move_command(t, r), 10)
+        success = self._send_command_with_response(self._make_move_command(t, r))
         if success: self.current_pos = np.concatenate([t, r])
         return success
 
-    def _send_command_with_response(self, command: str, timeout=5.0) -> bool:
+    def _send_cached_first_move_command(self) -> bool:
+        success = self._send_command_with_response(self._make_first_move_command())
+        return success
+
+    def _send_command_with_response(self, command: str, timeout=30.0) -> bool:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.robot_ip, self.robot_port))
@@ -98,11 +104,12 @@ class ManipulatorGenerator(ImageGenerator):
 
             start_time = time.monotonic()
             while time.monotonic() - start_time < timeout:
-                # TODO check minimum time that needs to get info from joint_states
-                js = self.listener.listen_once(max(0.5, timeout / 10))
-                if js is None: continue
-                if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]):
-                    if self.last_joints_pos is None: return True
+                js = self.listener.listen_once(3)
+                if js is None:
+                    continue
+                if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]) and 3 <= time.monotonic() - start_time:
+                    if self.last_joints_pos is None:
+                        return True
                     if self.last_joints_pos != js.position:
                         self.last_joints_pos = js.position
                         return True
@@ -121,10 +128,33 @@ def myProg():
     success = is_within_safety_limits(target_pose)
 
     if success:
-        movej(target_pose, a=1.2, v=0.25, r = 0)
+        movej(target_pose, a=1.2, v=0.5, r = 0)
         textmsg("ok")
+        textmsg(target_pose)
+        textmsg(get_inverse_kin(target_pose))
     else:
         textmsg("bad")
+        textmsg(target_pose)
+        textmsg(get_inverse_kin(target_pose))
+    end
+end
+myProg()
+'''
+        return urscript_command
+
+    def _make_first_move_command(self):
+        urscript_command = f'''
+def myProg():
+    target_pose = [-5.17818, -1.91922, -1.64695, -4.28781, 1.5708, 0.465794]
+    success = is_within_safety_limits(target_pose)
+
+    if success:
+        movej(target_pose, a=1.2, v=0.5, r = 0)
+        textmsg("ok first")
+        textmsg(target_pose)
+    else:
+        textmsg("bad first")
+        textmsg(target_pose)
     end
 end
 myProg()
