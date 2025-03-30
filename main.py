@@ -16,6 +16,7 @@ from python.models.imageGenerators.vtkGenerator import VTKGenerator
 import numpy as np
 
 from python.models.transformsParser.cubeParser import CubeParser
+from python.models.transformsParser.kalmanParser import SimpleKalmanFilterParser
 from python.models.transformsParser.physicsParser import SimpleAccelerationConstraintsParser
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import tag_images_folder, test_camera_matrix
@@ -318,19 +319,32 @@ def simple_trajectory_rotation_experiment(z: float) -> (list[list[float]], list[
         total_time += frame_time
     return translations, rotations, (np.arange(0, len(translations)) * frame_time).tolist()
 
+def simple_trajectory_only_rotate_experiment(z: float) -> (list[list[float]], list[Rotation], list[float]):
+    translations = []
+    rotations = []
+
+    frame_time = 1/20
+    total_time = 0
+    for t in range(0, int(3/frame_time)):
+        translations.append([0, 0, z])
+        rotations.append(Rotation.from_rotvec([((-1.5 + total_time) / 1.5) * 90, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
+        total_time += frame_time
+    return translations, rotations, (np.arange(0, len(translations)) * frame_time).tolist()
+
 def experiments_test():
     image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", False)
-    profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"]
-    # profiles_transforms = [
-    #     x_y_experiment(0.2, 15),
-    #     x_z_experiment(0.2, 15),
-    #     x_rx_experiment(0.2, 50, 15, 10),
-    #     x_ry_experiment(0.2, 50, 15, 10),
-    #     x_rz_experiment(0.2, 50, 15, 10),
-    #     simple_trajectory_experiment(0.8),
-    #     simple_trajectory_rotation_experiment(0.8)
-    # ]
-    #
+    profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2", "traj_3"]
+    profiles_transforms = [
+        x_y_experiment(0.2, 15),
+        x_z_experiment(0.2, 15),
+        x_rx_experiment(0.2, 50, 15, 10),
+        x_ry_experiment(0.2, 50, 15, 10),
+        x_rz_experiment(0.2, 50, 15, 10),
+        simple_trajectory_experiment(0.8),
+        simple_trajectory_rotation_experiment(0.8),
+        simple_trajectory_only_rotate_experiment(2.5)
+    ]
+
     # square_size = 0.1 / 11
     # perform_calibration(
     #     profiles_to_use[0],
@@ -341,65 +355,67 @@ def experiments_test():
     #     (0.2, 0.3), 15, 40, 40, Rotation.from_rotvec([180, 0, 0], degrees=True)
     # )
     #
-    # info = read_profile_json(profiles_to_use[0])
+    info = read_profile_json(profiles_to_use[0])
     # print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
     # print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
-    #
-    # used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
-    # # used_detector = ArucoDetector(test_camera_matrix, np.array([0.0, 0.0, 0.0, 0.0, 0.0]), image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
-    # used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
-    # used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
-    #                               [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
-    #                               test_camera_matrix, image_settings.tagSize * 450 / 354,
-    #                               image_settings.tagSize * 450 / 354)
+
+    parameters = cv2.aruco.DetectorParameters()
+    parameters.useAruco3Detection = True
+    used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), image_settings.tagSize, parameters, cv2.aruco.DICT_5X5_50)
+    used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+    used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
+                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
+                                  test_camera_matrix, image_settings.tagSize * 450 / 354,
+                                  image_settings.tagSize * 450 / 354)
     #
     # perform_eye_hand(profiles_to_use[0], used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
     # info = read_profile_json(profiles_to_use[0])
     # print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
     # print(f"Got cameraRotation: {info.get("cameraRotation")}")
-    #
+
     # for profile in profiles_to_use[1:]:
     #     copy_camera_profile_info(profiles_to_use[0], profile)
-    #
-    # for i in range(len(profiles_to_use) - 2):
+
+    # for i in range(len(profiles_to_use) - 3):
     #     generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
     #     perform_detection(profiles_to_use[i], used_detector, used_transform, True)
-    # image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
-    # for i in range(len(profiles_to_use) - 2, len(profiles_to_use)):
-    #     generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
-    #     perform_detection(profiles_to_use[i], used_detector, used_transform, True)
+    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
+    for i in range(len(profiles_to_use) - 1, len(profiles_to_use)):
+        # generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
+        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
 
-    # two_parameter_relation_show(profiles_to_use[0], True, 'x', True, 'y', 0)
-    # two_parameter_relation_show(profiles_to_use[1], True, 'x', True, 'z', 0)
-    # two_parameter_relation_show(profiles_to_use[2], True, 'x', False, 'x', 0)
-    # two_parameter_relation_show(profiles_to_use[3], True, 'x', False, 'y', 0)
-    # two_parameter_relation_show(profiles_to_use[4], True, 'x', False, 'z', 0)
-    # two_parameter_relation_show(profiles_to_use[5], True, 'x', True, 'x', 0)
-    two_parameter_relation_show(profiles_to_use[6], True, 'x', True, 'x', 0)
+    # two_parameter_relation_show(profiles_to_use[0], True, 'x', True, 'y', 0, '', {"aruco3": False})
+    # two_parameter_relation_show(profiles_to_use[1], True, 'x', True, 'z', 0, '', {"aruco3": False})
+    # two_parameter_relation_show(profiles_to_use[2], True, 'x', False, 'x', 0, '', {"aruco3": False})
+    # two_parameter_relation_show(profiles_to_use[3], True, 'x', False, 'y', 0, '', {"aruco3": False})
+    # two_parameter_relation_show(profiles_to_use[4], True, 'x', False, 'z', 0, '', {"aruco3": False})
+    # two_parameter_relation_show(profiles_to_use[5], True, 'x', True, 'x', 0, '', {"aruco3": False})
+    # two_parameter_relation_show(profiles_to_use[6], True, 'x', True, 'x', 0, '', {"aruco3": False})
+    two_parameter_relation_show(profiles_to_use[7], False, 'x', False, 'x', 180, 'aruco3', {"aruco3": True})
 
 def physics_parser_test():
     image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
-    profiles_to_use = ["traj_1", "traj_2"]
+    profiles_to_use = ["traj_1", "traj_2", "traj_3"]
 
     info = read_profile_json(profiles_to_use[0])
+    parameters = cv2.aruco.DetectorParameters()
+    parameters.useAruco3Detection = True
     used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
-                                  image_settings.tagSize, cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
+                                  image_settings.tagSize, parameters, cv2.aruco.DICT_5X5_50)
     used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
 
     for i in range(0, len(profiles_to_use)):
-        physics_transform = SimpleAccelerationConstraintsParser(
+        physics_transform = SimpleKalmanFilterParser(
             used_transform,
-            (-1, 1),
-            (-1, 1),
-            0.3,
-            5,
-            0.3,
+            1,
             True
         )
         perform_detection(profiles_to_use[i], used_detector, physics_transform, True)
 
-    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_phys')
-    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_phys')
+    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_aruco3_phys', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_aruco3_phys', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[2], False, 'x', False, 'x', 180, '_aruco3_phys', {"aruco3": True})
+    show_trajectory(profiles_to_use[2], False, 'x', {"aruco3": True})
 
 def generator_test():
     used_transform = CubeParser([0, 1, 2, 3, 4, 5], 0.1 * 450 / 354)

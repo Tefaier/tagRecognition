@@ -71,7 +71,7 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
                 deviation_t_2 = np.linalg.norm(translations[i] - (r_mirrored * l_r.inv()).apply(l_t) - self.last_detected_translation)
                 deviation_r_1 = (rotations[i] * l_r.inv() * self.last_detected_rotation.inv()).magnitude()
                 deviation_r_2 = (r_mirrored * l_r.inv() * self.last_detected_rotation.inv()).magnitude()
-                if deviation_t_1 > deviation_t_2 and deviation_r_1 > deviation_r_2:
+                if deviation_t_1 > deviation_t_2 - 0.001 and deviation_r_1 > deviation_r_2 - 0.01:
                     rotations[i] = r_mirrored
 
         result = self.child_parser.get_parent_transform(translations, rotations, ids, time)
@@ -100,8 +100,8 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
             self.last_detected_rotation = Rotation.from_rotvec(result[1], degrees=False)
             return result
 
-        t_acc = np.linalg.norm(translation_speed) - np.linalg.norm(self.last_detected_translation_speed)
-        r_acc = np.linalg.norm(rotation_speed) - np.linalg.norm(self.last_detected_rotation_speed)
+        t_acc = (np.linalg.norm(translation_speed) - np.linalg.norm(self.last_detected_translation_speed)) / time_since_last
+        r_acc = (np.linalg.norm(rotation_speed) - np.linalg.norm(self.last_detected_rotation_speed)) / time_since_last
         t_passed = (0 > t_acc > self.max_acc[0]) or (0 <= t_acc < self.max_acc[1])
         r_passed = (0 > r_acc > self.max_rot_acc[0]) or (0 <= r_acc < self.max_rot_acc[1])
 

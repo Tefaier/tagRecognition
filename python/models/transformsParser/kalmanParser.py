@@ -21,6 +21,7 @@ class SimpleKalmanFilterParser(TransformsParser):
     last_detected_translation: np.ndarray[float]
     last_detected_rotation: Rotation
     k_filter: KalmanFilter
+    flip_series: dict[int, int]
 
     flip: bool
 
@@ -35,9 +36,10 @@ class SimpleKalmanFilterParser(TransformsParser):
 
         self.last_detection_time = None
         self.last_detection_lifetime = last_detection_lifetime
-        last_detected_translation = None
-        last_detected_rotation = None
-        k_filter = None
+        self.last_detected_translation = None
+        self.last_detected_rotation = None
+        self.k_filter = None
+        self.flip_series = {}
 
         self.flip = try_flipping_tags
 
@@ -53,7 +55,6 @@ class SimpleKalmanFilterParser(TransformsParser):
         f.H = measurement
         f.P *= 1000.0
         f.R = np.eye(3, 3) * 4
-        f.Q = Q_discrete_white_noise(dim=6, dt=0.1, var=0.1)
         return f
 
     def get_parent_transform(
@@ -72,23 +73,32 @@ class SimpleKalmanFilterParser(TransformsParser):
                 r_mirrored = get_mirror_rotation(translations[i], rotations[i])
                 deviation_t_1 = np.linalg.norm(translations[i] - (rotations[i] * l_r.inv()).apply(l_t) - self.last_detected_translation)
                 deviation_t_2 = np.linalg.norm(translations[i] - (r_mirrored * l_r.inv()).apply(l_t) - self.last_detected_translation)
-                deviation_r_1 = (rotations[i] * l_r.inv() * self.last_detected_rotation.inv()).magnitude()
-                deviation_r_2 = (r_mirrored * l_r.inv() * self.last_detected_rotation.inv()).magnitude()
-                if deviation_t_1 > deviation_t_2 and deviation_r_1 > deviation_r_2:
+                deviation_r_1 = (l_r.inv() * rotations[i] * self.last_detected_rotation.inv()).magnitude()
+                deviation_r_2 = (l_r.inv() * r_mirrored * self.last_detected_rotation.inv()).magnitude()
+                # print(time)
+                # print(self.last_detected_rotation.as_rotvec(degrees=True))
+                # print(rotations[i].as_rotvec(degrees=True))
+                # print(r_mirrored.as_rotvec(degrees=True))
+                current_flip_series = self.flip_series.get(ids[i], 0)
+                if (deviation_t_1 > deviation_t_2 - 0.0001 and deviation_r_1 > deviation_r_2 + np.deg2rad(10 + current_flip_series * 5)) or (deviation_t_1 > deviation_t_2 + 0.02 + current_flip_series * 0.01 and deviation_r_1 > deviation_r_2 - 0.001):
                     rotations[i] = r_mirrored
+                    self.flip_series[ids[i]] = current_flip_series + 1
+                else:
+                    self.flip_series[ids[i]] = 0
 
         result = self.child_parser.get_parent_transform(translations, rotations, ids, time)
         if len(result[0]) == 0:
             return result
 
-        time_shift = time - self.last_detection_time
         self.last_detected_rotation = Rotation.from_rotvec(result[1], degrees=False)
 
-        if self.last_detection_time is None or time_shift > self.last_detection_lifetime:
+        if self.last_detection_time is None or time - self.last_detection_time > self.last_detection_lifetime:
             self.k_filter = None
             self.last_detection_time = time
             self.last_detected_translation = result[0]
             return result
+
+        time_shift = time - self.last_detection_time
 
         if self.k_filter is None:
             self.k_filter = self._create_filter(result[0], (result[0] - self.last_detected_translation) / time_shift)
@@ -99,7 +109,8 @@ class SimpleKalmanFilterParser(TransformsParser):
         self.k_filter.predict(Q=Q_discrete_white_noise(dim=2, dt=time_shift, var=0.1, block_size=3, order_by_dim=False))
         self.k_filter.update(result[0])
         self.last_detection_time = time
-        self.last_detected_translation = self.k_filter.x
+        self.last_detected_translation = ((self.k_filter.x)[:3]).copy()
+        return result
 
 
 
