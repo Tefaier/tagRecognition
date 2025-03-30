@@ -413,9 +413,10 @@ def physics_parser_test():
         perform_detection(profiles_to_use[i], used_detector, physics_transform, True)
 
     two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_aruco3_phys', {"aruco3": True})
+    show_trajectory(profiles_to_use[0], True, 'x', '', {"aruco3": True})
     two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_aruco3_phys', {"aruco3": True})
     two_parameter_relation_show(profiles_to_use[2], False, 'x', False, 'x', 180, '_aruco3_phys', {"aruco3": True})
-    show_trajectory(profiles_to_use[2], False, 'x', {"aruco3": True})
+    show_trajectory(profiles_to_use[2], False, 'x', '', {"aruco3": True})
 
 def generator_test():
     used_transform = CubeParser([0, 1, 2, 3, 4, 5], 0.1 * 450 / 354)

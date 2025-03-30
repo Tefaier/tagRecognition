@@ -301,7 +301,7 @@ def two_parameter_relation_show(
         1,
         1,
         'Relation by mean error',
-        f'Real {"translation" if x_is_translation else "rotation"} x, {"m" if x_is_translation else "degrees"}',
+        f'Real {"translation" if x_is_translation else "rotation"} {x_axis_part_to_show}, {"m" if x_is_translation else "degrees"}' if not x_axis_part_to_show == 't' else 'Time, s',
         f'Deviation, {"m" if y_is_translation else "degrees"}')
     make_display_by_threshold(
         y_axis_part_to_show,
@@ -322,6 +322,7 @@ def show_missed_count(
         x_is_translation: bool,
         x_axis_part_to_show: str,
         x_center_to_shift: float = 0.0,
+        extra_label: str = '',
         settings_dict: dict = {}
 ):
     info = get_info_part(read_info([profile]), profile, settings_dict)
@@ -332,7 +333,7 @@ def show_missed_count(
         1,
         1,
         'How much detection fails to detect object',
-        f'Real {"translation" if x_is_translation else "rotation"} x, {"m" if x_is_translation else "degrees"}',
+        f'Real {"translation" if x_is_translation else "rotation"} {x_axis_part_to_show}, {"m" if x_is_translation else "degrees"}',
         f'Missed part, %')
     make_display_with_missed(
         "missed part",
@@ -343,12 +344,13 @@ def show_missed_count(
         info,
         x_center_to_shift)
 
-    save_plot(fig,f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_missings.png')
+    save_plot(fig,f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_missings{extra_label}.png')
 
 def show_trajectory(
         profile: str,
         y_is_translation: bool,
         y_axis_part_to_show: str,
+        extra_label: str = '',
         settings_dict: dict = {}
 ):
     info = get_info_part(read_info([profile]), profile, settings_dict)
@@ -378,7 +380,7 @@ def show_trajectory(
         True
     )
 
-    save_plot(fig,f'{plots_folder}/{profile}_{y_is_translation}_{y_axis_part_to_show}_trajectory.png')
+    save_plot(fig,f'{plots_folder}/{profile}_{y_is_translation}_{y_axis_part_to_show}_trajectory{extra_label}.png')
 
 def simple_show(profiles: list[str]):
     general_info = read_info(profiles)
