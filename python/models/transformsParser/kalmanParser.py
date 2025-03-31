@@ -73,12 +73,12 @@ class SimpleKalmanFilterParser(TransformsParser):
                 r_mirrored = get_mirror_rotation(translations[i], rotations[i])
                 deviation_t_1 = np.linalg.norm(translations[i] - (rotations[i] * l_r.inv()).apply(l_t) - self.last_detected_translation)
                 deviation_t_2 = np.linalg.norm(translations[i] - (r_mirrored * l_r.inv()).apply(l_t) - self.last_detected_translation)
-                deviation_r_1 = (l_r.inv() * rotations[i] * self.last_detected_rotation.inv()).magnitude()
-                deviation_r_2 = (l_r.inv() * r_mirrored * self.last_detected_rotation.inv()).magnitude()
+                deviation_r_1 = (rotations[i] * l_r.inv() * self.last_detected_rotation.inv()).magnitude()
+                deviation_r_2 = (r_mirrored * l_r.inv() * self.last_detected_rotation.inv()).magnitude()
                 # print(time)
                 # print(self.last_detected_rotation.as_rotvec(degrees=True))
-                # print(rotations[i].as_rotvec(degrees=True))
-                # print(r_mirrored.as_rotvec(degrees=True))
+                # print((rotations[i] * l_r.inv()).as_rotvec(degrees=True))
+                # print((r_mirrored * l_r.inv()).as_rotvec(degrees=True))
                 current_flip_series = self.flip_series.get(ids[i], 0)
                 if (deviation_t_1 > deviation_t_2 - 0.0001 and deviation_r_1 > deviation_r_2 + np.deg2rad(10 + current_flip_series * 5)) or (deviation_t_1 > deviation_t_2 + 0.02 + current_flip_series * 0.01 and deviation_r_1 > deviation_r_2 - 0.001):
                     rotations[i] = r_mirrored

@@ -362,12 +362,26 @@ def experiments_test():
     parameters = cv2.aruco.DetectorParameters()
     parameters.useAruco3Detection = True
     used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), image_settings.tagSize, parameters, cv2.aruco.DICT_5X5_50)
+    used_transform = CubeParser([0, 1, 2, 3, 4, 5], image_settings.tagSize * 450 / 354)
+    used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
+                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_1.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_2.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_3.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_4.png',
+                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_5.png'],
+                                  test_camera_matrix, image_settings.tagSize * 450 / 354,
+                                  image_settings.tagSize * 450 / 354)
+
+    '''
+    ALTERNATIVE SETUP
     used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
     used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
                                   [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
-    #
+    '''
+
     # perform_eye_hand(profiles_to_use[0], used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
     # info = read_profile_json(profiles_to_use[0])
     # print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
@@ -376,22 +390,22 @@ def experiments_test():
     # for profile in profiles_to_use[1:]:
     #     copy_camera_profile_info(profiles_to_use[0], profile)
 
-    # for i in range(len(profiles_to_use) - 3):
-    #     generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
-    #     perform_detection(profiles_to_use[i], used_detector, used_transform, True)
+    for i in range(len(profiles_to_use) - 3):
+        # generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
+        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
     image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
-    for i in range(len(profiles_to_use) - 1, len(profiles_to_use)):
+    for i in range(len(profiles_to_use) - 3, len(profiles_to_use)):
         # generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
         perform_detection(profiles_to_use[i], used_detector, used_transform, True)
 
-    # two_parameter_relation_show(profiles_to_use[0], True, 'x', True, 'y', 0, '', {"aruco3": False})
-    # two_parameter_relation_show(profiles_to_use[1], True, 'x', True, 'z', 0, '', {"aruco3": False})
-    # two_parameter_relation_show(profiles_to_use[2], True, 'x', False, 'x', 0, '', {"aruco3": False})
-    # two_parameter_relation_show(profiles_to_use[3], True, 'x', False, 'y', 0, '', {"aruco3": False})
-    # two_parameter_relation_show(profiles_to_use[4], True, 'x', False, 'z', 0, '', {"aruco3": False})
-    # two_parameter_relation_show(profiles_to_use[5], True, 'x', True, 'x', 0, '', {"aruco3": False})
-    # two_parameter_relation_show(profiles_to_use[6], True, 'x', True, 'x', 0, '', {"aruco3": False})
-    two_parameter_relation_show(profiles_to_use[7], False, 'x', False, 'x', 180, 'aruco3', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[0], True, 'x', True, 'y', 0, '_aruco3_cuber', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[1], True, 'x', True, 'z', 0, '_aruco3_cuber', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[2], True, 'x', False, 'x', 0, '_aruco3_cuber', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[3], True, 'x', False, 'y', 0, '_aruco3_cuber', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[4], True, 'x', False, 'z', 0, '_aruco3_cuber', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[5], True, 'x', True, 'x', 0, '_aruco3_cuber', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[6], True, 'x', True, 'x', 0, '_aruco3_cuber', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[7], False, 'x', False, 'x', 180, '_aruco3_cuber', {"aruco3": True})
 
 def physics_parser_test():
     image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
@@ -402,7 +416,8 @@ def physics_parser_test():
     parameters.useAruco3Detection = True
     used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
                                   image_settings.tagSize, parameters, cv2.aruco.DICT_5X5_50)
-    used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+    used_transform = CubeParser([0, 1, 2, 3, 4, 5], image_settings.tagSize * 450 / 354)
+    # used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
 
     for i in range(0, len(profiles_to_use)):
         physics_transform = SimpleKalmanFilterParser(
@@ -412,11 +427,11 @@ def physics_parser_test():
         )
         perform_detection(profiles_to_use[i], used_detector, physics_transform, True)
 
-    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_aruco3_phys', {"aruco3": True})
-    show_trajectory(profiles_to_use[0], True, 'x', '', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_aruco3_phys', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[2], False, 'x', False, 'x', 180, '_aruco3_phys', {"aruco3": True})
-    show_trajectory(profiles_to_use[2], False, 'x', '', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_aruco3_phys_cube_fix', {"aruco3": True})
+    show_trajectory(profiles_to_use[0], True, 'x', '_aruco3_phys_cube_fix', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_aruco3_phys_cube_fix', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[2], False, 'x', False, 'x', 180, '_aruco3_phys_cube_fix', {"aruco3": True})
+    show_trajectory(profiles_to_use[2], False, 'x', '_aruco3_phys_cube_fix', {"aruco3": True})
 
 def generator_test():
     used_transform = CubeParser([0, 1, 2, 3, 4, 5], 0.1 * 450 / 354)
