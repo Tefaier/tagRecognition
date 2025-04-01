@@ -22,25 +22,46 @@ from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import tag_images_folder, test_camera_matrix
 from python.utils import read_profile_json, generate_random_norm_vector, copy_camera_profile_info
 
-
-def test_aruco_simple():
-    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "")
-    profile_to_use = "test"
+def run_default_calibration(profile: str):
+    calibration_profile = profile
 
     square_size = 0.1 / 11
     perform_calibration(
-        profile_to_use,
+        calibration_profile,
         ChessboardDetector(None, None, (8, 6), square_size),
         VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
                      [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
                      square_size * 11, square_size * 9),
-        (0.2, 0.3), 15, 5, 30, Rotation.from_rotvec([180, 0, 0], degrees=True)
+        (0.2, 0.3), 15, 40, 40, Rotation.from_rotvec([180, 0, 0], degrees=True)
     )
 
-    info = read_profile_json(profile_to_use)
+    info = read_profile_json(calibration_profile)
     print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
     print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
 
+    calibration_image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", False)
+    parameters = cv2.aruco.DetectorParameters()
+    parameters.useAruco3Detection = True
+    used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+    used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
+                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
+                                  test_camera_matrix, calibration_image_settings.tagSize * 450 / 354,
+                                  calibration_image_settings.tagSize * 450 / 354)
+    used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
+                                  calibration_image_settings.tagSize, parameters, cv2.aruco.DICT_5X5_50)
+    perform_eye_hand(calibration_profile, used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30,
+                     Rotation.from_rotvec([180, 0, 0], degrees=True))
+    info = read_profile_json(calibration_profile)
+    print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
+    print(f"Got cameraRotation: {info.get("cameraRotation")}")
+
+def test_aruco_simple():
+    profile_to_use = "test"
+    run_default_calibration(profile_to_use)
+
+    info = read_profile_json(profile_to_use)
+
+    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "")
     used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), 0.1,
                                   cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
     used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
@@ -48,11 +69,6 @@ def test_aruco_simple():
                                   [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
-
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
-    info = read_profile_json(profile_to_use)
-    print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
-    print(f"Got cameraRotation: {info.get("cameraRotation")}")
 
     entries_to_make = 10
     translations = [np.array([0, 0, 1]) + generate_random_norm_vector() * 0.1 for i in range(entries_to_make)]
@@ -67,23 +83,12 @@ def test_aruco_simple():
     simple_show([profile_to_use])
 
 def test_apriltag_simple():
-    image_settings = ImageGenerationSettings(True, 0.1, False, "", True, "tag36h11")
     profile_to_use = "test"
-
-    square_size = 0.1 / 11
-    perform_calibration(
-        profile_to_use,
-        ChessboardDetector(None, None, (8, 6), square_size),
-        VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
-                     [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9),
-        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
-    )
+    run_default_calibration(profile_to_use)
 
     info = read_profile_json(profile_to_use)
-    print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
-    print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
 
+    image_settings = ImageGenerationSettings(True, 0.1, False, "", True, "tag36h11")
     used_detector = ApriltagDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
                                      0.1, ApriltagSettings(), image_settings.apriltagFamily)
     used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
@@ -91,11 +96,6 @@ def test_apriltag_simple():
                                   [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_0.png'],
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
-
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
-    info = read_profile_json(profile_to_use)
-    print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
-    print(f"Got cameraRotation: {info.get("cameraRotation")}")
 
     entries_to_make = 10
     translations = [np.array([0, 0, 1]) + generate_random_norm_vector() * 0.1 for i in range(entries_to_make)]
@@ -110,23 +110,12 @@ def test_apriltag_simple():
     simple_show([profile_to_use])
 
 def test_aruco_cube():
-    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "")
+    run_default_calibration("test")
     profile_to_use = "test"
 
-    square_size = 0.1 / 11
-    perform_calibration(
-        profile_to_use,
-        ChessboardDetector(None, None, (8, 6), square_size),
-        VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
-                     [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9),
-        (0.2, 0.3), 5, 15, 30, Rotation.from_rotvec([180, 0, 0], degrees=True)
-    )
-
     info = read_profile_json(profile_to_use)
-    print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
-    print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
 
+    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "")
     used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), 0.1,
                                   cv2.aruco.DetectorParameters(), cv2.aruco.DICT_5X5_50)
     used_transform = CubeParser([0, 1, 2, 3, 4, 5], image_settings.tagSize * 450 / 354)
@@ -139,11 +128,6 @@ def test_aruco_cube():
                                    f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_5.png'],
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
-
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
-    info = read_profile_json(profile_to_use)
-    print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
-    print(f"Got cameraRotation: {info.get("cameraRotation")}")
 
     entries_to_make = 10
     translations = [np.array([0, 0, 1]) + generate_random_norm_vector() * 0.1 for i in range(entries_to_make)]
@@ -158,23 +142,12 @@ def test_aruco_cube():
     simple_show([profile_to_use])
 
 def test_apriltag_cube():
-    image_settings = ImageGenerationSettings(True, 0.1, False, "", True, "tag36h11")
     profile_to_use = "test"
-
-    square_size = 0.1 / 11
-    perform_calibration(
-        profile_to_use,
-        ChessboardDetector(None, None, (8, 6), square_size),
-        VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
-                     [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-                     square_size * 11, square_size * 9),
-        (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True)
-    )
+    run_default_calibration(profile_to_use)
 
     info = read_profile_json(profile_to_use)
-    print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
-    print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
 
+    image_settings = ImageGenerationSettings(True, 0.1, False, "", True, "tag36h11")
     used_detector = ApriltagDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
                                      0.1, ApriltagSettings(), image_settings.apriltagFamily)
     used_transform = CubeParser([0, 1, 2, 3, 4, 5], image_settings.tagSize * 450 / 354)
@@ -188,11 +161,6 @@ def test_apriltag_cube():
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
 
-    perform_eye_hand(profile_to_use, used_detector, used_transform, used_generator, (0.2, 0.3), 20, 10, 60, Rotation.from_rotvec([180, 0, 0], degrees=True))
-    info = read_profile_json(profile_to_use)
-    print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
-    print(f"Got cameraRotation: {info.get("cameraRotation")}")
-
     entries_to_make = 10
     translations = [np.array([0, 0, 1]) + generate_random_norm_vector() * 0.1 for i in range(entries_to_make)]
     rotations = [
@@ -205,55 +173,55 @@ def test_apriltag_cube():
 
     simple_show([profile_to_use])
 
-def x_y_experiment(deviation: float, entries_per_axis: int) -> (list[list[float]], list[Rotation]):
+def x_y_experiment(distance: float, deviation: float, entries_per_axis: int) -> (list[list[float]], list[Rotation]):
     translations = []
     rotations = []
 
     for x in np.linspace(-deviation, deviation, entries_per_axis):
         for y in np.linspace(-deviation, deviation, entries_per_axis):
-            translations.append([x, y, 0.8])
+            translations.append([x, y, distance])
             rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
-    return translations, rotations
+    return translations, rotations, None
 
-def x_z_experiment(deviation: float, entries_per_axis: int) -> (list[list[float]], list[Rotation]):
+def x_z_experiment(distance: float, deviation: float, entries_per_axis: int) -> (list[list[float]], list[Rotation]):
     translations = []
     rotations = []
 
     for x in np.linspace(-deviation, deviation, entries_per_axis):
         for z in np.linspace(-deviation, deviation, entries_per_axis):
-            translations.append([x, 0, 0.8 + z])
+            translations.append([x, 0, distance + z])
             rotations.append(Rotation.from_rotvec([0, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
-    return translations, rotations
+    return translations, rotations, None
 
-def x_rx_experiment(deviation: float, angle_deviation: float, entries_per_translation: int, entries_per_rotation: int) -> (list[list[float]], list[Rotation]):
+def x_rx_experiment(distance: float, deviation: float, angle_deviation: float, entries_per_translation: int, entries_per_rotation: int) -> (list[list[float]], list[Rotation]):
     translations = []
     rotations = []
 
     for x in np.linspace(-deviation, deviation, entries_per_translation):
         for rx in np.linspace(-angle_deviation, angle_deviation, entries_per_rotation):
-            translations.append([x, 0, 0.8])
+            translations.append([x, 0, distance])
             rotations.append(Rotation.from_rotvec([rx, 0, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
-    return translations, rotations
+    return translations, rotations, None
 
-def x_ry_experiment(deviation: float, angle_deviation: float, entries_per_translation: int, entries_per_rotation: int) -> (list[list[float]], list[Rotation]):
+def x_ry_experiment(distance: float, deviation: float, angle_deviation: float, entries_per_translation: int, entries_per_rotation: int) -> (list[list[float]], list[Rotation]):
     translations = []
     rotations = []
 
     for x in np.linspace(-deviation, deviation, entries_per_translation):
         for ry in np.linspace(-angle_deviation, angle_deviation, entries_per_rotation):
-            translations.append([x, 0, 0.8])
+            translations.append([x, 0, distance])
             rotations.append(Rotation.from_rotvec([0, ry, 0], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
-    return translations, rotations
+    return translations, rotations, None
 
-def x_rz_experiment(deviation: float, angle_deviation: float, entries_per_translation: int, entries_per_rotation: int) -> (list[list[float]], list[Rotation]):
+def x_rz_experiment(distance: float, deviation: float, angle_deviation: float, entries_per_translation: int, entries_per_rotation: int) -> (list[list[float]], list[Rotation]):
     translations = []
     rotations = []
 
     for x in np.linspace(-deviation, deviation, entries_per_translation):
         for rz in np.linspace(-angle_deviation, angle_deviation, entries_per_rotation):
-            translations.append([x, 0, 0.8])
+            translations.append([x, 0, distance])
             rotations.append(Rotation.from_rotvec([0, 0, rz], degrees=True) * Rotation.from_rotvec([180, 0, 0], degrees=True))
-    return translations, rotations
+    return translations, rotations, None
 
 def simple_trajectory_experiment(z: float) -> (list[list[float]], list[Rotation], list[float]):
     translations = []
@@ -335,29 +303,17 @@ def experiments_test():
     image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", False)
     profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2", "traj_3"]
     profiles_transforms = [
-        x_y_experiment(0.2, 15),
-        x_z_experiment(0.2, 15),
-        x_rx_experiment(0.2, 50, 15, 10),
-        x_ry_experiment(0.2, 50, 15, 10),
-        x_rz_experiment(0.2, 50, 15, 10),
+        x_y_experiment(0.8, 0.2, 15),
+        x_z_experiment(0.8, 0.2, 15),
+        x_rx_experiment(0.8, 0.2, 50, 15, 10),
+        x_ry_experiment(0.8, 0.2, 50, 15, 10),
+        x_rz_experiment(0.8, 0.2, 50, 15, 10),
         simple_trajectory_experiment(0.8),
         simple_trajectory_rotation_experiment(0.8),
         simple_trajectory_only_rotate_experiment(2.5)
     ]
 
-    # square_size = 0.1 / 11
-    # perform_calibration(
-    #     profiles_to_use[0],
-    #     ChessboardDetector(None, None, (8, 6), square_size),
-    #     VTKGenerator(1920, 1080, [np.array([0, 0, 0])], [Rotation.from_rotvec([0, 0, 0])],
-    #                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/chessboard.png'], test_camera_matrix,
-    #                  square_size * 11, square_size * 9),
-    #     (0.2, 0.3), 15, 40, 40, Rotation.from_rotvec([180, 0, 0], degrees=True)
-    # )
-    #
     info = read_profile_json(profiles_to_use[0])
-    # print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
-    # print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
 
     parameters = cv2.aruco.DetectorParameters()
     parameters.useAruco3Detection = True
@@ -381,11 +337,6 @@ def experiments_test():
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
     '''
-
-    # perform_eye_hand(profiles_to_use[0], used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
-    # info = read_profile_json(profiles_to_use[0])
-    # print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
-    # print(f"Got cameraRotation: {info.get("cameraRotation")}")
 
     # for profile in profiles_to_use[1:]:
     #     copy_camera_profile_info(profiles_to_use[0], profile)
@@ -423,28 +374,127 @@ def physics_parser_test():
         physics_transform = SimpleKalmanFilterParser(
             used_transform,
             1,
+            False,
             True
         )
         perform_detection(profiles_to_use[i], used_detector, physics_transform, True)
 
-    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_aruco3_phys_cube_fix', {"aruco3": True})
-    show_trajectory(profiles_to_use[0], True, 'x', '_aruco3_phys_cube_fix', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_aruco3_phys_cube_fix', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[2], False, 'x', False, 'x', 180, '_aruco3_phys_cube_fix', {"aruco3": True})
-    show_trajectory(profiles_to_use[2], False, 'x', '_aruco3_phys_cube_fix', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_aruco3_phys_cube_filter', {"aruco3": True})
+    show_trajectory(profiles_to_use[0], True, 'x', '_aruco3_phys_cube_filter', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_aruco3_phys_cube_filter', {"aruco3": True})
+    two_parameter_relation_show(profiles_to_use[2], False, 'x', False, 'x', 180, '_aruco3_phys_cube_filter', {"aruco3": True})
+    show_trajectory(profiles_to_use[2], False, 'x', '_aruco3_phys_cube_filter', {"aruco3": True})
 
-def generator_test():
-    used_transform = CubeParser([0, 1, 2, 3, 4, 5], 0.1 * 450 / 354)
-    used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
-                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_1.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_2.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_3.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_4.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_5.png'],
-                                  test_camera_matrix, 0.1 * 450 / 354,
-                                  0.1 * 450 / 354)
-    used_generator.generate_image_with_obj_at_transform(np.array([0, 0, 0.5]), Rotation.from_rotvec([20, -20, 0], degrees=True), "cube.png")
+def generate_virtual_images():
+    def create_image_generation_settings(detector_type: str, transforms_type: str) -> ImageGenerationSettings:
+        return ImageGenerationSettings(
+            True,
+            0.1,
+            detector_type == 'aruco',
+            str(cv2.aruco.DICT_5X5_50) if detector_type == 'aruco' else '',
+            detector_type == 'apriltag',
+            "tag36h11" if detector_type == 'apriltag' else '',
+            "traj" in transforms_type
+        )
+
+    def create_parser(settings: ImageGenerationSettings, setup_type: str) -> TransformsParser:
+        if setup_type == "single":
+            return TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+        else:
+            return CubeParser([0, 1, 2, 3, 4, 5], settings.tagSize * 450 / 354)
+
+    def create_generator(settings: ImageGenerationSettings, used_transform: TransformsParser, detector_type: str, setup_type: str) -> VTKGenerator:
+        if detector_type == "aruco":
+            path_creator = lambda i: f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_{i}.png'
+        else:
+            path_creator = lambda i: f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_{i}.png'
+        paths = [path_creator(i) for i in range(0, 1 if setup_type == "single" else 6)]
+        return VTKGenerator(
+            1920,
+            1080,
+            used_transform.translations,
+            used_transform.rotations,
+            paths,
+            test_camera_matrix,
+            settings.tagSize * 450 / 354,
+            settings.tagSize * 450 / 354
+        )
+
+    def create_transforms(transforms_type: str, distance: float):
+        if transforms_type == "x_y":
+            return x_y_experiment(distance, 0.2, 15)
+        elif transforms_type == "x_z":
+            return x_z_experiment(distance, 0.2, 15)
+        elif transforms_type == "x_rx":
+            return x_rx_experiment(distance, 0.2, 50, 15, 10)
+        elif transforms_type == "x_ry":
+            return x_ry_experiment(distance, 0.2, 50, 15, 10)
+        elif transforms_type == "x_rz":
+            return x_rz_experiment(distance, 0.2, 50, 15, 10)
+        elif transforms_type == "traj_1":
+            return simple_trajectory_experiment(distance)
+        elif transforms_type == "traj_2":
+            return simple_trajectory_rotation_experiment(distance)
+
+    def create_detections(profile: str, settings: ImageGenerationSettings, parser: TransformsParser, detector_type: str, setup_type: str, transforms_type: str):
+        info = read_profile_json(profile)
+        used_detectors = []
+        if detector_type == "aruco":
+            for aruco3 in [False, True]:
+                parameters = cv2.aruco.DetectorParameters()
+                parameters.useAruco3Detection = aruco3
+                used_detectors.append(ArucoDetector(
+                    np.array(info.get("cameraMatrix")),
+                    np.array(info.get("distortionCoefficients")),
+                    settings.tagSize,
+                    parameters,
+                    cv2.aruco.DICT_5X5_50
+                ))
+        else:
+            used_detectors.append(ApriltagDetector(
+                np.array(info.get("cameraMatrix")),
+                np.array(info.get("distortionCoefficients")),
+                settings.tagSize,
+                ApriltagSettings(),
+                settings.apriltagFamily
+            ))
+
+        used_parsers = [parser]
+        extra_infos = [{"parser": "simple"}]
+        if "traj" in transforms_type:
+            for flip in [False, True]:
+                for filter in [False] if setup_type == "single" else [False, True]:
+                    used_parsers.append(SimpleKalmanFilterParser(
+                        parser,
+                        1,
+                        flip,
+                        filter
+                    ))
+                    extra_infos.append({"parser": "Kalman", "flip": flip, "filter": filter})
+
+        iteration = 0
+        for detector in used_detectors:
+            for i in range(0, len(used_parsers)):
+                perform_detection(profile, detector, used_parsers[i], iteration == 0, extra_infos[i])
+                iteration += 1
+
+
+    calibration_profile = "calibration"
+    run_default_calibration(calibration_profile)
+
+    for detector_type in ["aruco", "apriltag"]:
+        for setup_type in ["single", "cube"]:
+            for transforms_type in ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"]:
+                for distance in [0.8, 2.0]:
+                    profile_str = f"{setup_type}_{detector_type}_{transforms_type}_{"close" if distance < 1 else "far"}"
+                    copy_camera_profile_info(calibration_profile, profile_str)
+                    image_settings = create_image_generation_settings(detector_type, transforms_type)
+                    used_parser = create_parser(image_settings, setup_type)
+                    used_generator = create_generator(image_settings, used_parser, detector_type, setup_type)
+                    t, r, s = create_transforms(transforms_type, distance)
+                    generate_images(profile_str, used_generator, image_settings, t, r, s)
+                    create_detections(profile_str, image_settings, used_parser, detector_type, setup_type, transforms_type)
+
 
 if __name__ == "__main__":
     # calibrationTest()

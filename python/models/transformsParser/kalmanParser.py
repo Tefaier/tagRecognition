@@ -1,3 +1,4 @@
+from idlelib.pyparse import trans
 from typing import Tuple
 
 from filterpy.common import Q_discrete_white_noise
@@ -24,12 +25,14 @@ class SimpleKalmanFilterParser(TransformsParser):
     flip_series: dict[int, int]
 
     flip: bool
+    filter: bool
 
     def __init__(
             self,
             child_parser: TransformsParser,
             last_detection_lifetime: float,
-            try_flipping_tags: bool
+            try_flipping_tags: bool,
+            use_only_best: bool
     ):
         super().__init__(child_parser.translations, child_parser.rotations, child_parser.ids)
         self.child_parser = child_parser
@@ -42,6 +45,7 @@ class SimpleKalmanFilterParser(TransformsParser):
         self.flip_series = {}
 
         self.flip = try_flipping_tags
+        self.filter = use_only_best
 
     def _create_filter(self, pos: np.ndarray[float], speed: np.ndarray[float]) -> KalmanFilter:
         f = KalmanFilter(dim_x=6, dim_z=3)
@@ -85,6 +89,22 @@ class SimpleKalmanFilterParser(TransformsParser):
                     self.flip_series[ids[i]] = current_flip_series + 1
                 else:
                     self.flip_series[ids[i]] = 0
+
+        if self.filter:
+            best_index = -1
+            best_angle = 0
+            for i in range(0, len(ids)):
+                if self.tags.get(ids[i], None) is None:
+                    continue
+                print(rotations[i].as_euler('xyz', degrees=True))
+                angle = rotation_to_vector(rotations[i].apply([0, 0, 1]), -translations[i]).magnitude()
+                if best_index == -1 or best_angle > angle:
+                    best_index = i
+                    best_angle = angle
+            if not best_index == -1:
+                translations = [translations[best_index]]
+                rotations = [rotations[best_index]]
+                ids = [ids[best_index]]
 
         result = self.child_parser.get_parent_transform(translations, rotations, ids, time)
         if len(result[0]) == 0:
