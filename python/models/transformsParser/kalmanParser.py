@@ -1,6 +1,3 @@
-from idlelib.pyparse import trans
-from typing import Tuple
-
 from filterpy.common import Q_discrete_white_noise
 
 from python.models.transformsParser.transformsParser import TransformsParser
@@ -96,7 +93,7 @@ class SimpleKalmanFilterParser(TransformsParser):
             for i in range(0, len(ids)):
                 if self.tags.get(ids[i], None) is None:
                     continue
-                print(rotations[i].as_euler('xyz', degrees=True))
+                # print(rotations[i].as_euler('xyz', degrees=True))
                 angle = rotation_to_vector(rotations[i].apply([0, 0, 1]), -translations[i]).magnitude()
                 if best_index == -1 or best_angle > angle:
                     best_index = i

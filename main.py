@@ -9,7 +9,7 @@ from python.C_imagesGeneration import test_run as imagesGenerationTest, generate
     test_manipulator
 from python.D_tagsDetection import test_run as tagsDetectionTest, perform_detection
 from python.E_visualization import simple_show, two_parameter_relation_show, show_missed_count, show_trajectory
-#from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
@@ -507,5 +507,6 @@ if __name__ == "__main__":
     #test_manipulator('192.168.1.101', 30002)
 
     # experiments_test()
-    physics_parser_test()
+    # physics_parser_test()
+    generate_virtual_images()
 
