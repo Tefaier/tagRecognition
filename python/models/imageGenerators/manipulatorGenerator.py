@@ -37,7 +37,7 @@ class ManipulatorGenerator(ImageGenerator):
         if take_screenshot:
             class ScreenshotCamera:
                 def read(self):
-                    return pyautogui.screenshot(), True
+                    return True, np.array(pyautogui.screenshot())
             self.camera = ScreenshotCamera()
         else:
             self.camera = cv2.VideoCapture(camera_port)
