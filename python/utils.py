@@ -8,7 +8,6 @@ import cv2
 
 import numpy as np
 import numpy.random
-from pandas import Series
 from scipy.spatial.transform import Rotation
 
 from python.settings import generated_info_folder, general_info_filename
@@ -159,3 +158,20 @@ def get_mirror_rotation(t: np.ndarray[float], r: Rotation) -> Rotation:
     # now it is just appr of rotating to look at camera and then again
     rotation_to_face_camera = rotation_to_vector(r.apply([0, 0, 1]), -t)
     return rotation_to_face_camera * rotation_to_face_camera * r
+
+def change_base2gripper_to_camera2object(
+        base2camera_translation: np.array,
+        base2camera_rotation: Rotation,
+        gripper2object_translation: np.array,
+        gripper2object_rotation: Rotation,
+        translations: np.array,
+        rotations: list[Rotation]
+) -> (list[list[float]], list[Rotation]):
+    camera2base_translation = base2camera_rotation.inv().apply(-base2camera_translation)
+    camera2base_rotation = base2camera_rotation.inv()
+    for i in range(0, len(translations)):
+        t, r = from_local_to_global(translations[i], rotations[i], gripper2object_translation, gripper2object_rotation)
+        t, r = from_local_to_global(camera2base_translation, camera2base_rotation, t, r)
+        translations[i] = t
+        rotations[i] = r
+    return translations, rotations
