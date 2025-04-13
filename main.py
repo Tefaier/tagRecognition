@@ -25,9 +25,10 @@ from python.models.transformsParser.physicsParser import SimpleAccelerationConst
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import tag_images_folder, test_camera_matrix
 from python.utils import read_profile_json, generate_random_norm_vector, copy_camera_profile_info, \
-    change_base2gripper_to_camera2object
+    change_base2gripper_to_camera2object, write_info_to_profile_json
 from python.workflow_utils import run_default_calibration, create_image_generation_settings, create_parser, \
-    create_vtk_generator, create_transforms, create_detections
+    create_vtk_generator, create_transforms, create_detections, hand_to_eye_calibration, camera_calibration, \
+    create_manipulator_generator
 
 
 def experiments_test():
@@ -133,6 +134,32 @@ def generate_virtual_images():
                     t, r, s = create_transforms(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False), transforms_type, distance)
                     generate_images(profile_str, used_generator, image_settings, t, r, s)
                     create_detections(profile_str, image_settings, used_parser, detector_type, setup_type, transforms_type)
+
+
+# cameraMatrix as list 3x3, distortionCoefficients as list 5
+def save_camera_info(profile: str, cameraMatrix: list[list[float]], distortionCoefficients: list[float]):
+    # TODO 1 - save camera intrinsic parameters or get them with calibration
+    write_info_to_profile_json(profile, {"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients})
+
+def camera_calibration_on_manipulator(profile: str):
+    camera_calibration(profile, False, np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0], degrees=True))
+
+def hand_to_eye_on_manipulator(profile: str):
+    # TODO 2 - manually calculate approximate base2camera transform and adjust generation strategy in function if needed
+    hand_to_eye_calibration(profile, False, np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0], degrees=True))
+
+# experiment_type is one of [x_y, x_z, x_rx, x_ry, x_rz, traj_1, traj_2]
+def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool):
+    # TODO 3 - check all experiments and adjust their function so that all positions are successfully generated
+    # TODO 4 - find wait timing fall all of experiments, either shared or individual
+    detector_type = 'aruco' if is_aruco else 'apriltag'
+    profile_str = f"{profile_label}_{detector_type}_{experiment_type}"
+    copy_camera_profile_info(profile_source, profile_str)
+    info = read_profile_json(profile_str)
+    image_settings = create_image_generation_settings(detector_type, experiment_type)
+    used_generator = create_manipulator_generator(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False))
+    t, r, s = create_transforms(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False), experiment_type)
+    generate_images(profile_str, used_generator, image_settings, t, r, s)
 
 
 if __name__ == "__main__":

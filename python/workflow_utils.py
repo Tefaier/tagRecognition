@@ -108,7 +108,6 @@ def create_transforms(
         base2camera_translation: np.array,
         base2camera_rotation: Rotation,
         transforms_type: str,
-        distance: float
 ):
     if transforms_type == "x_y":
         t, r, s = x_y_experiment(20, 5)
