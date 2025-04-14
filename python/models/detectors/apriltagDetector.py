@@ -98,7 +98,7 @@ class ApriltagDetector(TagDetector):
             ids.append(r.tag_id)
             rotation = self.rectify_rotation(Rotation.from_matrix(r.pose_R))
             rotations.append(rotation.as_rotvec(degrees=False))
-            translations.append([val[0] for val in r.pose_t])
+            translations.append(np.array([val[0] for val in r.pose_t]))
         return translations, rotations, ids
 
     def detector_settings(self) -> dict:

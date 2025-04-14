@@ -93,14 +93,14 @@ def _write_info_to_file(path: str, dframe: pd.DataFrame, detectionSettings: dict
     df = pd.read_csv(path)
     pd.concat([df, dframe]).to_csv(path, header=True, mode='w', index=False)
 
-def perform_detection(profile: str, detector: TagDetector, parser: TransformsParser, replace_info: bool):
+def perform_detection(profile: str, detector: TagDetector, parser: TransformsParser, replace_info: bool, extra_settings: dict = {}):
     profilePath = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}"
     imagesInfo = _open_and_prepare_raw_info(f"{profilePath}/{image_info_filename}.csv")
     _analyse_info(f"{profilePath}/{analyse_images_folder}", detector, imagesInfo, parser)
     _write_info_to_file(
         f"{profilePath}/{detection_info_filename}.csv",
         imagesInfo,
-        detector.detector_settings(),
+        detector.detector_settings() | extra_settings,
         replace_info
     )
 

@@ -51,7 +51,7 @@ def read_info(profiles: list[str]) -> list[list]:
             result_profile[-1].append([
                 detectionSettings[dict_of_settings_classes[key][0]], {}
             ])
-            result_profile[-1][-1][1]['method'] = [method[index] for index in value]
+            result_profile[-1][-1][0]['method'] = method[value[0]]
             result_profile[-1][-1][1]['realT'] = np.array([realT[index] for index in value])
             result_profile[-1][-1][1]['realR'] = np.array([realR[index] for index in value])
             result_profile[-1][-1][1]['detectedT'] = [detectedT[index] for index in value]
@@ -109,8 +109,9 @@ def _binify_info(x: list, y: list, bins: int, info_range: tuple[float, float]):
     return bin_middles, np.divide(np.histogram(x, bin_edges, weights=y)[0], bin_counters)
 
 def _perform_x_center_shift(x: np.array, prev_center: float) -> np.array:
-    x[x > 0] -= prev_center
-    x[x <= 0] += prev_center
+    limit1 = np.where(x > 0, True, False)
+    x[limit1] -= prev_center
+    x[np.logical_not(limit1)] += prev_center
     return x
 
 class Merge_methods(Enum):
@@ -261,7 +262,7 @@ def save_plot(
     plt.savefig(path, dpi='figure', bbox_inches='tight', pad_inches=0.2, edgecolor='blue')
     plt.close(figure)
 
-def get_info_part(info: list, profile: str, required_tuple: tuple):
+def get_info_part(info: list, profile: str, required_dict: dict):
     profile_index = -1
     for i in range(len(info)):
         if info[i][0] == profile:
@@ -271,10 +272,14 @@ def get_info_part(info: list, profile: str, required_tuple: tuple):
 
     dict_index = -1
     for i in range(len(info[profile_index][-1])):
-        if info[profile_index][-1][i][0] == required_tuple:
+        for key, value in required_dict.items():
+            if not info[profile_index][-1][i][0].get(key) == value:
+                break
             dict_index = i
             break
-    if dict_index == -1: raise ValueError(f"Didn't find dictionary with {required_tuple}")
+        if not dict_index == -1:
+            break
+    if dict_index == -1: raise ValueError(f"Didn't find dictionary with {required_dict}")
 
     return info[profile_index][-1][dict_index][1]
 
@@ -285,98 +290,97 @@ def two_parameter_relation_show(
         y_is_translation: bool,
         y_axis_part_to_show: str,
         x_center_to_shift: float = 0.0,
-        extra_label: str = ''
+        extra_label: str = '',
+        settings_dict: dict = {}
 ):
-    general_info = read_info([profile])
-    for setting in general_info[-1][-1]:
-        info = setting[1]
-        mask = np.arange(0, len(info["method"]))
-        fig = init_figure(f"Plot of {profile} with {setting[0]}")
-        init_subplot(
-            1,
-            1,
-            1,
-            'Relation by mean divergence',
-            f'Real {"translation" if x_is_translation else "rotation"} x, {"m" if x_is_translation else "degrees"}',
-            f'Deviation, {"m" if y_is_translation else "degrees"}')
-        make_display_by_threshold(
-            y_axis_part_to_show,
-            mask,
-            x_is_translation,
-            x_axis_part_to_show,
-            y_is_translation,
-            y_axis_part_to_show,
-            0.01,
-            info,
-            Merge_methods.mean, # for now just mean because mean_divergence turned out to be useless
-            x_center_to_shift)
+    info = get_info_part(read_info([profile]), profile, settings_dict)
+    mask = np.arange(0, len(info["isSuccess"]))
+    fig = init_figure(f"Plot of {profile} with {settings_dict}")
+    init_subplot(
+        1,
+        1,
+        1,
+        'Relation by mean error',
+        f'Real {"translation" if x_is_translation else "rotation"} {x_axis_part_to_show}, {"m" if x_is_translation else "degrees"}' if not x_axis_part_to_show == 't' else 'Time, s',
+        f'Deviation, {"m" if y_is_translation else "degrees"}')
+    make_display_by_threshold(
+        y_axis_part_to_show,
+        mask,
+        x_is_translation,
+        x_axis_part_to_show,
+        y_is_translation,
+        y_axis_part_to_show,
+        0.01,
+        info,
+        Merge_methods.mean, # for now just mean because mean_divergence turned out to be useless
+        x_center_to_shift)
 
-        save_plot(fig, f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_{y_is_translation}_{y_axis_part_to_show}{extra_label}.png')
+    save_plot(fig, f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_{y_is_translation}_{y_axis_part_to_show}{extra_label}.png')
 
 def show_missed_count(
         profile: str,
         x_is_translation: bool,
         x_axis_part_to_show: str,
-        x_center_to_shift: float = 0.0
+        x_center_to_shift: float = 0.0,
+        extra_label: str = '',
+        settings_dict: dict = {}
 ):
-    general_info = read_info([profile])
-    for setting in general_info[-1][-1]:
-        info = setting[1]
-        mask = np.arange(0, len(info["method"]))
-        fig = init_figure(f"Plot of {profile} with {setting[0]}")
-        init_subplot(
-            1,
-            1,
-            1,
-            'How much detection fails to detect object',
-            f'Real {"translation" if x_is_translation else "rotation"} x, {"m" if x_is_translation else "degrees"}',
-            f'Missed part, %')
-        make_display_with_missed(
-            "missed part",
-            mask,
-            x_is_translation,
-            x_axis_part_to_show,
-            0.01,
-            info,
-            x_center_to_shift)
+    info = get_info_part(read_info([profile]), profile, settings_dict)
+    mask = np.arange(0, len(info["isSuccess"]))
+    fig = init_figure(f"Plot of {profile} with {settings_dict}")
+    init_subplot(
+        1,
+        1,
+        1,
+        'How much detection fails to detect object',
+        f'Real {"translation" if x_is_translation else "rotation"} {x_axis_part_to_show}, {"m" if x_is_translation else "degrees"}',
+        f'Missed part, %')
+    make_display_with_missed(
+        "missed part",
+        mask,
+        x_is_translation,
+        x_axis_part_to_show,
+        0.01,
+        info,
+        x_center_to_shift)
 
-        save_plot(fig,f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_missings.png')
+    save_plot(fig,f'{plots_folder}/{profile}_{x_is_translation}_{x_axis_part_to_show}_missings{extra_label}.png')
 
 def show_trajectory(
         profile: str,
         y_is_translation: bool,
-        y_axis_part_to_show: str
+        y_axis_part_to_show: str,
+        extra_label: str = '',
+        settings_dict: dict = {}
 ):
-    general_info = read_info([profile])
-    for setting in general_info[-1][-1]:
-        info = setting[1]
-        mask = np.arange(0, len(info["method"]))
-        fig = init_figure(f"Plot of {profile} with {setting[0]}")
-        init_subplot(
-            1,
-            1,
-            1,
-            'Detected trajectory',
-            f'Real {"translation" if y_is_translation else "rotation"} x, {"m" if y_is_translation else "degrees"}',
-            f'{"m" if y_is_translation else "degrees"}')
-        make_display_trajectory(
-            "real trajectory",
-            mask,
-            y_is_translation,
-            y_axis_part_to_show,
-            info,
-            False
-        )
-        make_display_trajectory(
-            "detected trajectory",
-            mask,
-            y_is_translation,
-            y_axis_part_to_show,
-            info,
-            True
-        )
+    info = get_info_part(read_info([profile]), profile, settings_dict)
+    mask = np.arange(0, len(info["isSuccess"]))
+    fig = init_figure(f"Plot of {profile} with {settings_dict}")
+    init_subplot(
+        1,
+        1,
+        1,
+        'Detected trajectory',
+        f'Time, s',
+        f'{"m" if y_is_translation else "degrees"}')
+    make_display_trajectory(
+        "real trajectory",
+        mask,
+        y_is_translation,
+        y_axis_part_to_show,
+        info,
+        False
+    )
+    make_display_trajectory(
+        "detected trajectory",
+        mask,
+        y_is_translation,
+        y_axis_part_to_show,
+        info,
+        True
+    )
 
-        save_plot(fig,f'{plots_folder}/{profile}_{y_is_translation}_{y_axis_part_to_show}_trajectory.png')
+    save_plot(fig,f'{plots_folder}/{profile}_{y_is_translation}_{y_axis_part_to_show}_trajectory{extra_label}.png')
 
 def simple_show(profiles: list[str]):
     general_info = read_info(profiles)
