@@ -72,8 +72,8 @@ def create_manipulator_generator(
         base2camera_rotation: Rotation,
 ) -> ManipulatorGenerator:
     return ManipulatorGenerator(
-        '192.168.0.1',
-        3000,
+        '192.168.56.101',
+        30003,
         base2camera_translation,
         base2camera_rotation,
         np.array([0, 0, 0.107]),
