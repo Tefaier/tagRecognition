@@ -1,4 +1,4 @@
 .idea
 venv
 apriltagTesting/testImages
-checkAlgo/collectedInfo
+python/generatedInfo/**/*.png
