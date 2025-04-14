@@ -27,54 +27,26 @@ from python.utils import read_profile_json, generate_random_norm_vector, copy_ca
     change_base2gripper_to_camera2object, write_info_to_profile_json
 from python.workflow_utils import run_default_calibration, create_image_generation_settings, create_parser, \
     create_vtk_generator, create_transforms, create_detections, hand_to_eye_calibration, camera_calibration, \
-    create_manipulator_generator
+    create_manipulator_generator, create_aruco_detector
 
 
 def experiments_test():
-    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", False)
+    image_settings = create_image_generation_settings('aruco', '')
     profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2", "traj_3"]
-    profiles_transforms = [
-        x_y_experiment(0.8, 0.2, 15),
-        x_z_experiment(0.8, 0.2, 15),
-        x_rx_experiment(0.8, 0.2, 50, 15, 10),
-        x_ry_experiment(0.8, 0.2, 50, 15, 10),
-        x_rz_experiment(0.8, 0.2, 50, 15, 10),
-        simple_trajectory_experiment(0.8),
-        simple_trajectory_rotation_experiment(0.8),
-        simple_trajectory_only_rotate_experiment(2.5)
-    ]
+    profiles_transforms = [create_transforms(np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0]), setup) for setup in profiles_to_use]
 
-    info = read_profile_json(profiles_to_use[0])
+    used_detector = create_aruco_detector(profiles_to_use[0], image_settings, True)
+    used_transform = create_parser(image_settings, 'cube')
+    used_generator = create_vtk_generator(image_settings, used_transform, 'aruco', 'cube')
 
-    parameters = cv2.aruco.DetectorParameters()
-    parameters.useAruco3Detection = True
-    used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")), image_settings.tagSize, parameters, cv2.aruco.DICT_5X5_50)
-    used_transform = CubeParser([0, 1, 2, 3, 4, 5], image_settings.tagSize * 450 / 354)
-    used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
-                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_1.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_2.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_3.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_4.png',
-                                   f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_5.png'],
-                                  test_camera_matrix, image_settings.tagSize * 450 / 354,
-                                  image_settings.tagSize * 450 / 354)
-
-    '''
-    ALTERNATIVE SETUP
-    used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
-    used_generator = VTKGenerator(1920, 1080, used_transform.translations, used_transform.rotations,
-                                  [f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_0.png'],
-                                  test_camera_matrix, image_settings.tagSize * 450 / 354,
-                                  image_settings.tagSize * 450 / 354)
-    '''
-    # for profile in profiles_to_use[1:]:
-    #     copy_camera_profile_info(profiles_to_use[0], profile)
+    run_default_calibration('calibration')
+    for profile in profiles_to_use:
+        copy_camera_profile_info('calibration', profile)
 
     for i in range(len(profiles_to_use) - 3):
         # generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
         perform_detection(profiles_to_use[i], used_detector, used_transform, True)
-    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
+    image_settings = create_image_generation_settings('aruco', 'traj')
     for i in range(len(profiles_to_use) - 3, len(profiles_to_use)):
         # generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
         perform_detection(profiles_to_use[i], used_detector, used_transform, True)
@@ -92,13 +64,8 @@ def physics_parser_test():
     image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
     profiles_to_use = ["traj_1", "traj_2", "traj_3"]
 
-    info = read_profile_json(profiles_to_use[0])
-    parameters = cv2.aruco.DetectorParameters()
-    parameters.useAruco3Detection = True
-    used_detector = ArucoDetector(np.array(info.get("cameraMatrix")), np.array(info.get("distortionCoefficients")),
-                                  image_settings.tagSize, parameters, cv2.aruco.DICT_5X5_50)
-    used_transform = CubeParser([0, 1, 2, 3, 4, 5], image_settings.tagSize * 450 / 354)
-    # used_transform = TransformsParser([[0, 0, 0]], [Rotation.from_rotvec([0, 0, 0])], [0])
+    used_detector = create_aruco_detector(profiles_to_use[0], image_settings, True)
+    used_transform = create_parser(image_settings, 'cube')
 
     for i in range(0, len(profiles_to_use)):
         physics_transform = SimpleKalmanFilterParser(
