@@ -11,7 +11,6 @@ from python.D_tagsDetection import test_run as tagsDetectionTest, perform_detect
 from python.E_visualization import simple_show, two_parameter_relation_show, show_missed_count, show_trajectory
 from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
     simple_trajectory_experiment, simple_trajectory_rotation_experiment, simple_trajectory_only_rotate_experiment
-# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.arucoDetector import ArucoDetector
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.imageGenerators.imageGenerator import ImageGenerator
@@ -69,7 +68,6 @@ def experiments_test():
                                   test_camera_matrix, image_settings.tagSize * 450 / 354,
                                   image_settings.tagSize * 450 / 354)
     '''
-
     # for profile in profiles_to_use[1:]:
     #     copy_camera_profile_info(profiles_to_use[0], profile)
 
@@ -161,6 +159,31 @@ def make_images_for_experiment(profile_source: str, profile_label: str, experime
     t, r, s = create_transforms(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False), experiment_type)
     generate_images(profile_str, used_generator, image_settings, t, r, s)
 
+def test_exp_cube():
+    # n = 8
+    t = [
+        [0.25, -0.135, 0.3],  # A
+        [0.55, -0.135, 0.3],  # B
+        [0.55,  0.135, 0.3],  # C
+        [0.25,  0.135, 0.3],  # D
+        [0.25,  0.135, 0.5],  # H
+        [0.55,  0.135, 0.5],  # G
+        [0.55, -0.135, 0.5],  # F
+        [0.25, -0.135, 0.5],  # E
+        [0.25, -0.135, 0.3]   # A
+    ]
+    r = [
+        Rotation.from_rotvec([10, -5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([0, 5, 0], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([5, 10, -5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([5, -10, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([10, 5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([-10, -5, -5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([10, -5, 10], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([10, -10, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([5, -5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True)
+    ]
+    return [t, r]
 
 if __name__ == "__main__":
     # calibrationTest()
@@ -170,8 +193,10 @@ if __name__ == "__main__":
 
     #test_aruco_cube()
 
-    #test_manipulator('192.168.1.101', 30002)
-
+    # res = x_y_experiment(0.5, 5)
+    # res = test_exp_cube()    
+    # res = simple_trajectory_experiment(0.8)
+    # test_manipulator('192.168.56.101', 30003, res[0], res[1])
     # experiments_test()
     # physics_parser_test()
     # generate_virtual_images()
