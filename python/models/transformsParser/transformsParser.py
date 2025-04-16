@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+from python.utils import from_global_in_local_to_global_of_local
+
+
 class TransformsParser:
     tags: dict[int, list]
 
@@ -19,8 +22,9 @@ class TransformsParser:
             if self.tags.get(ids[i], None) is None:
                 continue
             local_transform = self.tags.get(ids[i])
-            parent_rotations.append(rotations[i] * local_transform[1].inv())
-            parent_translations.append(translations[i] - (parent_rotations[-1].apply(local_transform[0])))
+            t, r = from_global_in_local_to_global_of_local(translations[i], rotations[i], local_transform[0], local_transform[1])
+            parent_translations.append(t)
+            parent_rotations.append(r)
         if len(parent_translations) == 0:
             return [], []
         parent_translations = np.array(parent_translations)

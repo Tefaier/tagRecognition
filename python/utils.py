@@ -123,7 +123,7 @@ def from_local_to_global(parent_translation: np.array, parent_rotation: Rotation
     return global_translation, global_rotation
 
 def from_global_in_local_to_global_of_local(global_translation: np.array, global_rotation: Rotation, local_translation: np.array, local_rotation: Rotation) -> (np.array, Rotation):
-    global_of_local_rotation = local_rotation.inv() * global_rotation
+    global_of_local_rotation = global_rotation * local_rotation.inv()
     global_of_local_translation = global_translation - global_of_local_rotation.apply(local_translation)
     return global_of_local_translation, global_of_local_rotation
 
