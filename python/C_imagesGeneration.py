@@ -107,20 +107,24 @@ def generate_images(
     
     generator._send_cached_first_move_command() # приводим в стартовое положение
 
+    info = [] # информация о недоступных точках
+
     for iteration_index in range(len(translations)):
         translation = translations[iteration_index]
         rotation = rotations[iteration_index]
-        success = generator.check_transform_is_available(translation, rotation)
+        success = generator.check_transform_is_available(translation, rotation, iteration_index)
 
         if not success:
             p_bar.update(samples)
             p_bar.refresh()
+            info.append(list(map(float, translation)))
             continue
         
         success = generator.generate_images_with_obj_at_transform(
             translation,
             rotation,
-            [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)]
+            [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)],
+            iteration_index
         )
         
         if not success:
@@ -143,6 +147,11 @@ def generate_images(
         p_bar.update(samples)
         p_bar.refresh()
     p_bar.close()
+
+    print()
+    print('Not avaliable')
+    print(info)
+    print()
 
     _save_generated_info(
         f"{profile_folder}/{image_info_filename}.csv",
@@ -203,7 +212,7 @@ def test_run():
         rotations
     )
 
-def test_manipulator(robot_ip, robot_port, translations, rotations):
+def test_manipulator(is_real, robot_ip, robot_port, translations, rotations):
     profile = "manipulator test"
 
     camera_translation = np.array([0, 0, 0]) # пока что будем все измерять относительно стандартной ск
@@ -215,6 +224,7 @@ def test_manipulator(robot_ip, robot_port, translations, rotations):
     generate_images(
         profile,
         ManipulatorGenerator(
+            is_real, 
             robot_ip,
             robot_port,
             camera_translation,
