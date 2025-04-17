@@ -112,7 +112,7 @@ def generate_images(
     for iteration_index in range(len(translations)):
         translation = translations[iteration_index]
         rotation = rotations[iteration_index]
-        success = generator.check_transform_is_available(translation, rotation, iteration_index)
+        success = generator.check_transform_is_available(translation, rotation)
 
         if not success:
             p_bar.update(samples)
@@ -123,9 +123,7 @@ def generate_images(
         success = generator.generate_images_with_obj_at_transform(
             translation,
             rotation,
-            [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)],
-            iteration_index
-        )
+            [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)]        )
         
         if not success:
             p_bar.update(samples)

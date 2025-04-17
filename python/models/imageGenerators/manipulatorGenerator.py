@@ -17,20 +17,20 @@ from python.utils import from_local_to_global, from_global_in_local_to_global_of
 
 class ManipulatorGenerator(ImageGenerator):
     is_real: bool
+    count_request = 0
     camera_translation: np.array
     camera_rotation: Rotation
     object_translation_local_to_gripper: Rotation
     object_rotation_local_to_gripper: Rotation
 
-    def __init__(self, is_real0, robotIP: str, REALTIME_PORT: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0, take_screenshot: bool = False):
+    def __init__(self, is_real, robotIP: str, REALTIME_PORT: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0, take_screenshot: bool = False):
         super().__init__()
 
-        self.is_real = is_real0
+        self.is_real = is_real
         self.robot_ip = robotIP
         self.robot_port = REALTIME_PORT
         self.current_pos = None
         self.last_joints_pos = [0, -3.14/2, 0, -3.14/2, 0, 0]
-        # self.last_joints_pos = [-1.6007, -1.7272, -2.2029, -0.8080, 1.5951, 6.2521] # выбрать какое-то стартовое положение(его нужно указывать в углах суставов для однозначности)
 
         self.listener = JointStateListener()
 
@@ -48,6 +48,9 @@ class ManipulatorGenerator(ImageGenerator):
         else:
             self.camera = cv2.VideoCapture(camera_port)
 
+    def reset(self):
+        self.count_request = 0
+
     def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str) -> bool:
         t, r = self._convert_from_camera_to_gripper(obj_translation, obj_rotation)
         r = r.as_rotvec(degrees=False)
@@ -58,10 +61,10 @@ class ManipulatorGenerator(ImageGenerator):
         cv2.imwrite(save_path, image)
         return True
 
-    def generate_images_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_paths: list[str], i: int) -> bool:
+    def generate_images_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_paths: list[str]) -> bool:
         t, r = self._convert_from_camera_to_gripper(obj_translation, obj_rotation)
         r = r.as_rotvec(degrees=False)
-        success = self._send_cached_move_command(t, r, i)
+        success = self._send_cached_move_command(t, r)
         if not success: return False
         images = []
         for _ in save_paths:
@@ -72,10 +75,10 @@ class ManipulatorGenerator(ImageGenerator):
             cv2.imwrite(path, images[index])
         return True
 
-    def check_transform_is_available(self, obj_translation: np.array, obj_rotation: Rotation, i: int) -> bool:
+    def check_transform_is_available(self, obj_translation: np.array, obj_rotation: Rotation) -> bool:
         t, r = self._convert_from_camera_to_gripper(obj_translation, obj_rotation)
         r = r.as_rotvec(degrees=False)
-        return self._send_cached_move_command(t, r, i)
+        return self._send_cached_move_command(t, r)
 
 
     def _convert_from_camera_to_gripper(self, obj_translation: np.array, obj_rotation: Rotation) -> (np.array, Rotation):
@@ -85,17 +88,17 @@ class ManipulatorGenerator(ImageGenerator):
             self.object_rotation_local_to_gripper
         )
 
-    def _send_cached_move_command(self, t: np.array, r: np.array, i: int) -> bool:
+    def _send_cached_move_command(self, t: np.array, r: np.array) -> bool:
         if self.current_pos is not None and np.max(np.abs(self.current_pos - np.concatenate([t, r]))) < 1e-8: return True
-        success = self._send_command_with_response(self._make_move_command(t, r), i)
+        success = self._send_command_with_response(self._make_move_command(t, r))
         if success: self.current_pos = np.concatenate([t, r])
         return success
 
     def _send_cached_first_move_command(self) -> bool:
-        success = self._send_command_with_response(self._make_first_move_command(), 0)
+        success = self._send_command_with_response(self._make_first_move_command())
         return success
 
-    def _send_command_with_response(self, command: str, i: int) -> bool:
+    def _send_command_with_response(self, command: str) -> bool:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.robot_ip, self.robot_port))
@@ -107,7 +110,8 @@ class ManipulatorGenerator(ImageGenerator):
             s.close()
 
             if self.is_real:
-                if (i == 0):
+                if self.count_request < 2:
+                    self.count_request += 1
                     time.sleep(10)
                 else:
                     time.sleep(3)
@@ -119,7 +123,7 @@ class ManipulatorGenerator(ImageGenerator):
                     js = self.listener.listen_once(3)
                     if js is None:
                         continue
-                    if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]) and 2 <= time.monotonic() - start_time:
+                    if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]) and 1 <= time.monotonic() - start_time:
                         if self.last_joints_pos is None:
                             return True
                         if self.last_joints_pos != js.position:
