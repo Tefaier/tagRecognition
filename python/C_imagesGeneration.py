@@ -144,9 +144,6 @@ def generate_images(
         p_bar.refresh()
     p_bar.close()
 
-    generator.reset()
-    generator.to_start_pose() # возыращаем в стартовое положение
-
     print()
     print('Not avaliable')
     print(info)
