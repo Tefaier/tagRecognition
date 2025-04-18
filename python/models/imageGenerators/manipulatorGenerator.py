@@ -17,7 +17,7 @@ from python.utils import from_local_to_global, from_global_in_local_to_global_of
 
 class ManipulatorGenerator(ImageGenerator):
     is_real: bool
-    count_request = 0
+    count_request = True
     camera_translation: np.array
     camera_rotation: Rotation
     object_translation_local_to_gripper: Rotation
@@ -49,7 +49,7 @@ class ManipulatorGenerator(ImageGenerator):
             self.camera = cv2.VideoCapture(camera_port)
 
     def reset(self):
-        self.count_request = 0
+        self.count_request = True
 
     def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str) -> bool:
         t, r = self._convert_from_camera_to_gripper(obj_translation, obj_rotation)
@@ -94,7 +94,7 @@ class ManipulatorGenerator(ImageGenerator):
         if success: self.current_pos = np.concatenate([t, r])
         return success
 
-    def _send_cached_first_move_command(self) -> bool:
+    def to_start_pose(self) -> bool:
         success = self._send_command_with_response(self._make_first_move_command())
         return success
 
@@ -110,8 +110,8 @@ class ManipulatorGenerator(ImageGenerator):
             s.close()
 
             if self.is_real:
-                if self.count_request < 2:
-                    self.count_request += 1
+                if self.count_request:
+                    self.count_request = False
                     time.sleep(10)
                 else:
                     time.sleep(3)
