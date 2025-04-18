@@ -70,10 +70,14 @@ def create_vtk_generator(
 def create_manipulator_generator(
         base2camera_translation: np.array,
         base2camera_rotation: Rotation,
+        is_real: bool,
+        ip: str,
+        port: str,
 ) -> ManipulatorGenerator:
     return ManipulatorGenerator(
-        '192.168.56.101',
-        30003,
+        is_real,
+        ip,
+        port,
         base2camera_translation,
         base2camera_rotation,
         np.array([0, 0, 0.107]),

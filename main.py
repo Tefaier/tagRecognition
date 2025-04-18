@@ -114,7 +114,7 @@ def hand_to_eye_on_manipulator(profile: str):
     hand_to_eye_calibration(profile, False, np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0], degrees=True))
 
 # experiment_type is one of [x_y, x_z, x_rx, x_ry, x_rz, traj_1, traj_2]
-def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool):
+def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool, is_real: bool, ip: str, port: str):
     # TODO 3 - check all experiments and adjust their function so that all positions are successfully generated
     # TODO 4 - find wait timing fall all of experiments, either shared or individual
     detector_type = 'aruco' if is_aruco else 'apriltag'
@@ -122,23 +122,27 @@ def make_images_for_experiment(profile_source: str, profile_label: str, experime
     copy_camera_profile_info(profile_source, profile_str)
     info = read_profile_json(profile_str)
     image_settings = create_image_generation_settings(detector_type, experiment_type)
-    used_generator = create_manipulator_generator(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False))
+    used_generator = create_manipulator_generator(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False), is_real, ip, port)
     t, r, s = create_transforms(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False), experiment_type)
     generate_images(profile_str, used_generator, image_settings, t, r, s)
 
+    used_generator.reset()
+    used_generator.to_start_pose() # return to start position
+
 def test_exp_cube():
-    # n = 8
+    # n = 9
     t = [
-        [0.25, -0.135, 0.3],  # A
-        [0.55, -0.135, 0.3],  # B
-        [0.55,  0.135, 0.3],  # C
-        [0.25,  0.135, 0.3],  # D
-        [0.25,  0.135, 0.5],  # H
-        [0.55,  0.135, 0.5],  # G
-        [0.55, -0.135, 0.5],  # F
-        [0.25, -0.135, 0.5],  # E
-        [0.25, -0.135, 0.3]   # A
+        [0.3, -0.15, 0.3],  # A
+        [0.55, -0.15, 0.3],  # B
+        [0.55,  0.15, 0.3],  # C
+        [0.3,  0.15, 0.3],  # D
+        [0.3,  0.15, 0.5],  # H
+        [0.55,  0.15, 0.5],  # G
+        [0.55, -0.15, 0.5],  # F
+        [0.3, -0.15, 0.5],  # E
+        [0.3, -0.15, 0.3]   # A
     ]
+    
     r = [
         Rotation.from_rotvec([10, -5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
         Rotation.from_rotvec([0, 5, 0], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
@@ -158,13 +162,13 @@ if __name__ == "__main__":
     # imagesGenerationTest()
     # tagsDetectionTest()
 
-    #test_aruco_cube()
 
-    # res = x_y_experiment(0.5, 5)
-    # res = test_exp_cube()    
-    # res = simple_trajectory_experiment(0.8)
-    # test_manipulator('192.168.56.101', 30003, res[0], res[1])
+    # res = create_transforms(np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0]), 'x_y')
+    # test_manipulator('192.168.56.101', 30003, res[0], res[1], is_real = False)
+
+    make_images_for_experiment("x_y", "", "x_y", is_aruco = True, is_real = True, ip = '192.168.56.101', port = 30003)
+
     # experiments_test()
     # physics_parser_test()
     # generate_virtual_images()
-    run_default_calibration("test")
+    # run_default_calibration("test")
