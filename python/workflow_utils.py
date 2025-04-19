@@ -72,7 +72,7 @@ def create_manipulator_generator(
         base2camera_rotation: Rotation,
         is_real: bool,
         ip: str,
-        port: str,
+        port: int,
 ) -> ManipulatorGenerator:
     return ManipulatorGenerator(
         is_real,
@@ -139,7 +139,6 @@ def create_detections(profile: str, settings: ImageGenerationSettings, parser: T
         used_detectors.append(create_apriltag_detector(profile, settings))
 
     used_parsers = [parser]
-    extra_infos = [{"parser": "simple"}]
     if "traj" in transforms_type:
         for flip in [False, True]:
             for filter in [False] if setup_type == "single" else [False, True]:
@@ -149,15 +148,14 @@ def create_detections(profile: str, settings: ImageGenerationSettings, parser: T
                     flip,
                     filter
                 ))
-                extra_infos.append({"parser": "Kalman", "flip": flip, "filter": filter})
 
     iteration = 0
     for detector in used_detectors:
         for i in range(0, len(used_parsers)):
-            perform_detection(profile, detector, used_parsers[i], iteration == 0, extra_infos[i])
+            perform_detection(profile, detector, used_parsers[i], iteration == 0)
             iteration += 1
 
-def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None):
+def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None, is_real: bool = None, ip: str = None, port: int = None):
     if is_virtual:
         square_size = 0.1 / 11
         perform_calibration(
@@ -173,7 +171,7 @@ def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: 
         perform_calibration(
             profile,
             ChessboardDetector(None, None, (8, 6), square_size),
-            create_manipulator_generator(base2camera_translation, base2camera_rotation),
+            create_manipulator_generator(base2camera_translation, base2camera_rotation, is_real, ip, port),
             (0.2, 0.3), 15, 40, 40, Rotation.from_rotvec([180, 0, 0], degrees=True)
         )
 
@@ -181,13 +179,13 @@ def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: 
     print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
     print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
 
-def hand_to_eye_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None):
+def hand_to_eye_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None, is_real: bool = None, ip: str = None, port: int = None):
     calibration_image_settings = create_image_generation_settings('aruco', '')
     used_transform = create_parser(calibration_image_settings, 'single')
     if is_virtual:
         used_generator = create_vtk_generator(calibration_image_settings, used_transform, 'aruco', 'single')
     else:
-        used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation)
+        used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation, is_real, ip, port)
     used_detector = create_aruco_detector(profile, calibration_image_settings, False)
     perform_eye_hand(profile, used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
 

@@ -9,7 +9,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import JointState
 # import math
 import socket
-# import pyautogui
+import pyautogui
 
 from python.models.imageGenerators.imageGenerator import ImageGenerator
 from python.utils import from_local_to_global, from_global_in_local_to_global_of_local
@@ -23,12 +23,12 @@ class ManipulatorGenerator(ImageGenerator):
     object_translation_local_to_gripper: Rotation
     object_rotation_local_to_gripper: Rotation
 
-    def __init__(self, is_real, robotIP: str, REALTIME_PORT: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0, take_screenshot: bool = False):
+    def __init__(self, is_real, robot_ip: str, robot_port: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0, take_screenshot: bool = False):
         super().__init__()
 
         self.is_real = is_real
-        self.robot_ip = robotIP
-        self.robot_port = REALTIME_PORT
+        self.robot_ip = robot_ip
+        self.robot_port = robot_port
         self.current_pos = None
         self.last_joints_pos = [0, -3.14/2, 0, -3.14/2, 0, 0]
 
@@ -42,8 +42,7 @@ class ManipulatorGenerator(ImageGenerator):
         if take_screenshot:
             class ScreenshotCamera:
                 def read(self):
-                    pass
-                    # return pyautogui.screenshot(), True
+                    return pyautogui.screenshot(), True
             self.camera = ScreenshotCamera()
         else:
             self.camera = cv2.VideoCapture(camera_port)

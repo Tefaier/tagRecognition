@@ -121,7 +121,8 @@ def generate_images(
         success = generator.generate_images_with_obj_at_transform(
             translation,
             rotation,
-            [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)]        )
+            [f"{profile_folder}/{analyse_images_folder}/{to_write_from + iteration_index * samples + i}.png" for i in range(samples)]
+        )
         
         if not success:
             p_bar.update(samples)
@@ -144,10 +145,7 @@ def generate_images(
         p_bar.refresh()
     p_bar.close()
 
-    print()
-    print('Not avaliable')
-    print(info)
-    print()
+    print(f'\nNot avaliable\n{info}\n')
 
     _save_generated_info(
         f"{profile_folder}/{image_info_filename}.csv",

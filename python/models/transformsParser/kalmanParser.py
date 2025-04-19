@@ -129,6 +129,7 @@ class SimpleKalmanFilterParser(TransformsParser):
         self.last_detected_translation = ((self.k_filter.x)[:3]).copy()
         return result
 
-
+    def get_parser_dict(self) -> dict:
+        return super().get_parser_dict() | {"parser": "kalman", "flip": self.flip, "filter": self.filter}
 
 

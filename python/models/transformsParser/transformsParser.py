@@ -31,3 +31,6 @@ class TransformsParser:
         parent_translation = parent_translations.mean(axis=0)
         parent_rotation = Rotation.concatenate(parent_rotations).mean()
         return parent_translation, parent_rotation.as_rotvec(degrees=False)
+
+    def get_parser_dict(self) -> dict:
+        return {"parser": "simple"}
