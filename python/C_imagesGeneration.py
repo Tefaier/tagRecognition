@@ -104,8 +104,8 @@ def generate_images(
     timings_write = [] if settings.is_trajectory else None
 
     p_bar = tqdm(range(len(translations) * samples), ncols=100)
-    
-    generator._send_cached_first_move_command() # приводим в стартовое положение
+
+    info = [] # информация о недоступных точках
 
     for iteration_index in range(len(translations)):
         translation = translations[iteration_index]
@@ -115,6 +115,7 @@ def generate_images(
         if not success:
             p_bar.update(samples)
             p_bar.refresh()
+            info.append(list(map(float, translation)))
             continue
         
         success = generator.generate_images_with_obj_at_transform(
@@ -143,6 +144,8 @@ def generate_images(
         p_bar.update(samples)
         p_bar.refresh()
     p_bar.close()
+
+    print(f'\nNot avaliable\n{info}\n')
 
     _save_generated_info(
         f"{profile_folder}/{image_info_filename}.csv",
@@ -203,7 +206,7 @@ def test_run():
         rotations
     )
 
-def test_manipulator(robot_ip, robot_port, translations, rotations):
+def test_manipulator(robot_ip, robot_port, translations, rotations, is_real):
     profile = "manipulator test"
 
     camera_translation = np.array([0, 0, 0]) # пока что будем все измерять относительно стандартной ск
@@ -215,6 +218,7 @@ def test_manipulator(robot_ip, robot_port, translations, rotations):
     generate_images(
         profile,
         ManipulatorGenerator(
+            is_real, 
             robot_ip,
             robot_port,
             camera_translation,

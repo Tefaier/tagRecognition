@@ -118,3 +118,5 @@ class SimpleAccelerationConstraintsParser(TransformsParser):
 
         return [], []
 
+    def get_parser_dict(self) -> dict:
+        return super().get_parser_dict() | {"parser": "physics", "flip": self.flip}

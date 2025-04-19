@@ -100,7 +100,7 @@ def perform_detection(profile: str, detector: TagDetector, parser: TransformsPar
     _write_info_to_file(
         f"{profilePath}/{detection_info_filename}.csv",
         imagesInfo,
-        detector.detector_settings() | extra_settings,
+        detector.detector_settings() | parser.get_parser_dict() | extra_settings,
         replace_info
     )
 

@@ -11,7 +11,7 @@ def x_y_experiment(entries_per_x: int, entries_per_y: int) -> (list[list[float]]
 
     for x in np.linspace(-0.3, 0.3, entries_per_x):
         for y in np.linspace(-0.27, -0.22, entries_per_y):
-            translations.append([x, y, 0.1])
+            translations.append([x, y, 0.14])
             rotations.append(Rotation.from_rotvec([90, 0, 0], degrees=True))
     return translations, rotations, None
 

@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-import time
+# import math
 import socket
 import pyautogui
 
@@ -16,18 +16,21 @@ from python.utils import from_local_to_global, from_global_in_local_to_global_of
 
 
 class ManipulatorGenerator(ImageGenerator):
+    is_real: bool
+    count_request = True
     camera_translation: np.array
     camera_rotation: Rotation
     object_translation_local_to_gripper: Rotation
     object_rotation_local_to_gripper: Rotation
 
-    def __init__(self, robotIP: str, REALTIME_PORT: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0, take_screenshot: bool = False):
+    def __init__(self, is_real, robot_ip: str, robot_port: int, camera_translation: np.array, camera_rotation: Rotation, object_translation_local_to_gripper: np.array, object_rotation_local_to_gripper: Rotation, camera_port: int = 0, take_screenshot: bool = False):
         super().__init__()
 
-        self.robot_ip = robotIP
-        self.robot_port = REALTIME_PORT
+        self.is_real = is_real
+        self.robot_ip = robot_ip
+        self.robot_port = robot_port
         self.current_pos = None
-        self.last_joints_pos = [-5.17818, -1.91922, -1.64695, -4.28781, 1.5708, 0.465794] # выбрать какое-то стартовое положение(его нужно указывать в углах суставов для однозначности)
+        self.last_joints_pos = [0, -3.14/2, 0, -3.14/2, 0, 0]
 
         self.listener = JointStateListener()
 
@@ -39,10 +42,13 @@ class ManipulatorGenerator(ImageGenerator):
         if take_screenshot:
             class ScreenshotCamera:
                 def read(self):
-                    return True, np.array(pyautogui.screenshot())
+                    return pyautogui.screenshot(), True
             self.camera = ScreenshotCamera()
         else:
             self.camera = cv2.VideoCapture(camera_port)
+
+    def reset(self):
+        self.count_request = True
 
     def generate_image_with_obj_at_transform(self, obj_translation: np.array, obj_rotation: Rotation, save_path: str) -> bool:
         t, r = self._convert_from_camera_to_gripper(obj_translation, obj_rotation)
@@ -87,11 +93,11 @@ class ManipulatorGenerator(ImageGenerator):
         if success: self.current_pos = np.concatenate([t, r])
         return success
 
-    def _send_cached_first_move_command(self) -> bool:
+    def to_start_pose(self) -> bool:
         success = self._send_command_with_response(self._make_first_move_command())
         return success
 
-    def _send_command_with_response(self, command: str, timeout=30.0) -> bool:
+    def _send_command_with_response(self, command: str) -> bool:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self.robot_ip, self.robot_port))
@@ -102,20 +108,29 @@ class ManipulatorGenerator(ImageGenerator):
 
             s.close()
 
-            start_time = time.monotonic()
-            while time.monotonic() - start_time < timeout:
-                js = self.listener.listen_once(3)
-                if js is None:
-                    continue
-                if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]) and 3 <= time.monotonic() - start_time:
-                    if self.last_joints_pos is None:
-                        return True
-                    if self.last_joints_pos != js.position:
-                        self.last_joints_pos = js.position
-                        return True
-                    else:
-                        return False
-            return False
+            if self.is_real:
+                if self.count_request:
+                    self.count_request = False
+                    time.sleep(10)
+                else:
+                    time.sleep(3)
+                return True
+            else:
+                timeout = 20
+                start_time = time.monotonic()
+                while time.monotonic() - start_time < timeout:
+                    js = self.listener.listen_once(3)
+                    if js is None:
+                        continue
+                    if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]) and 1 <= time.monotonic() - start_time:
+                        if self.last_joints_pos is None:
+                            return True
+                        if self.last_joints_pos != js.position:
+                            self.last_joints_pos = js.position
+                            return True
+                        else:
+                            return False
+                return False
 
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -145,7 +160,7 @@ myProg()
     def _make_first_move_command(self):
         urscript_command = f'''
 def myProg():
-    target_pose = [-5.17818, -1.91922, -1.64695, -4.28781, 1.5708, 0.465794]
+    target_pose = [0, -3.14/2, 0, -3.14/2, 0, 0]
     success = is_within_safety_limits(target_pose)
 
     if success:
