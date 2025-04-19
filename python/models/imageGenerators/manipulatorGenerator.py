@@ -4,9 +4,6 @@ import time
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import JointState
 # import math
 import socket
 import pyautogui
@@ -32,8 +29,6 @@ class ManipulatorGenerator(ImageGenerator):
         self.current_pos = None
         self.last_joints_pos = [0, -3.14/2, 0, -3.14/2, 0, 0]
 
-        self.listener = JointStateListener()
-
         self.camera_translation = camera_translation
         self.camera_rotation = camera_rotation
         self.object_translation_local_to_gripper = object_translation_local_to_gripper
@@ -45,7 +40,7 @@ class ManipulatorGenerator(ImageGenerator):
                     return pyautogui.screenshot(), True
             self.camera = ScreenshotCamera()
         else:
-            self.camera = cv2.VideoCapture(camera_port)
+            self.camera = cv2.VideoCapture(camera_port, cv2.CAP_DSHOW)
 
     def reset(self):
         self.count_request = True
@@ -115,22 +110,6 @@ class ManipulatorGenerator(ImageGenerator):
                 else:
                     time.sleep(3)
                 return True
-            else:
-                timeout = 20
-                start_time = time.monotonic()
-                while time.monotonic() - start_time < timeout:
-                    js = self.listener.listen_once(3)
-                    if js is None:
-                        continue
-                    if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]) and 1 <= time.monotonic() - start_time:
-                        if self.last_joints_pos is None:
-                            return True
-                        if self.last_joints_pos != js.position:
-                            self.last_joints_pos = js.position
-                            return True
-                        else:
-                            return False
-                return False
 
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -175,32 +154,3 @@ end
 myProg()
 '''
         return urscript_command
-
-
-class JointStateListener(Node):
-    def __init__(self):
-        rclpy.init(args=None)
-        super().__init__('joint_state_listener')
-        self.joint_state = None
-        self.subscription = self.create_subscription(
-            JointState,
-            '/joint_states',
-            self.listener_callback,
-            1
-        )
-
-    def listener_callback(self, msg):
-        self.joint_state = msg
-        # self.get_logger().info("Получено сообщение /joint_states")
-
-    def listen_once(self, timeout=0.5, listen_time=0.1):
-        start_time = time.monotonic()
-        while time.monotonic() - start_time < timeout:
-            rclpy.spin_once(self, timeout_sec=listen_time)
-            if self.joint_state is not None:
-                break
-        return self.joint_state
-
-    def __del__(self):
-        self.destroy_node()
-        rclpy.shutdown()
