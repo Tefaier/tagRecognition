@@ -40,7 +40,19 @@ class ManipulatorGenerator(ImageGenerator):
                     return pyautogui.screenshot(), True
             self.camera = ScreenshotCamera()
         else:
-            self.camera = cv2.VideoCapture(camera_port, cv2.CAP_DSHOW)
+            self.camera = cv2.VideoCapture(camera_port)
+            self.camera.set(cv2.CAP_PROP_BRIGHTNESS, 100)  # Set brightness (default)
+            self.camera.set(cv2.CAP_PROP_CONTRAST, 100)  # Set contrast (default)
+            self.camera.set(cv2.CAP_PROP_SATURATION, -1)  # Set saturation (default)
+            self.camera.set(cv2.CAP_PROP_SHARPNESS, 100)  # Set sharpness (default)
+            self.camera.set(cv2.CAP_PROP_GAIN, -1)  # Set gain (default)
+            self.camera.set(cv2.CAP_PROP_AUTO_WB, -1)  # Enable auto white balance
+            self.camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # Enable auto exposure
+            self.camera.set(cv2.CAP_PROP_EXPOSURE, 100)  # Set exposure
+            self.camera.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
+            self.camera.set(cv2.CAP_PROP_FOCUS, -1)  # Set focus (default)
+            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)  # Set image width to 1920
+            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)  # Set image height to 1080
 
     def reset(self):
         self.count_request = True

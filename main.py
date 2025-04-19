@@ -107,11 +107,11 @@ def save_camera_info(profile: str, cameraMatrix: list[list[float]], distortionCo
     write_info_to_profile_json(profile, {"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients})
 
 def camera_calibration_on_manipulator(profile: str):
-    camera_calibration(profile, False, np.array([0, -1.5, 0.05]), Rotation.from_rotvec([-180, 0, 0], degrees=True), is_real=True, ip='192.168.55.55', port=30003)
+    camera_calibration(profile, False, np.array([0, -1.5, 0.05]), Rotation.from_rotvec([-180, 0, 0], degrees=True), is_real=True, ip='192.168.56.1', port=50002)
 
 def hand_to_eye_on_manipulator(profile: str):
     # TODO 2 - manually calculate approximate base2camera transform and adjust generation strategy in function if needed
-    hand_to_eye_calibration(profile, False, np.array([0, -1.5, 0.05]), Rotation.from_rotvec([-180, 0, 0], degrees=True), is_real=True, ip='192.168.55.55', port=30003)
+    hand_to_eye_calibration(profile, False, np.array([0, -1.5, 0.05]), Rotation.from_rotvec([-180, 0, 0], degrees=True), is_real=True, ip='192.168.56.1', port=50002)
 
 # experiment_type is one of [x_y, x_z, x_rx, x_ry, x_rz, traj_1, traj_2]
 def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool, is_real: bool, ip: str, port: int):
@@ -159,25 +159,21 @@ def test_exp_cube():
     return [t, r]
 
 def test_camera():
-    camera = cv2.VideoCapture(1,  cv2.CAP_DSHOW)
+    camera = cv2.VideoCapture(2)
     s, r = camera.read()
     cv2.imwrite("./test.png", r)
 
 if __name__ == "__main__":
-    save_camera_info("calibration_real", [[1380.76188, 0.0, 985.3763],
-         [0.0, 1378.32, 557.5717],
-         [0.0, 0.0, 1.0]], [-0.00573079, -0.05853685, 0.00310127, 0.0000021, 0])
+    # save_camera_info("calibration_real", [[1380.76188, 0.0, 985.3763],
+    #      [0.0, 1378.32, 557.5717],
+    #      [0.0, 0.0, 1.0]], [-0.00573079, -0.05853685, 0.00310127, 0.0000021, 0])
     # test_camera()
-    # calibrationTest()
-    # handEyeTest()
-    # imagesGenerationTest()
-    # tagsDetectionTest()
+    hand_to_eye_on_manipulator("calibration_real")
+    # make_images_for_experiment("calibration_real", "real", "x_y", is_aruco=True, is_real=True, ip='192.168.56.1', port=50002)
 
 
-    # res = create_transforms(np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0]), 'x_y')
     # test_manipulator('192.168.56.101', 30003, res[0], res[1], is_real = False)
 
-    # make_images_for_experiment("x_y", "", "x_y", is_aruco=True, is_real=True, ip='192.168.55.55', port=30003)
 
     # experiments_test()
     # physics_parser_test()

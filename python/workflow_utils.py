@@ -80,9 +80,9 @@ def create_manipulator_generator(
         port,
         base2camera_translation,
         base2camera_rotation,
-        np.array([0, 0, 0.107]),
+        np.array([0, 0.01, 0.107]),
         Rotation.from_rotvec([0, 0, 0]),
-        1,
+        2, # set 2 if Linux, 1 if Windows
         False
     )
 
@@ -127,7 +127,7 @@ def create_transforms(
         t, r, s = simple_trajectory_experiment(20)
     elif transforms_type == "traj_2":
         t, r, s = simple_trajectory_rotation_experiment(20)
-    t, r = change_base2gripper_to_camera2object(base2camera_translation, base2camera_rotation, np.array([0, 0, 0.107]), Rotation.from_rotvec([0, 0, 0]), np.array(t), r)
+    t, r = change_base2gripper_to_camera2object(base2camera_translation, base2camera_rotation, np.array([0, 0.01, 0.107]), Rotation.from_rotvec([0, 0, 0]), np.array(t), r)
     return t, r, s
 
 def create_detections(profile: str, settings: ImageGenerationSettings, parser: TransformsParser, detector_type: str, setup_type: str, transforms_type: str):

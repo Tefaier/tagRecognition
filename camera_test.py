@@ -10,23 +10,24 @@ cam_dir = os.path.join(base_dir, "cam0")
 os.makedirs(cam_dir, exist_ok=True)
 
 # Initialize the camera (0 is usually the default webcam)
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(2)
 
 # Check if the camera opened successfully
 if not cap.isOpened():
     print("Error: Could not open camera.")
     exit()
 # Set camera parameters
-cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # Set codec to MJPEG
-cap.set(cv2.CAP_PROP_AUTOFOCUS, 0) # turn the autofocus off
-cap.set(cv2.CAP_PROP_BRIGHTNESS, -1)  # Set brightness (default)
-cap.set(cv2.CAP_PROP_CONTRAST, -1)  # Set contrast (default)
+# cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # Set codec to MJPEG
+cap.set(cv2.CAP_PROP_BRIGHTNESS, 100)  # Set brightness (default)
+cap.set(cv2.CAP_PROP_CONTRAST, 100)  # Set contrast (default)
+
 cap.set(cv2.CAP_PROP_SATURATION, -1)  # Set saturation (default)
-cap.set(cv2.CAP_PROP_SHARPNESS, -1)  # Set sharpness (default)
+
+cap.set(cv2.CAP_PROP_SHARPNESS, 100)  # Set sharpness (default)
+
 cap.set(cv2.CAP_PROP_GAIN, -1)  # Set gain (default)
-cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # Enable auto white balance
-cap.set(cv2.CAP_PROP_WB_TEMPERATURE, 4000)  # Set white balance temperature
-cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # Enable auto exposure
+cap.set(cv2.CAP_PROP_AUTO_WB, -1)  # Enable auto white balance
+cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # Enable auto exposure
 cap.set(cv2.CAP_PROP_EXPOSURE, 100)  # Set exposure
 cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
 cap.set(cv2.CAP_PROP_FOCUS, -1)  # Set focus (default)
@@ -60,7 +61,7 @@ try:
 
         # Wait for 1 second before capturing the next image
         # Also check for user input to exit
-        if cv2.waitKey(1000) & 0xFF == ord('q'):  # Press 'q' to quit
+        if cv2.waitKey(10) & 0xFF == ord('q'):  # Press 'q' to quit
             print("User requested to stop.")
             break
 
