@@ -69,15 +69,12 @@ def create_vtk_generator(
 
 def create_manipulator_generator(
         base2camera_translation: np.array,
-        base2camera_rotation: Rotation,
-        is_real: bool,
-        ip: str,
-        port: int,
+        base2camera_rotation: Rotation
 ) -> ManipulatorGenerator:
     return ManipulatorGenerator(
-        is_real,
-        ip,
-        port,
+        True,
+        "192.168.55.55",
+        30003,
         base2camera_translation,
         base2camera_rotation,
         np.array([0, 0.01, 0.107]),
@@ -118,15 +115,15 @@ def create_transforms(
     elif transforms_type == "x_z":
         t, r, s = x_z_experiment(20, 5)
     elif transforms_type == "x_rx":
-        t, r, s = x_rx_experiment(15, 10)
+        t, r, s = x_rx_experiment(4, 4)
     elif transforms_type == "x_ry":
-        t, r, s = x_ry_experiment(15, 10)
+        t, r, s = x_ry_experiment(4, 4)
     elif transforms_type == "x_rz":
-        t, r, s = x_rz_experiment(15, 10)
+        t, r, s = x_rz_experiment(4, 4)
     elif transforms_type == "traj_1":
-        t, r, s = simple_trajectory_experiment(20)
+        t, r, s = simple_trajectory_experiment(10)
     elif transforms_type == "traj_2":
-        t, r, s = simple_trajectory_rotation_experiment(20)
+        t, r, s = simple_trajectory_rotation_experiment(10)
     t, r = change_base2gripper_to_camera2object(base2camera_translation, base2camera_rotation, np.array([0, 0.01, 0.107]), Rotation.from_rotvec([0, 0, 0]), np.array(t), r)
     return t, r, s
 
@@ -155,7 +152,7 @@ def create_detections(profile: str, settings: ImageGenerationSettings, parser: T
             perform_detection(profile, detector, used_parsers[i], iteration == 0)
             iteration += 1
 
-def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None, is_real: bool = None, ip: str = None, port: int = None):
+def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None):
     if is_virtual:
         square_size = 0.1 / 11
         perform_calibration(
@@ -171,7 +168,7 @@ def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: 
         perform_calibration(
             profile,
             ChessboardDetector(None, None, (8, 6), square_size),
-            create_manipulator_generator(base2camera_translation, base2camera_rotation, is_real, ip, port),
+            create_manipulator_generator(base2camera_translation, base2camera_rotation),
             (0.2, 0.3), 15, 40, 40, Rotation.from_rotvec([180, 0, 0], degrees=True)
         )
 
@@ -179,15 +176,15 @@ def camera_calibration(profile: str, is_virtual: bool, base2camera_translation: 
     print(f"Got cameraMatrix: {info.get("cameraMatrix")}")
     print(f"Got distortionCoefficients: {info.get("distortionCoefficients")}")
 
-def hand_to_eye_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None, is_real: bool = None, ip: str = None, port: int = None):
+def hand_to_eye_calibration(profile: str, is_virtual: bool, base2camera_translation: np.array = None, base2camera_rotation: Rotation = None):
     calibration_image_settings = create_image_generation_settings('aruco', '')
     used_transform = create_parser(calibration_image_settings, 'single')
     if is_virtual:
         used_generator = create_vtk_generator(calibration_image_settings, used_transform, 'aruco', 'single')
     else:
-        used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation, is_real, ip, port)
+        used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation)
     used_detector = create_aruco_detector(profile, calibration_image_settings, False)
-    perform_eye_hand(profile, used_detector, used_transform, used_generator, (0.6, 0.8), 18, 40, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
+    perform_eye_hand(profile, used_detector, used_transform, used_generator, (1.1, 1.3), 5, 10, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
 
     info = read_profile_json(profile)
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")

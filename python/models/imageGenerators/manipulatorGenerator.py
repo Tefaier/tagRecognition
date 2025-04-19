@@ -128,6 +128,8 @@ class ManipulatorGenerator(ImageGenerator):
             return False
 
     def _make_move_command(self, t: np.array, r: np.array):
+        print(t)
+        print(r)
         urscript_command = f'''
 def myProg():
     target_pose = p[{t[0]}, {t[1]}, {t[2]}, {r[0]}, {r[1]}, {r[2]}]

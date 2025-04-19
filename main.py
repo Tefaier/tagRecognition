@@ -107,14 +107,14 @@ def save_camera_info(profile: str, cameraMatrix: list[list[float]], distortionCo
     write_info_to_profile_json(profile, {"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients})
 
 def camera_calibration_on_manipulator(profile: str):
-    camera_calibration(profile, False, np.array([0, -1.5, 0.05]), Rotation.from_rotvec([-180, 0, 0], degrees=True), is_real=True, ip='192.168.56.1', port=50002)
+    camera_calibration(profile, False, np.array([0, -1.5, 0.05]), Rotation.from_rotvec([-180, 0, 0], degrees=True))
 
 def hand_to_eye_on_manipulator(profile: str):
     # TODO 2 - manually calculate approximate base2camera transform and adjust generation strategy in function if needed
-    hand_to_eye_calibration(profile, False, np.array([0, -1.5, 0.05]), Rotation.from_rotvec([-180, 0, 0], degrees=True), is_real=True, ip='192.168.56.1', port=50002)
+    hand_to_eye_calibration(profile, False, np.array([0, -1.6, 0.5]), Rotation.from_rotvec([-90, 0, 0], degrees=True))
 
 # experiment_type is one of [x_y, x_z, x_rx, x_ry, x_rz, traj_1, traj_2]
-def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool, is_real: bool, ip: str, port: int):
+def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool):
     # TODO 3 - check all experiments and adjust their function so that all positions are successfully generated
     # TODO 4 - find wait timing fall all of experiments, either shared or individual
     detector_type = 'aruco' if is_aruco else 'apriltag'
@@ -124,7 +124,7 @@ def make_images_for_experiment(profile_source: str, profile_label: str, experime
     base2camera_translation = np.array(info.get("cameraTranslation"))
     base2camera_rotation = Rotation.from_rotvec(info.get("cameraRotation"), degrees=False)
     image_settings = create_image_generation_settings(detector_type, experiment_type)
-    used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation, is_real, ip, port)
+    used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation)
     t, r, s = create_transforms(base2camera_translation, base2camera_rotation, experiment_type)
     generate_images(profile_str, used_generator, image_settings, t, r, s)
 
@@ -168,8 +168,8 @@ if __name__ == "__main__":
     #      [0.0, 1378.32, 557.5717],
     #      [0.0, 0.0, 1.0]], [-0.00573079, -0.05853685, 0.00310127, 0.0000021, 0])
     # test_camera()
-    hand_to_eye_on_manipulator("calibration_real")
-    # make_images_for_experiment("calibration_real", "real", "x_y", is_aruco=True, is_real=True, ip='192.168.56.1', port=50002)
+    # hand_to_eye_on_manipulator("calibration_real")
+    make_images_for_experiment("calibration_real", "real", "traj_2", is_aruco=True)
 
 
     # test_manipulator('192.168.56.101', 30003, res[0], res[1], is_real = False)
