@@ -169,7 +169,13 @@ if __name__ == "__main__":
     #      [0.0, 0.0, 1.0]], [-0.00573079, -0.05853685, 0.00310127, 0.0000021, 0])
     # test_camera()
     # hand_to_eye_on_manipulator("calibration_real")
-    make_images_for_experiment("calibration_real", "real", "traj_2", is_aruco=True)
+
+    # make_images_for_experiment("calibration_real", "real_cube", "x_y", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "x_z", is_aruco=False)
+    make_images_for_experiment("calibration_real", "real_cube", "x_rx", is_aruco=False)
+    make_images_for_experiment("calibration_real", "real_cube", "x_rz", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "traj_1", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "traj_2", is_aruco=False)
 
 
     # test_manipulator('192.168.56.101', 30003, res[0], res[1], is_real = False)

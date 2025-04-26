@@ -21,7 +21,7 @@ if not cap.isOpened():
 cap.set(cv2.CAP_PROP_BRIGHTNESS, 100)  # Set brightness (default)
 cap.set(cv2.CAP_PROP_CONTRAST, 100)  # Set contrast (default)
 
-cap.set(cv2.CAP_PROP_SATURATION, -1)  # Set saturation (default)
+cap.set(cv2.CAP_PROP_SATURATION, 150)  # Set saturation (default)
 
 cap.set(cv2.CAP_PROP_SHARPNESS, 100)  # Set sharpness (default)
 
@@ -61,7 +61,7 @@ try:
 
         # Wait for 1 second before capturing the next image
         # Also check for user input to exit
-        if cv2.waitKey(10) & 0xFF == ord('q'):  # Press 'q' to quit
+        if cv2.waitKey(200) & 0xFF == ord('q'):  # Press 'q' to quit
             print("User requested to stop.")
             break
 

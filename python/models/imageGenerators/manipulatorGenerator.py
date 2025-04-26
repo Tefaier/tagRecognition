@@ -43,7 +43,7 @@ class ManipulatorGenerator(ImageGenerator):
             self.camera = cv2.VideoCapture(camera_port)
             self.camera.set(cv2.CAP_PROP_BRIGHTNESS, 100)  # Set brightness (default)
             self.camera.set(cv2.CAP_PROP_CONTRAST, 100)  # Set contrast (default)
-            self.camera.set(cv2.CAP_PROP_SATURATION, -1)  # Set saturation (default)
+            self.camera.set(cv2.CAP_PROP_SATURATION, 150)  # Set saturation (default)
             self.camera.set(cv2.CAP_PROP_SHARPNESS, 100)  # Set sharpness (default)
             self.camera.set(cv2.CAP_PROP_GAIN, -1)  # Set gain (default)
             self.camera.set(cv2.CAP_PROP_AUTO_WB, -1)  # Enable auto white balance
@@ -53,6 +53,7 @@ class ManipulatorGenerator(ImageGenerator):
             self.camera.set(cv2.CAP_PROP_FOCUS, -1)  # Set focus (default)
             self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)  # Set image width to 1920
             self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)  # Set image height to 1080
+            self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     def reset(self):
         self.count_request = True
@@ -62,6 +63,7 @@ class ManipulatorGenerator(ImageGenerator):
         r = r.as_rotvec(degrees=False)
         success = self._send_cached_move_command(t, r)
         if not success: return False
+        self.camera.read()
         success, image = self.camera.read()
         if not success: return False
         cv2.imwrite(save_path, image)
@@ -74,6 +76,7 @@ class ManipulatorGenerator(ImageGenerator):
         if not success: return False
         images = []
         for _ in save_paths:
+            self.camera.read()
             success, image = self.camera.read()
             if not success: return False  # camera read fail - then all requested images are dropped
             images.append(image)
@@ -120,7 +123,7 @@ class ManipulatorGenerator(ImageGenerator):
                     self.count_request = False
                     time.sleep(10)
                 else:
-                    time.sleep(3)
+                    time.sleep(4)
                 return True
 
         except Exception as e:
@@ -128,15 +131,15 @@ class ManipulatorGenerator(ImageGenerator):
             return False
 
     def _make_move_command(self, t: np.array, r: np.array):
-        print(t)
-        print(r)
+        # print(t)
+        # print(r)
         urscript_command = f'''
 def myProg():
     target_pose = p[{t[0]}, {t[1]}, {t[2]}, {r[0]}, {r[1]}, {r[2]}]
     success = is_within_safety_limits(target_pose)
 
     if success:
-        movej(target_pose, a=1.2, v=0.5, r = 0)
+        movej(target_pose, a=1.2, v=1.5, r = 0)
         textmsg("ok")
         textmsg(target_pose)
         textmsg(get_inverse_kin(target_pose))
