@@ -4,14 +4,16 @@ import cv2
 from scipy.spatial.transform import Rotation
 
 from python.A_calibration import perform_calibration
-from python.B_handEyeCalibration import perform_eye_hand
+from python.B_handEyeCalibration import perform_eye_hand, _run_calibration
 from python.C_imagesGeneration import ImageGenerationSettings
 from python.D_tagsDetection import perform_detection
+from python.E_visualization import read_info, get_info_part
 from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
     simple_trajectory_experiment, simple_trajectory_rotation_experiment
 from python.models.detectors.arucoDetector import ArucoDetector
 # from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.chessboardDetector import ChessboardDetector
+from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
 import numpy as np
@@ -20,7 +22,8 @@ from python.models.transformsParser.cubeParser import CubeParser
 from python.models.transformsParser.kalmanParser import SimpleKalmanFilterParser
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import tag_images_folder, test_camera_matrix
-from python.utils import read_profile_json, change_base2gripper_to_camera2object
+from python.utils import read_profile_json, change_base2gripper_to_camera2object, write_info_to_profile_json
+
 
 # detector_type either aruco or apriltag
 # transforms_type either with traj or not
@@ -189,6 +192,38 @@ def hand_to_eye_calibration(profile: str, is_virtual: bool, base2camera_translat
     info = read_profile_json(profile)
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
     print(f"Got cameraRotation: {info.get("cameraRotation")}")
+
+def hand_to_eye_calibration_on_profiles(save_to_profile: str, profiles: list[str]):
+    translations_from_camera = []
+    rotations_from_camera = []
+    translations_from_base = []
+    rotations_from_base = []
+    detected_mask = []
+
+    info = read_info(profiles)
+    for profile in profiles:
+        profile_info = get_info_part(info, profile, {})
+        for translation in profile_info["detectedT"]:
+            translations_from_camera.append(translation)
+        for rotation in profile_info["detectedR"]:
+            rotations_from_camera.append(rotation)
+        for success in profile_info["isSuccess"]:
+            detected_mask.append(success)
+        transforms_type = [tr for tr in ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"] if tr in profile]
+        t, r, _ = create_transforms(np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0]), transforms_type[0])
+        for translation in t:
+            translations_from_base.append(translation)
+        for rotation in r:
+            rotations_from_base.append(rotation)
+
+    cameraTranslation, cameraRotation = _run_calibration(
+        translations_from_camera,
+        rotations_from_camera,
+        translations_from_base,
+        rotations_from_base,
+        detected_mask
+    )
+    write_info_to_profile_json(save_to_profile, {"cameraTranslation": cameraTranslation, "cameraRotation": cameraRotation})
 
 def run_default_calibration(profile: str):
     camera_calibration(profile, False)
