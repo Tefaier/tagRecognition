@@ -16,7 +16,8 @@ from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import generated_info_folder, calibration_images_folder, image_width, image_height, tag_images_folder, \
     test_camera_matrix, general_info_filename
-from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json, random_generator
+from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json, \
+    random_generator, from_local_to_global
 
 
 def _prepare_folder(path: str):
@@ -53,7 +54,7 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
 
     # position around which images are created
     index = 0
-    position_samples = 50
+    position_samples = 15
     rotation_samples = 1
 
     translations_from_base = []
@@ -64,8 +65,9 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
             rotation = Rotation.from_rotvec(generate_random_norm_vector() * random_generator.random() * obj_rotation_limit, degrees=True) * rotate_from
             success = generator.generate_image_with_obj_at_transform(translation, rotation, f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{index}.png')
             if success:
-                translations_from_base.append(translation)
-                rotations_from_base.append(rotation.as_rotvec(degrees=False))
+                t, r = from_local_to_global(cam_translation, cam_rotation, translation, rotation)
+                translations_from_base.append(t)
+                rotations_from_base.append(r.as_rotvec(degrees=False))
                 index += 1
 
     number = len(translations_from_base)

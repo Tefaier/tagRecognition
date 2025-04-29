@@ -11,7 +11,7 @@ from python.E_visualization import read_info, get_info_part
 from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
     simple_trajectory_experiment, simple_trajectory_rotation_experiment
 from python.models.detectors.arucoDetector import ArucoDetector
-# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
@@ -80,7 +80,7 @@ def create_manipulator_generator(
         30003,
         base2camera_translation,
         base2camera_rotation,
-        np.array([0, 0.01, 0.107]),
+        np.array([0, 0, 0.107]),
         Rotation.from_rotvec([0, 0, 0]),
         2, # set 2 if Linux, 1 if Windows
         False
@@ -118,16 +118,16 @@ def create_transforms(
     elif transforms_type == "x_z":
         t, r, s = x_z_experiment(20, 5)
     elif transforms_type == "x_rx":
-        t, r, s = x_rx_experiment(4, 4)
+        t, r, s = x_rx_experiment(10, 10)
     elif transforms_type == "x_ry":
-        t, r, s = x_ry_experiment(4, 4)
+        t, r, s = x_ry_experiment(10, 10)
     elif transforms_type == "x_rz":
-        t, r, s = x_rz_experiment(4, 4)
+        t, r, s = x_rz_experiment(10, 10)
     elif transforms_type == "traj_1":
-        t, r, s = simple_trajectory_experiment(10)
+        t, r, s = simple_trajectory_experiment(15)
     elif transforms_type == "traj_2":
-        t, r, s = simple_trajectory_rotation_experiment(10)
-    t, r = change_base2gripper_to_camera2object(base2camera_translation, base2camera_rotation, np.array([0, 0.01, 0.107]), Rotation.from_rotvec([0, 0, 0]), np.array(t), r)
+        t, r, s = simple_trajectory_rotation_experiment(15)
+    t, r = change_base2gripper_to_camera2object(base2camera_translation, base2camera_rotation, np.array([0, 0, 0.107]), Rotation.from_rotvec([0, 0, 0]), np.array(t), r)
     return t, r, s
 
 def create_detections(profile: str, settings: ImageGenerationSettings, parser: TransformsParser, detector_type: str, setup_type: str, transforms_type: str):
@@ -187,7 +187,7 @@ def hand_to_eye_calibration(profile: str, is_virtual: bool, base2camera_translat
     else:
         used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation)
     used_detector = create_aruco_detector(profile, calibration_image_settings, False)
-    perform_eye_hand(profile, used_detector, used_transform, used_generator, (1.1, 1.3), 5, 10, 30, Rotation.from_rotvec([180, 0, 0], degrees=True))
+    perform_eye_hand(profile, used_detector, used_transform, used_generator, (1.15, 1.3), 5, 5, 30, Rotation.from_rotvec([180, 0, 0], degrees=True), base2camera_translation, base2camera_rotation)
 
     info = read_profile_json(profile)
     print(f"Got cameraTranslation: {info.get("cameraTranslation")}")
