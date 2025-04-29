@@ -49,7 +49,7 @@ def _run_calibration(
     cameraRotation = Rotation.from_matrix(cameraRotation).as_rotvec(degrees=False).tolist()
     return cameraTranslation, cameraRotation
 
-def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator, distance_range: Tuple[float, float], x_deviation_angle: float, y_deviation_angle: float, obj_rotation_limit: float, rotate_from: Rotation) -> (list, list):
+def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator, distance_range: Tuple[float, float], x_deviation_angle: float, y_deviation_angle: float, obj_rotation_limit: float, rotate_from: Rotation, cam_translation: np.ndarray[float], cam_rotation: Rotation) -> (list, list):
     _prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
 
     # position around which images are created
