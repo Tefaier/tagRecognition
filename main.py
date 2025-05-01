@@ -60,7 +60,8 @@ def make_images_for_experiment(profile_source: str, profile_label: str, experime
     used_generator.to_start_pose() # return to start position
 
 if __name__ == "__main__":
-    run_image_info_creation("calibration_real")
+    pass
+    # run_image_info_creation("calibration_real")
     # generate_virtual_images("calibration_real")
     # save_camera_info("calibration_real", [[1393.53993076, 0.0, 986.86708455],
     #      [0.0, 1392.89920241, 558.27594943],
