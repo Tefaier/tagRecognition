@@ -33,8 +33,8 @@ def _run_calibration(
         rotations_from_base: list[list[float]],
         detected_mask: list[bool]
 ) -> (list, list):
-    translations_from_camera = np.array(translations_from_camera)
-    rotations_from_camera = np.array(rotations_from_camera)
+    translations_from_camera = np.array([translations_from_camera[i] for i, mask in enumerate(detected_mask) if mask])
+    rotations_from_camera = np.array([rotations_from_camera[i] for i, mask in enumerate(detected_mask) if mask])
     translations_from_base = np.array(translations_from_base)[detected_mask]
     rotations_from_base = np.array(rotations_from_base)[detected_mask]
     rotations_from_base_reverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotations_from_base]

@@ -5,24 +5,27 @@ from scipy.spatial.transform import Rotation
 
 from python.A_calibration import perform_calibration
 from python.B_handEyeCalibration import perform_eye_hand, _run_calibration
-from python.C_imagesGeneration import ImageGenerationSettings
+from python.C_imagesGeneration import ImageGenerationSettings, generate_images
 from python.D_tagsDetection import perform_detection
 from python.E_visualization import read_info, get_info_part
 from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
     simple_trajectory_experiment, simple_trajectory_rotation_experiment
 from python.models.detectors.arucoDetector import ArucoDetector
-from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
+from python.models.imageGenerators.pseudoGenerator import PseudoImageGenerator
 from python.models.imageGenerators.vtkGenerator import VTKGenerator
 import numpy as np
 
 from python.models.transformsParser.cubeParser import CubeParser
 from python.models.transformsParser.kalmanParser import SimpleKalmanFilterParser
 from python.models.transformsParser.transformsParser import TransformsParser
-from python.settings import tag_images_folder, test_camera_matrix
-from python.utils import read_profile_json, change_base2gripper_to_camera2object, write_info_to_profile_json
+from python.settings import tag_images_folder, test_camera_matrix, generated_info_folder, image_info_filename, \
+    detection_info_filename
+from python.utils import read_profile_json, change_base2gripper_to_camera2object, write_info_to_profile_json, \
+    copy_camera_profile_info
 
 
 # detector_type either aruco or apriltag
@@ -214,7 +217,7 @@ def hand_to_eye_calibration_on_profiles(save_to_profile: str, profiles: list[str
         for translation in t:
             translations_from_base.append(translation)
         for rotation in r:
-            rotations_from_base.append(rotation)
+            rotations_from_base.append(rotation.as_rotvec(degrees=False))
 
     cameraTranslation, cameraRotation = _run_calibration(
         translations_from_camera,
@@ -224,6 +227,34 @@ def hand_to_eye_calibration_on_profiles(save_to_profile: str, profiles: list[str
         detected_mask
     )
     write_info_to_profile_json(save_to_profile, {"cameraTranslation": cameraTranslation, "cameraRotation": cameraRotation})
+
+# if there are images in analyze present than it will have a bug of starting from n.png instead of 0.png
+def run_image_info_creation(calibration_profile: str):
+    for detector_type in ["aruco", "apriltag"]:
+        for setup_type in ["single", "cube"]:
+            for transforms_type in ["x_y", "x_z", "x_rx", "x_rz", "traj_1", "traj_2"]:
+                profile_str = f"real_{setup_type}_{detector_type}_{transforms_type}"
+                profile_folder = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile_str}"
+                try:
+                    os.remove(f"{profile_folder}/{image_info_filename}.csv")
+                except FileNotFoundError:
+                    pass
+                try:
+                    os.remove(f"{profile_folder}/{detection_info_filename}.csv")
+                except FileNotFoundError:
+                    pass
+
+                copy_camera_profile_info(calibration_profile, profile_str)
+                info = read_profile_json(profile_str)
+                image_settings = create_image_generation_settings(detector_type, transforms_type)
+                image_settings.clear_existing_images = False
+                used_parser = create_parser(image_settings, setup_type)
+                used_generator = PseudoImageGenerator()
+                t, r, s = create_transforms(np.array(info.get("cameraTranslation")),
+                                            Rotation.from_rotvec(info.get("cameraRotation"), degrees=False),
+                                            transforms_type)
+                generate_images(profile_str, used_generator, image_settings, t, r, s)
+                create_detections(profile_str, image_settings, used_parser, detector_type, setup_type, transforms_type)
 
 def run_default_calibration(profile: str):
     camera_calibration(profile, False)
