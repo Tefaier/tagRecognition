@@ -16,7 +16,8 @@ from python.models.imageGenerators.vtkGenerator import VTKGenerator
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import generated_info_folder, calibration_images_folder, image_width, image_height, tag_images_folder, \
     test_camera_matrix, general_info_filename
-from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json, random_generator
+from python.utils import ensure_folder_exists, generate_random_norm_vector, write_info_to_profile_json, \
+    random_generator, from_local_to_global
 
 
 def _prepare_folder(path: str):
@@ -25,12 +26,35 @@ def _prepare_folder(path: str):
     for f in files:
         os.remove(f)
 
-def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator, distance_range: Tuple[float, float], x_deviation_angle: float, y_deviation_angle: float, obj_rotation_limit: float, rotate_from: Rotation) -> (list, list):
+def _run_calibration(
+        translations_from_camera: list[list[float]],
+        rotations_from_camera: list[list[float]],
+        translations_from_base: list[list[float]],
+        rotations_from_base: list[list[float]],
+        detected_mask: list[bool]
+) -> (list, list):
+    translations_from_camera = np.array([translations_from_camera[i] for i, mask in enumerate(detected_mask) if mask])
+    rotations_from_camera = np.array([rotations_from_camera[i] for i, mask in enumerate(detected_mask) if mask])
+    translations_from_base = np.array(translations_from_base)[detected_mask]
+    rotations_from_base = np.array(rotations_from_base)[detected_mask]
+    rotations_from_base_reverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotations_from_base]
+    translations_from_base_reverse = [-1 * rotations_from_base_reverse[index].apply(tr) for index, tr in
+                                      enumerate(translations_from_base)]
+    rotations_from_base_reverse = [rot.as_rotvec(degrees=False) for rot in rotations_from_base_reverse]
+    cameraRotation, cameraTranslation = cv2.calibrateHandEye(rotations_from_base_reverse,
+                                                             translations_from_base_reverse, rotations_from_camera,
+                                                             translations_from_camera,
+                                                             method=cv2.CALIB_HAND_EYE_PARK)
+    cameraTranslation = cameraTranslation.reshape((3,)).tolist()
+    cameraRotation = Rotation.from_matrix(cameraRotation).as_rotvec(degrees=False).tolist()
+    return cameraTranslation, cameraRotation
+
+def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsParser, generator: ImageGenerator, distance_range: Tuple[float, float], x_deviation_angle: float, y_deviation_angle: float, obj_rotation_limit: float, rotate_from: Rotation, cam_translation: np.ndarray[float], cam_rotation: Rotation) -> (list, list):
     _prepare_folder(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}")
 
     # position around which images are created
     index = 0
-    position_samples = 50
+    position_samples = 15
     rotation_samples = 1
 
     translations_from_base = []
@@ -41,23 +65,14 @@ def perform_eye_hand(profile: str, detector: TagDetector, parser: TransformsPars
             rotation = Rotation.from_rotvec(generate_random_norm_vector() * random_generator.random() * obj_rotation_limit, degrees=True) * rotate_from
             success = generator.generate_image_with_obj_at_transform(translation, rotation, f'{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{calibration_images_folder}/{index}.png')
             if success:
-                translations_from_base.append(translation)
-                rotations_from_base.append(rotation.as_rotvec(degrees=False))
+                t, r = from_local_to_global(cam_translation, cam_rotation, translation, rotation)
+                translations_from_base.append(t)
+                rotations_from_base.append(r.as_rotvec(degrees=False))
                 index += 1
 
     number = len(translations_from_base)
     detected_mask, translations_from_camera, rotations_from_camera = _perform_eye_hand_detection(profile, detector, parser, number)
-    translations_from_camera = np.array(translations_from_camera)
-    rotations_from_camera = np.array(rotations_from_camera)
-    translations_from_base = np.array(translations_from_base)[detected_mask]
-    rotations_from_base = np.array(rotations_from_base)[detected_mask]
-    rotations_from_base_reverse = [Rotation.from_rotvec(rot, degrees=False).inv() for rot in rotations_from_base]
-    translations_from_base_reverse = [-1 * rotations_from_base_reverse[index].apply(tr) for index, tr in enumerate(translations_from_base)]
-    rotations_from_base_reverse = [rot.as_rotvec(degrees=False) for rot in rotations_from_base_reverse]
-    cameraRotation, cameraTranslation = cv2.calibrateHandEye(rotations_from_base_reverse, translations_from_base_reverse, rotations_from_camera, translations_from_camera,
-                                            method=cv2.CALIB_HAND_EYE_PARK)
-    cameraTranslation = cameraTranslation.reshape((3,)).tolist()
-    cameraRotation = Rotation.from_matrix(cameraRotation).as_rotvec(degrees=False).tolist()
+    cameraTranslation, cameraRotation = _run_calibration(translations_from_camera, rotations_from_camera, translations_from_base, rotations_from_base, detected_mask)
     write_info_to_profile_json(profile, {"cameraTranslation": cameraTranslation, "cameraRotation": cameraRotation})
     return cameraTranslation, cameraRotation
 

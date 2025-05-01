@@ -4,9 +4,6 @@ import time
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import JointState
 # import math
 import socket
 import pyautogui
@@ -32,8 +29,6 @@ class ManipulatorGenerator(ImageGenerator):
         self.current_pos = None
         self.last_joints_pos = [0, -3.14/2, 0, -3.14/2, 0, 0]
 
-        self.listener = JointStateListener()
-
         self.camera_translation = camera_translation
         self.camera_rotation = camera_rotation
         self.object_translation_local_to_gripper = object_translation_local_to_gripper
@@ -46,6 +41,19 @@ class ManipulatorGenerator(ImageGenerator):
             self.camera = ScreenshotCamera()
         else:
             self.camera = cv2.VideoCapture(camera_port)
+            self.camera.set(cv2.CAP_PROP_BRIGHTNESS, 100)  # Set brightness (default)
+            self.camera.set(cv2.CAP_PROP_CONTRAST, 100)  # Set contrast (default)
+            self.camera.set(cv2.CAP_PROP_SATURATION, 150)  # Set saturation (default)
+            self.camera.set(cv2.CAP_PROP_SHARPNESS, 100)  # Set sharpness (default)
+            self.camera.set(cv2.CAP_PROP_GAIN, -1)  # Set gain (default)
+            self.camera.set(cv2.CAP_PROP_AUTO_WB, -1)  # Enable auto white balance
+            self.camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # Enable auto exposure
+            self.camera.set(cv2.CAP_PROP_EXPOSURE, 100)  # Set exposure
+            self.camera.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
+            self.camera.set(cv2.CAP_PROP_FOCUS, -1)  # Set focus (default)
+            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)  # Set image width to 1920
+            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)  # Set image height to 1080
+            self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     def reset(self):
         self.count_request = True
@@ -55,6 +63,7 @@ class ManipulatorGenerator(ImageGenerator):
         r = r.as_rotvec(degrees=False)
         success = self._send_cached_move_command(t, r)
         if not success: return False
+        self.camera.read()
         success, image = self.camera.read()
         if not success: return False
         cv2.imwrite(save_path, image)
@@ -67,6 +76,7 @@ class ManipulatorGenerator(ImageGenerator):
         if not success: return False
         images = []
         for _ in save_paths:
+            self.camera.read()
             success, image = self.camera.read()
             if not success: return False  # camera read fail - then all requested images are dropped
             images.append(image)
@@ -113,37 +123,23 @@ class ManipulatorGenerator(ImageGenerator):
                     self.count_request = False
                     time.sleep(10)
                 else:
-                    time.sleep(3)
+                    time.sleep(4)
                 return True
-            else:
-                timeout = 20
-                start_time = time.monotonic()
-                while time.monotonic() - start_time < timeout:
-                    js = self.listener.listen_once(3)
-                    if js is None:
-                        continue
-                    if js.velocity == array.array('d', [0, 0, 0, 0, 0, 0]) and 1 <= time.monotonic() - start_time:
-                        if self.last_joints_pos is None:
-                            return True
-                        if self.last_joints_pos != js.position:
-                            self.last_joints_pos = js.position
-                            return True
-                        else:
-                            return False
-                return False
 
         except Exception as e:
             print(f"An error occurred: {e}")
             return False
 
     def _make_move_command(self, t: np.array, r: np.array):
+        # print(t)
+        # print(r)
         urscript_command = f'''
 def myProg():
     target_pose = p[{t[0]}, {t[1]}, {t[2]}, {r[0]}, {r[1]}, {r[2]}]
     success = is_within_safety_limits(target_pose)
 
     if success:
-        movej(target_pose, a=1.2, v=0.5, r = 0)
+        movej(target_pose, a=1.2, v=1.5, r = 0)
         textmsg("ok")
         textmsg(target_pose)
         textmsg(get_inverse_kin(target_pose))
@@ -175,32 +171,3 @@ end
 myProg()
 '''
         return urscript_command
-
-
-class JointStateListener(Node):
-    def __init__(self):
-        rclpy.init(args=None)
-        super().__init__('joint_state_listener')
-        self.joint_state = None
-        self.subscription = self.create_subscription(
-            JointState,
-            '/joint_states',
-            self.listener_callback,
-            1
-        )
-
-    def listener_callback(self, msg):
-        self.joint_state = msg
-        # self.get_logger().info("Получено сообщение /joint_states")
-
-    def listen_once(self, timeout=0.5, listen_time=0.1):
-        start_time = time.monotonic()
-        while time.monotonic() - start_time < timeout:
-            rclpy.spin_once(self, timeout_sec=listen_time)
-            if self.joint_state is not None:
-                break
-        return self.joint_state
-
-    def __del__(self):
-        self.destroy_node()
-        rclpy.shutdown()

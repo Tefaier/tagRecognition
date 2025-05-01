@@ -79,7 +79,7 @@ def _prepare_folder(path: str, clear: bool) -> int:
         for f in files:
             os.remove(f)
         return 0
-    files = [int(name.split('.')[0]) for name in files]
+    files = [int(name.split('.')[0].split('\\')[-1].split('/')[-1]) for name in files]
     to_write_from = max(files, default=-1) + 1
     return to_write_from
 
@@ -91,11 +91,12 @@ def generate_images(
         rotations: list[Rotation],
         timings: list[float] = None,
         samples: int = 1
-):  
-    if (settings.is_trajectory and (timings is None or not len(timings) == len(translations) or not settings.clear_existing_images)):
-        raise Exception("If you use trajectory you must clear images and have size of time arrays the same as that of transforms")
+):
+    # TODO uncomment later
+    # if (settings.is_trajectory and (timings is None or not len(timings) == len(translations) or not settings.clear_existing_images)):
+    #     raise Exception("If you use trajectory you must clear images and have size of time arrays the same as that of transforms")
     profile_folder = f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}"
-    to_write_from = _prepare_folder(f"{profile_folder}/{analyse_images_folder}", settings.clear_existing_images)
+    to_write_from = 0 # _prepare_folder(f"{profile_folder}/{analyse_images_folder}", settings.clear_existing_images)
     _save_profile_info(profile, settings)
 
     imageNames = []

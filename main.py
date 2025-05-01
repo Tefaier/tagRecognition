@@ -27,96 +27,24 @@ from python.utils import read_profile_json, generate_random_norm_vector, copy_ca
     change_base2gripper_to_camera2object, write_info_to_profile_json
 from python.workflow_utils import run_default_calibration, create_image_generation_settings, create_parser, \
     create_vtk_generator, create_transforms, create_detections, hand_to_eye_calibration, camera_calibration, \
-    create_manipulator_generator, create_aruco_detector
+    create_manipulator_generator, create_aruco_detector, hand_to_eye_calibration_on_profiles, run_image_info_creation
 
-
-def experiments_test():
-    image_settings = create_image_generation_settings('aruco', '')
-    profiles_to_use = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2", "traj_3"]
-    profiles_transforms = [create_transforms(np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0]), setup) for setup in profiles_to_use]
-
-    used_detector = create_aruco_detector(profiles_to_use[0], image_settings, True)
-    used_transform = create_parser(image_settings, 'cube')
-    used_generator = create_vtk_generator(image_settings, used_transform, 'aruco', 'cube')
-
-    run_default_calibration('calibration')
-    for profile in profiles_to_use:
-        copy_camera_profile_info('calibration', profile)
-
-    for i in range(len(profiles_to_use) - 3):
-        # generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1])
-        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
-    image_settings = create_image_generation_settings('aruco', 'traj')
-    for i in range(len(profiles_to_use) - 3, len(profiles_to_use)):
-        # generate_images(profiles_to_use[i], used_generator, image_settings, profiles_transforms[i][0], profiles_transforms[i][1], profiles_transforms[i][2])
-        perform_detection(profiles_to_use[i], used_detector, used_transform, True)
-
-    two_parameter_relation_show(profiles_to_use[0], True, 'x', True, 'y', 0, '_aruco3_cuber', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[1], True, 'x', True, 'z', 0, '_aruco3_cuber', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[2], True, 'x', False, 'x', 0, '_aruco3_cuber', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[3], True, 'x', False, 'y', 0, '_aruco3_cuber', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[4], True, 'x', False, 'z', 0, '_aruco3_cuber', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[5], True, 'x', True, 'x', 0, '_aruco3_cuber', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[6], True, 'x', True, 'x', 0, '_aruco3_cuber', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[7], False, 'x', False, 'x', 180, '_aruco3_cuber', {"aruco3": True})
-
-def physics_parser_test():
-    image_settings = ImageGenerationSettings(True, 0.1, True, str(cv2.aruco.DICT_5X5_50), False, "", True)
-    profiles_to_use = ["traj_1", "traj_2", "traj_3"]
-
-    used_detector = create_aruco_detector(profiles_to_use[0], image_settings, True)
-    used_transform = create_parser(image_settings, 'cube')
-
-    for i in range(0, len(profiles_to_use)):
-        physics_transform = SimpleKalmanFilterParser(
-            used_transform,
-            1,
-            False,
-            True
-        )
-        perform_detection(profiles_to_use[i], used_detector, physics_transform, True)
-
-    two_parameter_relation_show(profiles_to_use[0], True, 't', True, 'x', 0, '_aruco3_phys_cube_filter', {"aruco3": True})
-    show_trajectory(profiles_to_use[0], True, 'x', '_aruco3_phys_cube_filter', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[1], True, 't', True, 'x', 0, '_aruco3_phys_cube_filter', {"aruco3": True})
-    two_parameter_relation_show(profiles_to_use[2], False, 'x', False, 'x', 180, '_aruco3_phys_cube_filter', {"aruco3": True})
-    show_trajectory(profiles_to_use[2], False, 'x', '_aruco3_phys_cube_filter', {"aruco3": True})
-
-def generate_virtual_images():
-    calibration_profile = "calibration"
-    run_default_calibration(calibration_profile)
-
+def generate_virtual_images(calibration_profile: str):
     for detector_type in ["aruco", "apriltag"]:
         for setup_type in ["single", "cube"]:
-            for transforms_type in ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"]:
-                for distance in [0.8, 2.0]:
-                    profile_str = f"{setup_type}_{detector_type}_{transforms_type}_{"close" if distance < 1 else "far"}"
-                    copy_camera_profile_info(calibration_profile, profile_str)
-                    info = read_profile_json(profile_str)
-                    image_settings = create_image_generation_settings(detector_type, transforms_type)
-                    used_parser = create_parser(image_settings, setup_type)
-                    used_generator = create_vtk_generator(image_settings, used_parser, detector_type, setup_type)
-                    t, r, s = create_transforms(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False), transforms_type, distance)
-                    generate_images(profile_str, used_generator, image_settings, t, r, s)
-                    create_detections(profile_str, image_settings, used_parser, detector_type, setup_type, transforms_type)
+            for transforms_type in ["x_y", "x_z", "x_rx", "x_rz", "traj_1", "traj_2"]:
+                profile_str = f"virtual_{setup_type}_{detector_type}_{transforms_type}"
+                copy_camera_profile_info(calibration_profile, profile_str)
+                info = read_profile_json(profile_str)
+                image_settings = create_image_generation_settings(detector_type, transforms_type)
+                used_parser = create_parser(image_settings, setup_type)
+                used_generator = create_vtk_generator(image_settings, used_parser, detector_type, setup_type, np.array(info.get("cameraMatrix"),))
+                t, r, s = create_transforms(np.array(info.get("cameraTranslation")), Rotation.from_rotvec(info.get("cameraRotation"), degrees=False), transforms_type)
+                generate_images(profile_str, used_generator, image_settings, t, r, s)
+                create_detections(profile_str, image_settings, used_parser, detector_type, setup_type, transforms_type)
 
-
-# cameraMatrix as list 3x3, distortionCoefficients as list 5
-def save_camera_info(profile: str, cameraMatrix: list[list[float]], distortionCoefficients: list[float]):
-    # TODO 1 - save camera intrinsic parameters or get them with calibration
-    write_info_to_profile_json(profile, {"cameraMatrix": cameraMatrix, "distortionCoefficients": distortionCoefficients})
-
-def camera_calibration_on_manipulator(profile: str):
-    camera_calibration(profile, False, np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0], degrees=True), is_real=True, ip='192.168.56.101', port=30003)
-
-def hand_to_eye_on_manipulator(profile: str):
-    # TODO 2 - manually calculate approximate base2camera transform and adjust generation strategy in function if needed
-    hand_to_eye_calibration(profile, False, np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0], degrees=True), is_real=True, ip='192.168.56.101', port=30003)
-
-# experiment_type is one of [x_y, x_z, x_rx, x_ry, x_rz, traj_1, traj_2]
-def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool, is_real: bool, ip: str, port: int):
-    # TODO 3 - check all experiments and adjust their function so that all positions are successfully generated
-    # TODO 4 - find wait timing fall all of experiments, either shared or individual
+# experiment_type is one of [x_y, x_z, x_rx, x_rz, traj_1, traj_2]
+def make_images_for_experiment(profile_source: str, profile_label: str, experiment_type: str, is_aruco: bool):
     detector_type = 'aruco' if is_aruco else 'apriltag'
     profile_str = f"{profile_label}_{detector_type}_{experiment_type}"
     copy_camera_profile_info(profile_source, profile_str)
@@ -124,51 +52,38 @@ def make_images_for_experiment(profile_source: str, profile_label: str, experime
     base2camera_translation = np.array(info.get("cameraTranslation"))
     base2camera_rotation = Rotation.from_rotvec(info.get("cameraRotation"), degrees=False)
     image_settings = create_image_generation_settings(detector_type, experiment_type)
-    used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation, is_real, ip, port)
+    used_generator = create_manipulator_generator(base2camera_translation, base2camera_rotation)
     t, r, s = create_transforms(base2camera_translation, base2camera_rotation, experiment_type)
     generate_images(profile_str, used_generator, image_settings, t, r, s)
 
     used_generator.reset()
     used_generator.to_start_pose() # return to start position
 
-def test_exp_cube():
-    # n = 9
-    t = [
-        [0.3, -0.15, 0.3],  # A
-        [0.55, -0.15, 0.3],  # B
-        [0.55,  0.15, 0.3],  # C
-        [0.3,  0.15, 0.3],  # D
-        [0.3,  0.15, 0.5],  # H
-        [0.55,  0.15, 0.5],  # G
-        [0.55, -0.15, 0.5],  # F
-        [0.3, -0.15, 0.5],  # E
-        [0.3, -0.15, 0.3]   # A
-    ]
-    
-    r = [
-        Rotation.from_rotvec([10, -5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([0, 5, 0], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([5, 10, -5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([5, -10, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([10, 5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([-10, -5, -5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([10, -5, 10], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([10, -10, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
-        Rotation.from_rotvec([5, -5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True)
-    ]
-    return [t, r]
-
 if __name__ == "__main__":
-    # calibrationTest()
-    # handEyeTest()
-    # imagesGenerationTest()
-    # tagsDetectionTest()
+    run_image_info_creation("calibration_real")
+    # generate_virtual_images("calibration_real")
+    # save_camera_info("calibration_real", [[1393.53993076, 0.0, 986.86708455],
+    #      [0.0, 1392.89920241, 558.27594943],
+    #      [0.0, 0.0, 1.0]], [-0.00222352, -0.06004384,  0.00375605, -0.00080867, 0])
+    # profiles = ["real_single_aruco_x_rx", "real_single_aruco_x_rz", "real_single_aruco_x_y", "real_single_aruco_x_z", "real_single_aruco_traj_1", "real_single_aruco_traj_2"]
+    # for profile in profiles:
+    #     transforms_type = [tr for tr in ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"] if tr in profile][0]
+    #     image_settings = create_image_generation_settings("aruco", transforms_type)
+    #     create_detections(profile, image_settings, create_parser(image_settings, "single"), "aruco", "single", transforms_type)
+    # hand_to_eye_calibration_on_profiles("calibration_real", ["real_single_aruco_x_rx", "real_single_aruco_x_rz", "real_single_aruco_x_y", "real_single_aruco_x_z", "real_single_aruco_traj_1", "real_single_aruco_traj_2"])
+    # test_camera()
+    # hand_to_eye_on_manipulator("calibration_real")
+
+    # make_images_for_experiment("calibration_real", "real_cube", "x_y", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "x_z", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "x_rx", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "x_rz", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "traj_1", is_aruco=False)
+    # make_images_for_experiment("calibration_real", "real_cube", "traj_2", is_aruco=False)
 
 
-    # res = create_transforms(np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0]), 'x_y')
     # test_manipulator('192.168.56.101', 30003, res[0], res[1], is_real = False)
 
-    make_images_for_experiment("x_y", "", "x_y", is_aruco=True, is_real=True, ip='192.168.56.101', port=30003)
 
     # experiments_test()
     # physics_parser_test()

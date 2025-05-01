@@ -271,6 +271,8 @@ def get_info_part(info: list, profile: str, required_dict: dict):
     if profile_index == -1: raise ValueError(f"Didn't find profile {profile}")
 
     dict_index = -1
+    if len(required_dict) == 0:
+        dict_index = 0
     for i in range(len(info[profile_index][-1])):
         for key, value in required_dict.items():
             if not info[profile_index][-1][i][0].get(key) == value:
