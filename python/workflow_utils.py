@@ -11,7 +11,7 @@ from python.E_visualization import read_info, get_info_part
 from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
     simple_trajectory_experiment, simple_trajectory_rotation_experiment
 from python.models.detectors.arucoDetector import ArucoDetector
-# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
@@ -44,7 +44,7 @@ def create_image_generation_settings(detector_type: str, transforms_type: str) -
 # setup_type either single or cube
 def create_parser(settings: ImageGenerationSettings, setup_type: str) -> TransformsParser:
     if setup_type == "single":
-        return TransformsParser([[0, 0, settings.tagSize * 450 / 354 / 2]], [Rotation.from_rotvec([0, 0, 90])], [2])
+        return TransformsParser([[0, 0, settings.tagSize * 450 / 354 / 2]], [Rotation.from_rotvec([0, 0, 90], degrees=True)], [2])
     else:
         return CubeParser([0, 1, 2, 3, 4, 5], settings.tagSize * 450 / 354)
 
@@ -54,12 +54,13 @@ def create_vtk_generator(
         settings: ImageGenerationSettings,
         used_transform: TransformsParser,
         detector_type: str,
-        setup_type: str
+        setup_type: str,
+        camera_matrix: np.ndarray
 ) -> VTKGenerator:
     if detector_type == "aruco":
-        path_creator = lambda i: f'{os.path.dirname(__file__)}/python/{tag_images_folder}/aruco_5x5_{i}.png'
+        path_creator = lambda i: f'{os.path.dirname(__file__)}/{tag_images_folder}/aruco_5x5_{i}.png'
     else:
-        path_creator = lambda i: f'{os.path.dirname(__file__)}/python/{tag_images_folder}/april_36h11_{i}.png'
+        path_creator = lambda i: f'{os.path.dirname(__file__)}/{tag_images_folder}/april_36h11_{i}.png'
     paths = [2] if setup_type == "single" else [0, 1, 2, 3, 4, 5]
     paths = [path_creator(path) for path in paths]
     return VTKGenerator(
@@ -68,7 +69,7 @@ def create_vtk_generator(
         used_transform.translations,
         used_transform.rotations,
         paths,
-        test_camera_matrix,
+        camera_matrix,
         settings.tagSize * 450 / 354,
         settings.tagSize * 450 / 354
     )
@@ -101,15 +102,15 @@ def create_aruco_detector(profile: str, settings: ImageGenerationSettings, aruco
         cv2.aruco.DICT_5X5_50
     )
 
-# def create_apriltag_detector(profile: str, settings: ImageGenerationSettings) -> ApriltagDetector:
-#     info = read_profile_json(profile)
-#     return ApriltagDetector(
-#         np.array(info.get("cameraMatrix")),
-#         np.array(info.get("distortionCoefficients")),
-#         settings.tagSize,
-#         ApriltagSettings(),
-#         settings.apriltagFamily
-#     )
+def create_apriltag_detector(profile: str, settings: ImageGenerationSettings) -> ApriltagDetector:
+    info = read_profile_json(profile)
+    return ApriltagDetector(
+        np.array(info.get("cameraMatrix")),
+        np.array(info.get("distortionCoefficients")),
+        settings.tagSize,
+        ApriltagSettings(),
+        settings.apriltagFamily
+    )
 
 def create_transforms(
         base2camera_translation: np.array,

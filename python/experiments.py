@@ -130,3 +130,30 @@ def simple_trajectory_only_rotate_experiment() -> (list[list[float]], list[Rotat
         rotations.append(Rotation.from_rotvec([((-1.5 + total_time) / 1.5) * 90, 0, 0], degrees=True) * Rotation.from_rotvec([90, 0, 0], degrees=True))
         total_time += frame_time
     return translations, rotations, (np.arange(0, len(translations)) * frame_time).tolist()
+
+def test_exp_cube():
+    # n = 9
+    t = [
+        [0.3, -0.15, 0.3],  # A
+        [0.55, -0.15, 0.3],  # B
+        [0.55, 0.15, 0.3],  # C
+        [0.3, 0.15, 0.3],  # D
+        [0.3, 0.15, 0.5],  # H
+        [0.55, 0.15, 0.5],  # G
+        [0.55, -0.15, 0.5],  # F
+        [0.3, -0.15, 0.5],  # E
+        [0.3, -0.15, 0.3]  # A
+    ]
+
+    r = [
+        Rotation.from_rotvec([10, -5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([0, 5, 0], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([5, 10, -5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([5, -10, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([10, 5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([-10, -5, -5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([10, -5, 10], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([10, -10, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True),
+        Rotation.from_rotvec([5, -5, 5], degrees=True) * Rotation.from_rotvec([0, 0, 0], degrees=True)
+    ]
+    return t, r, None
