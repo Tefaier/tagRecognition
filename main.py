@@ -60,8 +60,8 @@ def make_images_for_experiment(profile_source: str, profile_label: str, experime
     used_generator.to_start_pose() # return to start position
 
 if __name__ == "__main__":
-    # run_image_info_creation("calibration_real")
-    # generate_virtual_images("calibration_real")
+    run_image_info_creation("calibration_real")
+    generate_virtual_images("calibration_real")
     # save_camera_info("calibration_real", [[1393.53993076, 0.0, 986.86708455],
     #      [0.0, 1392.89920241, 558.27594943],
     #      [0.0, 0.0, 1.0]], [-0.00222352, -0.06004384,  0.00375605, -0.00080867, 0])
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     #     transforms_type = [tr for tr in ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"] if tr in profile][0]
     #     image_settings = create_image_generation_settings("aruco", transforms_type)
     #     create_detections(profile, image_settings, create_parser(image_settings, "single"), "aruco", "single", transforms_type)
-    hand_to_eye_calibration_on_profiles("calibration_real", ["real_single_aruco_x_rx", "real_single_aruco_x_rz", "real_single_aruco_x_y", "real_single_aruco_x_z", "real_single_aruco_traj_1", "real_single_aruco_traj_2"])
+    # hand_to_eye_calibration_on_profiles("calibration_real", ["real_single_aruco_x_rx", "real_single_aruco_x_rz", "real_single_aruco_x_y", "real_single_aruco_x_z", "real_single_aruco_traj_1", "real_single_aruco_traj_2"])
     # test_camera()
     # hand_to_eye_on_manipulator("calibration_real")
 
