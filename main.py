@@ -1,28 +1,8 @@
-import os
-
-import cv2
 from scipy.spatial.transform import Rotation
 
-from python.A_calibration import test_run as calibrationTest, perform_calibration
-from python.B_handEyeCalibration import test_run as handEyeTest, perform_eye_hand
-from python.C_imagesGeneration import test_run as imagesGenerationTest, generate_images, ImageGenerationSettings, \
-    test_manipulator
-from python.D_tagsDetection import test_run as tagsDetectionTest, perform_detection
-from python.E_visualization import simple_show, two_parameter_relation_show, show_missed_count, show_trajectory
-from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
-    simple_trajectory_experiment, simple_trajectory_rotation_experiment, simple_trajectory_only_rotate_experiment
-from python.models.detectors.arucoDetector import ArucoDetector
-from python.models.detectors.chessboardDetector import ChessboardDetector
-from python.models.imageGenerators.imageGenerator import ImageGenerator
-from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
-from python.models.imageGenerators.vtkGenerator import VTKGenerator
-import numpy as np
-
-from python.models.transformsParser.cubeParser import CubeParser
-from python.models.transformsParser.kalmanParser import SimpleKalmanFilterParser
-from python.models.transformsParser.physicsParser import SimpleAccelerationConstraintsParser
-from python.models.transformsParser.transformsParser import TransformsParser
-from python.settings import tag_images_folder, test_camera_matrix
+from python.C_imagesGeneration import test_run as imagesGenerationTest, generate_images
+from python.E_visualization import *
+from python.E_visualization import _make_y_axis_info, _mask_by_success
 from python.utils import read_profile_json, generate_random_norm_vector, copy_camera_profile_info, \
     change_base2gripper_to_camera2object, write_info_to_profile_json
 from python.workflow_utils import run_default_calibration, create_image_generation_settings, create_parser, \
@@ -59,9 +39,67 @@ def make_images_for_experiment(profile_source: str, profile_label: str, experime
     used_generator.reset()
     used_generator.to_start_pose() # return to start position
 
+def build_profile(is_real: bool, is_single: bool, is_aruco: bool, traj: str) -> str:
+    v1 = "real" if is_real else "virtual"
+    v2 = "single" if is_single else "cube"
+    v3 = "aruco" if is_aruco else "apriltag"
+    v4 = traj
+    return f"{v1}_{v2}_{v3}_{v4}"
+
+def build_profiles_strings(is_real: bool = None, is_single: bool = None, is_aruco: bool = None, traj: list[str] = None) -> list[str]:
+    profiles = []
+    iter_1 = ["real", "virtual"]
+    if is_real is not None:
+        iter_1 = ["real"] if is_real else ["virtual"]
+    iter_2 = ["single", "cube"]
+    if is_single is not None:
+        iter_2 = ["single"] if is_single else ["cube"]
+    iter_3 = ["aruco", "apriltag"]
+    if is_aruco is not None:
+        iter_3 = ["aruco"] if is_aruco else ["apriltag"]
+    iter_4 = ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"]
+    if traj is not None:
+        iter_4 = traj
+    for v1 in iter_1:
+        for v2 in iter_2:
+            for v3 in iter_3:
+                for v4 in iter_4:
+                    profiles.append(f"{v1}_{v2}_{v3}_{v4}")
+    return profiles
+
+def compute_info(
+        info: dict,
+        y_is_translation: bool = False,
+        y_axis_part_to_show: str = 'all',
+        merge_entries_method: Merge_methods = Merge_methods.mean,
+        missing_percentage: bool = False
+):
+    if missing_percentage:
+        return 100 * np.sum(np.where(info["isSuccess"], 0, 1)) / len(info["isSuccess"])
+    mask = _mask_by_success(info, None)
+    y = _make_y_axis_info(info, mask, y_is_translation, y_axis_part_to_show)
+    if merge_entries_method is Merge_methods.mean:
+        y = y
+    elif merge_entries_method is Merge_methods.divergence_squared:
+        y_mean = np.mean(y, axis=0)
+        y = (y - y_mean) ** 2
+    elif merge_entries_method is Merge_methods.divergence_module:
+        y_mean = np.mean(y, axis=0)
+        y = abs(y - y_mean)
+    else:
+        raise ValueError("Unsupported Merge_methods used")
+    return np.mean(y, axis=0)
+
 if __name__ == "__main__":
-    run_image_info_creation("calibration_real")
-    generate_virtual_images("calibration_real")
+    profiles = build_profiles_strings(None, None, None, ["traj_1", "traj_2"])
+    all_info = read_info(profiles)
+    print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": False, "parser": "simple"}), missing_percentage=True))
+    print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": True, "parser": "simple"}), missing_percentage=True))
+    print(compute_info(get_info_part(all_info, build_profile(True, True, False, "traj_1"), {"parser": "simple"}), missing_percentage=True))
+
+
+    # run_image_info_creation("calibration_real")
+    # generate_virtual_images("calibration_real")
     # save_camera_info("calibration_real", [[1393.53993076, 0.0, 986.86708455],
     #      [0.0, 1392.89920241, 558.27594943],
     #      [0.0, 0.0, 1.0]], [-0.00222352, -0.06004384,  0.00375605, -0.00080867, 0])
@@ -89,3 +127,57 @@ if __name__ == "__main__":
     # physics_parser_test()
     # generate_virtual_images()
     # run_default_calibration("test")
+
+
+'''
+This can be used to extract some exact group of information
+
+    profiles = build_profiles_strings(None, None, None, ["traj_1", "traj_2"])
+    all_info = read_info(profiles)
+    info = get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": False, "parser": "simple"})
+'''
+
+'''
+This can be used to make different graphs
+
+    profiles = build_profiles_strings(None, None, None, ["traj_1", "traj_2"])
+    all_info = read_info(profiles)
+    info1 = get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": False, "parser": "simple"})
+    info2 = get_info_part(all_info, build_profile(True, False, True, "traj_1"), {"aruco3": False, "parser": "simple"})
+    info3 = get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": True, "parser": "simple"})
+    info4 = get_info_part(all_info, build_profile(True, False, True, "traj_1"), {"aruco3": True, "parser": "simple"})
+    info5 = get_info_part(all_info, build_profile(True, True, False, "traj_1"), {"parser": "simple"})
+    info6 = get_info_part(all_info, build_profile(True, False, False, "traj_1"), {"parser": "simple"})
+    info7 = get_info_part(all_info, build_profile(False, True, True, "traj_1"), {"aruco3": False, "parser": "simple"})
+    info8 = get_info_part(all_info, build_profile(False, False, True, "traj_1"), {"aruco3": False, "parser": "simple"})
+    info9 = get_info_part(all_info, build_profile(False, True, True, "traj_1"), {"aruco3": True, "parser": "simple"})
+    info10 = get_info_part(all_info, build_profile(False, False, True, "traj_1"), {"aruco3": True, "parser": "simple"})
+    info11 = get_info_part(all_info, build_profile(False, True, False, "traj_1"), {"parser": "simple"})
+    info12 = get_info_part(all_info, build_profile(False, False, False, "traj_1"), {"parser": "simple"})
+    fig = init_figure(f"Plot of traj_1", size=(16, 11))
+    init_subplot(2,1,1,'Relation by mean error - real images',f'Time, s',f'Rotation error, degrees')
+    make_display_by_threshold("total - aruco - single", None, True, "t", False, "all", 0.2, info1, Merge_methods.mean, 0)
+    make_display_by_threshold("total - aruco - cube", None, True, "t", False, "all", 0.2, info2, Merge_methods.mean, 0)
+    make_display_by_threshold("total - aruco3 - single", None, True, "t", False, "all", 0.2, info3, Merge_methods.mean, 0)
+    make_display_by_threshold("total - aruco3 - cube", None, True, "t", False, "all", 0.2, info4, Merge_methods.mean, 0)
+    make_display_by_threshold("total - apriltag - single", None, True, "t", False, "all", 0.2, info5, Merge_methods.mean, 0)
+    make_display_by_threshold("total - apriltag - cube", None, True, "t", False, "all", 0.2, info6, Merge_methods.mean, 0)
+    init_subplot(2, 1, 2, 'Relation by mean error - virtual images', f'Time, s', f'Rotation error, degrees')
+    make_display_by_threshold("total - aruco - single", None, True, "t", False, "all", 0.2, info7, Merge_methods.mean,0)
+    make_display_by_threshold("total - aruco - cube", None, True, "t", False, "all", 0.2, info8, Merge_methods.mean, 0)
+    make_display_by_threshold("total - aruco3 - single", None, True, "t", False, "all", 0.2, info9, Merge_methods.mean,0)
+    make_display_by_threshold("total - aruco3 - cube", None, True, "t", False, "all", 0.2, info10, Merge_methods.mean, 0)
+    make_display_by_threshold("total - apriltag - single", None, True, "t", False, "all", 0.2, info11,Merge_methods.mean, 0)
+    make_display_by_threshold("total - apriltag - cube", None, True, "t", False, "all", 0.2, info12, Merge_methods.mean,0)
+
+    save_plot(fig,f'{plots_folder}/error in traj_1 by rotation.png')
+'''
+
+'''
+This can be used to get total value some kind of
+
+    result = compute_info(info, True, "x", Merge_methods.divergence_module)
+    result = compute_info(info, True, "y", Merge_methods.divergence_module)
+    result = compute_info(info, True, "z", Merge_methods.divergence_module)
+    result = compute_info(info, True, "all", Merge_methods.divergence_module)
+'''

@@ -75,11 +75,17 @@ def _make_x_axis_info(info: dict, specific_mask: np.array, is_translation: bool,
 
 def _make_y_axis_info(info: dict, specific_mask: np.array, is_translation: bool, y_axis_part_to_show: str):
     if is_translation:
+        if y_axis_part_to_show == 'all':
+            return [np.linalg.norm(info["errorT"][index]) for index in specific_mask]
         return [info["errorT"][index][axis_to_index(y_axis_part_to_show)] for index in specific_mask]
     else:
+        if y_axis_part_to_show == 'all':
+            return [np.rad2deg(np.linalg.norm(info["errorR"][index])) for index in specific_mask]
         return [get_rotation_euler(info["errorR"][index], y_axis_part_to_show, True) for index in specific_mask]
 
 def _mask_by_success(info: dict, mask: np.array):
+    if mask is None:
+        mask = np.arange(0, len(info["isSuccess"]))
     return np.intersect1d(mask, info["successMask"])
 
 def init_subplot(plot_row: int, plot_column: int, plot_number: int, plot_title: str, plot_x_axis_title: str, plot_y_axis_title: str):
