@@ -1,6 +1,8 @@
+import glob
 import os
 
 import cv2
+import pandas as pd
 from scipy.spatial.transform import Rotation
 
 from python.A_calibration import perform_calibration
@@ -11,7 +13,7 @@ from python.E_visualization import read_info, get_info_part
 from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
     simple_trajectory_experiment, simple_trajectory_rotation_experiment
 from python.models.detectors.arucoDetector import ArucoDetector
-from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
@@ -23,7 +25,7 @@ from python.models.transformsParser.cubeParser import CubeParser
 from python.models.transformsParser.kalmanParser import SimpleKalmanFilterParser
 from python.models.transformsParser.transformsParser import TransformsParser
 from python.settings import tag_images_folder, test_camera_matrix, generated_info_folder, image_info_filename, \
-    detection_info_filename
+    detection_info_filename, analyse_images_folder
 from python.utils import read_profile_json, change_base2gripper_to_camera2object, write_info_to_profile_json, \
     copy_camera_profile_info
 
@@ -102,15 +104,15 @@ def create_aruco_detector(profile: str, settings: ImageGenerationSettings, aruco
         cv2.aruco.DICT_5X5_50
     )
 
-def create_apriltag_detector(profile: str, settings: ImageGenerationSettings) -> ApriltagDetector:
-    info = read_profile_json(profile)
-    return ApriltagDetector(
-        np.array(info.get("cameraMatrix")),
-        np.array(info.get("distortionCoefficients")),
-        settings.tagSize,
-        ApriltagSettings(),
-        settings.apriltagFamily
-    )
+# def create_apriltag_detector(profile: str, settings: ImageGenerationSettings) -> ApriltagDetector:
+#     info = read_profile_json(profile)
+#     return ApriltagDetector(
+#         np.array(info.get("cameraMatrix")),
+#         np.array(info.get("distortionCoefficients")),
+#         settings.tagSize,
+#         ApriltagSettings(),
+#         settings.apriltagFamily
+#     )
 
 def create_transforms(
         base2camera_translation: np.array,
@@ -206,6 +208,8 @@ def hand_to_eye_calibration_on_profiles(save_to_profile: str, profiles: list[str
 
     info = read_info(profiles)
     for profile in profiles:
+        names = pd.read_csv(f"{os.path.dirname(__file__)}/{generated_info_folder}/{profile}/{image_info_filename}.csv")["imageName"]
+        names = [int(name.split('.')[0]) for name in names]
         profile_info = get_info_part(info, profile, {})
         for translation in profile_info["detectedT"]:
             translations_from_camera.append(translation)
@@ -215,10 +219,9 @@ def hand_to_eye_calibration_on_profiles(save_to_profile: str, profiles: list[str
             detected_mask.append(success)
         transforms_type = [tr for tr in ["x_y", "x_z", "x_rx", "x_ry", "x_rz", "traj_1", "traj_2"] if tr in profile]
         t, r, _ = create_transforms(np.array([0, 0, 0]), Rotation.from_rotvec([0, 0, 0]), transforms_type[0])
-        for translation in t:
-            translations_from_base.append(translation)
-        for rotation in r:
-            rotations_from_base.append(rotation.as_rotvec(degrees=False))
+        for index in names:
+            translations_from_base.append(t[index])
+            rotations_from_base.append(r[index].as_rotvec(degrees=False))
 
     cameraTranslation, cameraRotation = _run_calibration(
         translations_from_camera,
