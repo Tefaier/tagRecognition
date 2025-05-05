@@ -47,15 +47,20 @@ class SimpleKalmanFilterParser(TransformsParser):
     def _create_filter(self, pos: np.ndarray[float], speed: np.ndarray[float]) -> KalmanFilter:
         f = KalmanFilter(dim_x=6, dim_z=3)
         f.alpha = 1.01
-        f.x = np.concatenate([pos, speed], axis=0)
+        f.x = np.array(np.concatenate([pos, speed]))
         transition = np.eye(6, 6)
         transition += np.eye(6, 6, 3)
         f.F = transition
         measurement = np.zeros((3, 6))
         measurement[[0, 1, 2], [0, 1, 2]] = 1
         f.H = measurement
-        f.P *= 1000.0
-        f.R = np.eye(3, 3) * 4
+        f.P *= 10
+        f.R *= 0.1
+        q = Q_discrete_white_noise(dim=2, dt=0.1, var=0.2)
+        f.Q = np.zeros((6, 6))
+        f.Q[:2, :2] = q  # x and vx
+        f.Q[2:4, 2:4] = q  # y and vy
+        f.Q[4:6, 4:6] = q  # z and vz
         return f
 
     def get_parent_transform(
@@ -123,11 +128,16 @@ class SimpleKalmanFilterParser(TransformsParser):
             self.last_detected_translation = result[0]
             return result
 
-        self.k_filter.predict(Q=Q_discrete_white_noise(dim=2, dt=time_shift, var=0.1, block_size=3, order_by_dim=False))
+        q = Q_discrete_white_noise(dim=2, dt=time - self.last_detection_time, var=0.2)
+        Q = np.zeros((6, 6))
+        Q[:2, :2] = q  # x and vx
+        Q[2:4, 2:4] = q  # y and vy
+        Q[4:6, 4:6] = q
+        self.k_filter.predict(Q=Q)
         self.k_filter.update(result[0])
         self.last_detection_time = time
         self.last_detected_translation = ((self.k_filter.x)[:3]).copy()
-        return result
+        return self.last_detected_translation, result[1]
 
     def get_parser_dict(self) -> dict:
         return super().get_parser_dict() | {"parser": "kalman", "flip": self.flip, "filter": self.filter}
