@@ -27,7 +27,7 @@ class ApriltagSettings:
             "quad_decimate": self.quad_decimate,
             "quad_sigma": self.quad_sigma,
             "refine_edges": self.refine_edges,
-            "refine_edges": self.refine_edges,
+            "decode_sharpening": self.decode_sharpening,
         }
 
 # considers tag orientation on image to be (rectify applied)
