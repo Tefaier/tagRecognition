@@ -54,7 +54,7 @@ class SimpleKalmanFilterParser(TransformsParser):
         measurement = np.zeros((3, 6))
         measurement[[0, 1, 2], [0, 1, 2]] = 1
         f.H = measurement
-        f.P *= 10
+        f.P *= 100
         f.R *= 0.1
         q = Q_discrete_white_noise(dim=2, dt=0.1, var=0.2)
         f.Q = np.zeros((6, 6))
