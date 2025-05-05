@@ -90,12 +90,50 @@ def compute_info(
         raise ValueError("Unsupported Merge_methods used")
     return np.mean(y, axis=0)
 
+def compute_metric(info: dict) -> float:
+    return 0
+
 if __name__ == "__main__":
     profiles = build_profiles_strings(None, None, None, ["traj_1", "traj_2"])
     all_info = read_info(profiles)
-    print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": False, "parser": "simple"}), missing_percentage=True))
-    print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": True, "parser": "simple"}), missing_percentage=True))
-    print(compute_info(get_info_part(all_info, build_profile(True, True, False, "traj_1"), {"parser": "simple"}), missing_percentage=True))
+
+    dicts = []
+    results = []
+    dict = {}
+    show_dict = {}
+    for v1 in ["real", "virtual"]:
+        show_dict["environment"] = v1
+        for v2 in ["single", "cube"]:
+            show_dict["composition"] = v2
+            for v3 in ["aruco", "apriltag"]:
+                show_dict["method"] = v3
+                for v4 in ["traj_1", "traj_2"]:
+                    show_dict["experiment"] = v4
+                    for v5 in [False, True] if v3 == "aruco" else [None]:
+                        if v5 is None:
+                            if dict.__contains__("aruco3"):
+                                dict.pop("aruco3")
+                        else:
+                            dict["aruco3"] = v5
+                        for v6 in ["simple", "kalman"]:
+                            dict["parser"] = v6
+                            if v6 == "kalman":
+                                for v7 in [False, True]:
+                                    dict["flip"] = v7
+                                    for v8 in [False] if v2 == "single" else [False, True]:
+                                        dict["filter"] = v8
+                                        info = get_info_part(all_info, build_profile(v1 == "real", v2 == "single", v3 == "aruco", v4), dict)
+                                        dicts.append(dict | show_dict)
+                                        results.append(compute_metric(info))
+                            else:
+                                if dict.__contains__("flip"):
+                                    dict.pop("flip")
+                                if dict.__contains__("filter"):
+                                    dict.pop("filter")
+                                info = get_info_part(all_info, build_profile(v1 == "real", v2 == "single", v3 == "aruco", v4), dict)
+                                dicts.append(dict | show_dict)
+                                results.append(compute_metric(info))
+    print(dicts)
 
 
     # run_image_info_creation("calibration_real")
@@ -174,10 +212,41 @@ This can be used to make different graphs
 '''
 
 '''
+    traj = "traj_2"
+    is_translation = True
+
+    info1 = get_info_part(all_info, build_profile(True, True, True, traj), {"aruco3": False, "parser": "simple"})
+    info2 = get_info_part(all_info, build_profile(True, False, True, traj), {"aruco3": False, "parser": "simple"})
+    info5 = get_info_part(all_info, build_profile(True, True, False, traj), {"parser": "simple"})
+    info6 = get_info_part(all_info, build_profile(True, False, False, traj), {"parser": "simple"})
+    info7 = get_info_part(all_info, build_profile(False, True, True, traj), {"aruco3": False, "parser": "simple"})
+    info8 = get_info_part(all_info, build_profile(False, False, True, traj), {"aruco3": False, "parser": "simple"})
+    info11 = get_info_part(all_info, build_profile(False, True, False, traj), {"parser": "simple"})
+    info12 = get_info_part(all_info, build_profile(False, False, False, traj), {"parser": "simple"})
+    fig = init_figure(f"Plot of {traj}", size=(16, 11))
+    init_subplot(2, 1, 1, 'Relation by mean module of deviation of error - real images', f'Time, s', f'Module of deviation, {"m" if is_translation else "degrees"}')
+    make_display_by_threshold("total - aruco - single", None, True, "t", is_translation, "all", 0.2, info1, Merge_methods.divergence_module,0)
+    make_display_by_threshold("total - aruco - cube", None, True, "t", is_translation, "all", 0.2, info2, Merge_methods.divergence_module, 0)
+    make_display_by_threshold("total - apriltag - single", None, True, "t", is_translation, "all", 0.2, info5,Merge_methods.divergence_module, 0)
+    make_display_by_threshold("total - apriltag - cube", None, True, "t", is_translation, "all", 0.2, info6, Merge_methods.divergence_module,0)
+    init_subplot(2, 1, 2, 'Relation by mean module of deviation of error - virtual images', f'Time, s', f'Rotation error, degrees')
+    make_display_by_threshold("total - aruco - single", None, True, "t", is_translation, "all", 0.2, info7, Merge_methods.divergence_module,0)
+    make_display_by_threshold("total - aruco - cube", None, True, "t", is_translation, "all", 0.2, info8, Merge_methods.divergence_module, 0)
+    make_display_by_threshold("total - apriltag - single", None, True, "t", is_translation, "all", 0.2, info11,Merge_methods.divergence_module, 0)
+    make_display_by_threshold("total - apriltag - cube", None, True, "t", is_translation, "all", 0.2, info12, Merge_methods.divergence_module,0)
+
+    save_plot(fig, f'{plots_folder}/error in {traj} by {"translation" if is_translation else "rotation"}.png')
+'''
+
+'''
 This can be used to get total value some kind of
 
     result = compute_info(info, True, "x", Merge_methods.divergence_module)
     result = compute_info(info, True, "y", Merge_methods.divergence_module)
     result = compute_info(info, True, "z", Merge_methods.divergence_module)
     result = compute_info(info, True, "all", Merge_methods.divergence_module)
+    
+    print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": False, "parser": "simple"}), missing_percentage=True))
+    print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": True, "parser": "simple"}), missing_percentage=True))
+    print(compute_info(get_info_part(all_info, build_profile(True, True, False, "traj_1"), {"parser": "simple"}), missing_percentage=True))
 '''

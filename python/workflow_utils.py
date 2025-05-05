@@ -13,7 +13,7 @@ from python.E_visualization import read_info, get_info_part
 from python.experiments import x_y_experiment, x_z_experiment, x_rx_experiment, x_ry_experiment, x_rz_experiment, \
     simple_trajectory_experiment, simple_trajectory_rotation_experiment
 from python.models.detectors.arucoDetector import ArucoDetector
-from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
+# from python.models.detectors.apriltagDetector import ApriltagDetector, ApriltagSettings
 from python.models.detectors.chessboardDetector import ChessboardDetector
 from python.models.detectors.detector import TagDetector
 from python.models.imageGenerators.manipulatorGenerator import ManipulatorGenerator
@@ -104,15 +104,15 @@ def create_aruco_detector(profile: str, settings: ImageGenerationSettings, aruco
         cv2.aruco.DICT_5X5_50
     )
 
-def create_apriltag_detector(profile: str, settings: ImageGenerationSettings) -> ApriltagDetector:
-    info = read_profile_json(profile)
-    return ApriltagDetector(
-        np.array(info.get("cameraMatrix")),
-        np.array(info.get("distortionCoefficients")),
-        settings.tagSize,
-        ApriltagSettings(),
-        settings.apriltagFamily
-    )
+# def create_apriltag_detector(profile: str, settings: ImageGenerationSettings) -> ApriltagDetector:
+#     info = read_profile_json(profile)
+#     return ApriltagDetector(
+#         np.array(info.get("cameraMatrix")),
+#         np.array(info.get("distortionCoefficients")),
+#         settings.tagSize,
+#         ApriltagSettings(),
+#         settings.apriltagFamily
+#     )
 
 def create_transforms(
         base2camera_translation: np.array,
