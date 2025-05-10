@@ -1,10 +1,15 @@
+from typing import Tuple
+
+import numpy as np
+import pandas as pd
 from scipy.spatial.transform import Rotation
+import ast
 
 from python.C_imagesGeneration import test_run as imagesGenerationTest, generate_images
 from python.E_visualization import *
 from python.E_visualization import _make_y_axis_info, _mask_by_success
 from python.utils import read_profile_json, generate_random_norm_vector, copy_camera_profile_info, \
-    change_base2gripper_to_camera2object, write_info_to_profile_json
+    change_base2gripper_to_camera2object, write_info_to_profile_json, find_matching_dict_index, reorder_list
 from python.workflow_utils import run_default_calibration, create_image_generation_settings, create_parser, \
     create_vtk_generator, create_transforms, create_detections, hand_to_eye_calibration, camera_calibration, \
     create_manipulator_generator, create_aruco_detector, hand_to_eye_calibration_on_profiles, run_image_info_creation
@@ -90,51 +95,28 @@ def compute_info(
         raise ValueError("Unsupported Merge_methods used")
     return np.mean(y, axis=0)
 
-def compute_metric(info: dict) -> float:
-    return 0
+# returns metrics by missed, translation, rotation
+def compute_metric(info: dict) -> Tuple[float, float, float]:
+    return (
+        compute_info(info, missing_percentage=True),
+        compute_info(info, True, 'all', Merge_methods.mean),
+        compute_info(info, False, 'all', Merge_methods.mean)
+    )
+
+def get_metric_indexes(profiles: list[dict], required_dict: dict) -> list[int]:
+    indexes = []
+    for i in range(len(profiles)):
+        success = True
+        for key, value in required_dict.items():
+            if not profiles[i].get(key) == value:
+                success = False
+                break
+        if success:
+            indexes.append(i)
+    return indexes
 
 if __name__ == "__main__":
-    profiles = build_profiles_strings(None, None, None, ["traj_1", "traj_2"])
-    all_info = read_info(profiles)
-
-    dicts = []
-    results = []
-    dict = {}
-    show_dict = {}
-    for v1 in ["real", "virtual"]:
-        show_dict["environment"] = v1
-        for v2 in ["single", "cube"]:
-            show_dict["composition"] = v2
-            for v3 in ["aruco", "apriltag"]:
-                show_dict["method"] = v3
-                for v4 in ["traj_1", "traj_2"]:
-                    show_dict["experiment"] = v4
-                    for v5 in [False, True] if v3 == "aruco" else [None]:
-                        if v5 is None:
-                            if dict.__contains__("aruco3"):
-                                dict.pop("aruco3")
-                        else:
-                            dict["aruco3"] = v5
-                        for v6 in ["simple", "kalman"]:
-                            dict["parser"] = v6
-                            if v6 == "kalman":
-                                for v7 in [False, True]:
-                                    dict["flip"] = v7
-                                    for v8 in [False] if v2 == "single" else [False, True]:
-                                        dict["filter"] = v8
-                                        info = get_info_part(all_info, build_profile(v1 == "real", v2 == "single", v3 == "aruco", v4), dict)
-                                        dicts.append(dict | show_dict)
-                                        results.append(compute_metric(info))
-                            else:
-                                if dict.__contains__("flip"):
-                                    dict.pop("flip")
-                                if dict.__contains__("filter"):
-                                    dict.pop("filter")
-                                info = get_info_part(all_info, build_profile(v1 == "real", v2 == "single", v3 == "aruco", v4), dict)
-                                dicts.append(dict | show_dict)
-                                results.append(compute_metric(info))
-    print(dicts)
-
+    pass
 
     # run_image_info_creation("calibration_real")
     # generate_virtual_images("calibration_real")
@@ -249,4 +231,130 @@ This can be used to get total value some kind of
     print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": False, "parser": "simple"}), missing_percentage=True))
     print(compute_info(get_info_part(all_info, build_profile(True, True, True, "traj_1"), {"aruco3": True, "parser": "simple"}), missing_percentage=True))
     print(compute_info(get_info_part(all_info, build_profile(True, True, False, "traj_1"), {"parser": "simple"}), missing_percentage=True))
+'''
+
+
+'''
+This can be used to create metrics info and save it to file
+
+    profiles = build_profiles_strings(None, None, None, ["traj_1", "traj_2"])
+    all_info = read_info(profiles)
+
+    dicts = []
+    results = []
+    dict = {}
+    show_dict = {}
+    for v1 in ["real", "virtual"]:
+        show_dict["environment"] = v1
+        for v2 in ["single", "cube"]:
+            show_dict["composition"] = v2
+            for v3 in ["aruco", "apriltag"]:
+                show_dict["method"] = v3
+                for v4 in ["traj_1", "traj_2"]:
+                    show_dict["experiment"] = v4
+                    for v5 in [False, True] if v3 == "aruco" else [None]:
+                        if v5 is None:
+                            if dict.__contains__("aruco3"):
+                                dict.pop("aruco3")
+                        else:
+                            dict["aruco3"] = v5
+                        for v6 in ["simple", "kalman"]:
+                            dict["parser"] = v6
+                            if v6 == "kalman":
+                                for v7 in [False, True]:
+                                    dict["flip"] = v7
+                                    for v8 in [False] if v2 == "single" else [False, True]:
+                                        dict["filter"] = v8
+                                        info = get_info_part(all_info, build_profile(v1 == "real", v2 == "single", v3 == "aruco", v4), dict)
+                                        dicts.append(dict | show_dict)
+                                        results.append(compute_metric(info))
+                            else:
+                                if dict.__contains__("flip"):
+                                    dict.pop("flip")
+                                if dict.__contains__("filter"):
+                                    dict.pop("filter")
+                                info = get_info_part(all_info, build_profile(v1 == "real", v2 == "single", v3 == "aruco", v4), dict)
+                                dicts.append(dict | show_dict)
+                                results.append(compute_metric(info))
+    print(dicts)
+    df = pd.DataFrame()
+    df["info"] = dicts
+    df["missed"] = [metrics[0] for metrics in results]
+    df["translation"] = [metrics[1] for metrics in results]
+    df["rotation"] = [metrics[2] for metrics in results]
+    df.to_csv("metrics.csv")
+'''
+
+'''
+This can be used to read metrics info
+
+    df = pd.read_csv("metrics.csv")
+    profiles = [ast.literal_eval(d) for d in df["info"]]
+    missed = df["missed"].values
+    translations = df["translation"].values
+    rotations = df["rotation"].values
+'''
+
+'''
+This can be used to analyze metrics by max min
+
+    df = pd.read_csv("metrics.csv")
+    profiles = [ast.literal_eval(d) for d in df["info"]]
+    missed = df["missed"].values
+    translations = df["translation"].values
+    rotations = df["rotation"].values
+    indexes = get_metric_indexes(profiles, {"experiment": "traj_2", "environment": "virtual"})
+    p_f = [profiles[i] for i in indexes]
+    m_f = np.array(missed[indexes])
+    t_f = np.array(translations[indexes])
+    r_f = np.array(rotations[indexes])
+    min_i_by_m = np.argmin(m_f)
+    min_i_by_t = np.argmin(t_f)
+    min_i_by_r = np.argmin(r_f)
+    max_i_by_m = np.argmax(m_f)
+    max_i_by_t = np.argmax(t_f)
+    max_i_by_r = np.argmax(r_f)
+    print(f"Min by missed with value {m_f[min_i_by_m]} at profile: {p_f[min_i_by_m]}")
+    print(f"Max by missed with value {m_f[max_i_by_m]} at profile: {p_f[max_i_by_m]}")
+    print(f"Min by transl with value {t_f[min_i_by_t]}/{r_f[min_i_by_t]} at profile: {p_f[min_i_by_t]}")
+    print(f"Max by transl with value {t_f[max_i_by_t]}/{r_f[max_i_by_t]} at profile: {p_f[max_i_by_t]}")
+    print(f"Min by rotati with value {t_f[min_i_by_r]}/{r_f[min_i_by_r]} at profile: {p_f[min_i_by_r]}")
+    print(f"Max by rotati with value {t_f[max_i_by_r]}/{r_f[max_i_by_r]} at profile: {p_f[max_i_by_r]}")
+'''
+
+'''
+This can be used to make metrics comparison
+
+    df = pd.read_csv("metrics.csv")
+    profiles = [ast.literal_eval(d) for d in df["info"]]
+    missed = df["missed"].values
+    translations = df["translation"].values
+    rotations = df["rotation"].values
+    indexes = get_metric_indexes(profiles, {"experiment": "traj_2", "environment": "real", "parser": "kalman"})
+    p_f_all = [profiles[i] for i in indexes]
+    m_f_all = np.array(missed[indexes])
+    t_f_all = np.array(translations[indexes])
+    r_f_all = np.array(rotations[indexes])
+    indexes_from = get_metric_indexes(p_f_all, {"flip": False, "filter": False})
+    p_f_from = [p_f_all[i] for i in indexes_from]
+    m_f_from = np.array(m_f_all[indexes_from])
+    t_f_from = np.array(t_f_all[indexes_from])
+    r_f_from = np.array(r_f_all[indexes_from])
+    indexes_to = get_metric_indexes(p_f_all, {"flip": False, "filter": True})
+    p_f_to = [p_f_all[i] for i in indexes_to]
+    m_f_to = np.array(m_f_all[indexes_to])
+    t_f_to = np.array(t_f_all[indexes_to])
+    r_f_to = np.array(r_f_all[indexes_to])
+    shuffle_list = [find_matching_dict_index(p_f_from, p, ["flip", "filter"]) for p in p_f_to]
+    p_f_to = reorder_list(p_f_to, shuffle_list)
+    m_f_to = np.array(reorder_list(m_f_to, shuffle_list))
+    t_f_to = np.array(reorder_list(t_f_to, shuffle_list))
+    r_f_to = np.array(reorder_list(r_f_to, shuffle_list))
+
+    m_change = np.mean(m_f_to - m_f_from)
+    t_change = np.mean(t_f_to - t_f_from)
+    r_change = np.mean(r_f_to - r_f_from)
+    print(f"Mean change by missed {m_change}")
+    print(f"Mean change by transl {t_change}")
+    print(f"Mean change by rotati {r_change}")
 '''

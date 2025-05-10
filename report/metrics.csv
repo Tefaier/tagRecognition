@@ -1,0 +1,97 @@
+index,info,missed,translation,rotation
+0,"{'aruco3': False, 'parser': 'simple', 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.028223138256884953,6.017770662258606
+1,"{'aruco3': False, 'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.028620129520318994,6.017770662258606
+2,"{'aruco3': False, 'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.02865663543113056,5.249583566583191
+3,"{'aruco3': True, 'parser': 'simple', 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.028223138256884953,6.017770662258606
+4,"{'aruco3': True, 'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.02897365477942693,6.017770662258606
+5,"{'aruco3': True, 'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.02910372645601532,6.150222350422313
+6,"{'aruco3': False, 'parser': 'simple', 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",7.920792079207921,0.03370578910022575,3.6811413728234466
+7,"{'aruco3': False, 'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",7.920792079207921,0.05143163178788876,3.6811413728234466
+8,"{'aruco3': False, 'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",7.920792079207921,0.05111521358977634,2.048967477694972
+9,"{'aruco3': True, 'parser': 'simple', 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",7.920792079207921,0.03464204021804565,3.716191971655037
+10,"{'aruco3': True, 'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",7.920792079207921,0.05337353856315232,3.716191971655037
+11,"{'aruco3': True, 'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",7.920792079207921,0.053303284179807904,2.0840180765265632
+12,"{'parser': 'simple', 'environment': 'real', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.014993751243217139,3.4221762872891324
+13,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.015817333072710292,3.4221762872891324
+14,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.015778533950527345,2.989653839703282
+15,"{'parser': 'simple', 'environment': 'real', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_2'}",28.712871287128714,0.01652448270934702,1.5095458722525104
+16,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_2'}",28.712871287128714,0.03457036481618239,1.5095458722525104
+17,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_2'}",28.712871287128714,0.03457036481618239,1.5095458722525104
+18,"{'parser': 'simple', 'aruco3': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.025752947776263205,4.715972570717737
+19,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.026229754975003322,4.715972570717737
+20,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.026229754975003322,4.715972570717737
+21,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.026361899123285636,5.019007301256507
+22,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.026361899123285636,5.019007301256507
+23,"{'parser': 'simple', 'aruco3': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.025752947776263205,4.715972570717737
+24,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.02646404162812823,4.715972570717737
+25,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.02646404162812823,4.715972570717737
+26,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.0266728957206439,5.019007301256507
+27,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.0266728957206439,5.019007301256507
+28,"{'parser': 'simple', 'aruco3': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.031188454235472823,3.0027843217970256
+29,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.051209476174108634,3.0027843217970256
+30,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04823679038818268,2.5406438243774425
+31,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.051128186848888126,2.103957398276503
+32,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04839798867615089,2.753210573172059
+33,"{'parser': 'simple', 'aruco3': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.031188454235472823,3.0027843217970256
+34,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.05467805995245144,3.0027843217970256
+35,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.052228826592629264,2.5406438243774425
+36,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.05460874385418121,2.103957398276503
+37,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.052387831436340404,2.753210573172059
+38,"{'parser': 'simple', 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.015207552325216792,2.836469037448473
+39,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.01611736172396474,2.836469037448473
+40,"{'parser': 'kalman', 'flip': False, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.01596365542872629,3.3096080278985767
+41,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.016125168700685283,2.7738426841723007
+42,"{'parser': 'kalman', 'flip': True, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.015994972567318903,3.2882449521419876
+43,"{'parser': 'simple', 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",1.9801980198019802,0.017016050022192714,2.952920360199549
+44,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",1.9801980198019802,0.040161706124195964,2.952920360199549
+45,"{'parser': 'kalman', 'flip': False, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",1.9801980198019802,0.03906987353714812,1.511393580100546
+46,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",1.9801980198019802,0.0399918138796202,1.6892615945160858
+47,"{'parser': 'kalman', 'flip': True, 'filter': True, 'environment': 'real', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",1.9801980198019802,0.03906987353714812,1.511393580100546
+48,"{'parser': 'simple', 'aruco3': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011221070577957014,4.329898707829589
+49,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011599717875779398,4.329898707829589
+50,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011616928524439905,4.334375085305426
+51,"{'parser': 'simple', 'aruco3': True, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011221070577957014,4.329898707829589
+52,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.0119427371426897,4.329898707829589
+53,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011950887934404695,4.334375085305426
+54,"{'parser': 'simple', 'aruco3': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.016308864188867917,0.8297701659805011
+55,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04763407343701947,0.8297701659805011
+56,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04763407343701947,0.8297701659805011
+57,"{'parser': 'simple', 'aruco3': True, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.016308864188867917,0.8297701659805011
+58,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.05001812174095212,0.8297701659805011
+59,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.05001812174095212,0.8297701659805011
+60,"{'parser': 'simple', 'environment': 'virtual', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.0051051673128896915,5.314581437702323
+61,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.004917780701668935,5.314581437702323
+62,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.004963558714908968,5.313448806689575
+63,"{'parser': 'simple', 'environment': 'virtual', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.00312347870745769,0.5663132374080483
+64,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.03901881969633622,0.5663132374080483
+65,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'single', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.03901881969633622,0.5663132374080483
+66,"{'parser': 'simple', 'aruco3': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.01148796022682803,4.186442332843201
+67,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011839080113417307,4.186442332843201
+68,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011626574039728858,4.3121634034578
+69,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011857836707168905,4.190918710319039
+70,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011643854797888323,4.316639780933637
+71,"{'parser': 'simple', 'aruco3': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.01148796022682803,4.186442332843201
+72,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.012176288845236579,4.186442332843201
+73,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.01196342907592797,4.3121634034578
+74,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.012185914182022004,4.190918710319039
+75,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_1'}",0.0,0.011971797663079061,4.316639780933637
+76,"{'parser': 'simple', 'aruco3': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.01821935481624652,0.5452404026240806
+77,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04708837180384859,0.5452404026240806
+78,"{'parser': 'kalman', 'aruco3': False, 'flip': False, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.044468998457110824,0.9107656626727182
+79,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04708837180384859,0.5452404026240806
+80,"{'parser': 'kalman', 'aruco3': False, 'flip': True, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.044468998457110824,0.9107656626727182
+81,"{'parser': 'simple', 'aruco3': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.01821935481624652,0.5452404026240806
+82,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04954754047602347,0.5452404026240806
+83,"{'parser': 'kalman', 'aruco3': True, 'flip': False, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04726623770579244,0.9107656626727182
+84,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04954754047602347,0.5452404026240806
+85,"{'parser': 'kalman', 'aruco3': True, 'flip': True, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'aruco', 'experiment': 'traj_2'}",0.0,0.04726623770579244,0.9107656626727182
+86,"{'parser': 'simple', 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.004550321915946863,4.838366402905291
+87,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.0046202252800690785,4.838366402905291
+88,"{'parser': 'kalman', 'flip': False, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.004917780701668935,5.314581437702323
+89,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.004665578339129267,4.837233771892542
+90,"{'parser': 'kalman', 'flip': True, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_1'}",0.0,0.004963558714908968,5.313448806689575
+91,"{'parser': 'simple', 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.0030837802245024188,0.5049821181031969
+92,"{'parser': 'kalman', 'flip': False, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.039375568432136666,0.5049821181031969
+93,"{'parser': 'kalman', 'flip': False, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.039492877286981094,0.6285207655131995
+94,"{'parser': 'kalman', 'flip': True, 'filter': False, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.03929671725176099,0.4047041192762143
+95,"{'parser': 'kalman', 'flip': True, 'filter': True, 'environment': 'virtual', 'composition': 'cube', 'method': 'apriltag', 'experiment': 'traj_2'}",0.0,0.039492877286981094,0.6285207655131995
