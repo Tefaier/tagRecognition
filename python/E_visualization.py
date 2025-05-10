@@ -280,12 +280,13 @@ def get_info_part(info: list, profile: str, required_dict: dict):
     if len(required_dict) == 0:
         dict_index = 0
     for i in range(len(info[profile_index][-1])):
+        success = True
         for key, value in required_dict.items():
             if not info[profile_index][-1][i][0].get(key) == value:
+                success = False
                 break
+        if success:
             dict_index = i
-            break
-        if not dict_index == -1:
             break
     if dict_index == -1: raise ValueError(f"Didn't find dictionary with {required_dict}")
 
