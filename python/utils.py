@@ -175,3 +175,26 @@ def change_base2gripper_to_camera2object(
         translations[i] = t
         rotations[i] = r
     return translations, rotations
+
+
+def find_matching_dict_index(list_of_dicts, target_dict, exclude_keys=None) -> int | None:
+    if exclude_keys is None:
+        exclude_keys = []
+
+    for i, d in enumerate(list_of_dicts):
+        match = all(
+            key in d and d[key] == value
+            for key, value in target_dict.items()
+            if key not in exclude_keys
+        )
+
+        if match:
+            return i
+
+    return None
+
+def reorder_list(list, new_indexes):
+    reordered = [None] * len(list)
+    for original_index, new_index in enumerate(new_indexes):
+        reordered[new_index] = list[original_index]
+    return reordered
